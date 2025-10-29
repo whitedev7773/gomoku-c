@@ -1,12 +1,17 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Iinclude -lncurses
+CFLAGS = -Wall -Wextra -O2 -Iinclude -pthread
+LDFLAGS = -lncurses -pthread
 TARGET = gomoku
 
-SRC = $(wildcard src/**/*.c) $(wildcard src/*.c)
-OBJ = $(SRC:.c=.o)
+SRC := $(shell find src -name '*.c')
+OBJ := $(SRC:.c=.o)
 
 $(TARGET): $(OBJ)
-	$(CC) $(OBJ) -o $@ -lncurses
+	$(CC) $(OBJ) -o $@ $(LDFLAGS)
 
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.PHONY: clean
 clean:
 	rm -f $(OBJ) $(TARGET)

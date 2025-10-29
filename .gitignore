@@ -1,0 +1,11 @@
+# Build artifacts
+gomoku
+*.o
+**/*.o
+
+# Editor / OS clutter
+*.swp
+*.swo
+*~
+.DS_Store
+
