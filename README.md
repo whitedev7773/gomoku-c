@@ -1,11 +1,5 @@
-# Gomoku TUI (Curses, C)
-
-A terminal-based Gomoku (Omok) game written in C using the curses library.
-
-## Features
-- Single & LAN Multiplayer
-- AI difficulty (easy / medium / hard)
-- Timer per turn
-- Undo & resign support
-- Chat window during play
-- Nickname setting
+# Gomoku TUI (Curses)
+Curses 기반 오목 게임 프로젝트.
+- 싱글/멀티플레이 지원
+- AI 난이도: Easy / Medium / Hard
+- 채팅, 기권, 무르기, 시간제한 포함
