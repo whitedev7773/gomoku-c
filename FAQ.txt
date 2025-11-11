@@ -1,0 +1,28 @@
+팀 프로젝트 관련 질문 및 답변을 공유하니 참고하기 바랍니다.
+
+1. Proposal 이후 최종 발표까지 어느 정도 변경이 허용되나요?
+모든 부분의 변경을 허용합니다.
+다만, 가능하면 프로젝트 주제는 유지하는 것을 권장합니다.
+Proposal과 비교해 변경된 내용이 있다면, 최종 발표 시 변경하게 된 이유 등을 설명해야 합니다.
+
+2. 특정 기능(e.g., AI 관련 기능 등)을 구현하기 위해 일부를 C 언어 외 다른 언어로 작성해도 되나요?
+기본적으로 모든 코드는 C 언어로 작성되어야 하며, C 언어 라이브러리는 자유롭게 사용 가능합니다.
+단, AI 관련 기능 등 C로 구현 시 비효율적이거나 과도하게 복잡한 부분에 한해, 일부는 다른 언어(e.g., Python)로 구현하는 것도 허용합니다.
+
+하지만, 아래의 코드 관련 평가 기준은 C 언어 코드에 대해서만 적용되므로 주의하기 바랍니다.
+
+• Code Requirements (100 pts):
+Minimum 500 lines (excluding comments)
+Use at least 5 different system calls
+Implement at least 3 core functionalities
+
+• Complexity (30 pts):
+Implementing more than 5 core functionalities.
+Using advanced system programming features (e.g., threads, socket)
+
+즉, 일부를 다른 언어로 구현하더라도, C 언어로 작성된 코드에서 세 가지 기준(500 라인 이상, 시스템 콜 5개 이상 사용, 기능 3개 이상 구현)은 반드시 충족해야 합니다.
+(참고로, C 코드 내에서 특정 기능을 수행하기 위해 외부 프로그램을 호출하는 방식은 허용됩니다.)
+
+3. Creativity 항목 관련
+단순히 프로젝트 주제의 참신성뿐 아니라, 세부 기능이나 구현 방식에서의 창의성도 인정됩니다.
+따라서 주제가 평범하더라도 세부 기능에서 창의적인 요소가 있다면 긍정적으로 평가됩니다.

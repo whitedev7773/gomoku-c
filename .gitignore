@@ -1,0 +1,8 @@
+/build
+/build/*
+
+/dist
+/dist/*
+
+/bin
+/bin/*
