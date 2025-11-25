@@ -7,19 +7,12 @@ include_directories(${CURSES_INCLUDE_DIR})
 
 include_directories(include)
 
-file(GLOB SRC_FILES
+file(GLOB_RECURSE SRC_FILES
     "src/*.c"
-    "src/application/*.c"
-    "src/application/**/*.c"
-
-    "src/domain/*.c"
-    "src/domain/**/*.c"
-
-    "src/infrastructure/*.c"
-    "src/infrastructure/**/*.c"
-
-    "src/presentation/*.c"
-    "src/presentation/**/*.c"
+    "src/utils/*.c"
+    "src/ui/*.c"
+    "src/game/*.c"
+    "src/network/*.c"
 )
 
 add_executable(gomoku-c ${SRC_FILES})
