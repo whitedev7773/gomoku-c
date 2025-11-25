@@ -1,0 +1,2 @@
+cmake-4.2.0-rc3
+openssl-3.5.4
