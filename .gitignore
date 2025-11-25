@@ -3,11 +3,6 @@
 /build/
 /dist/
 
-# Claude Code
-/.claude/
-AGENTS.md
-CLAUDE.md
-
 # Compiled files
 *.o
 *.a
@@ -16,6 +11,7 @@ CLAUDE.md
 
 # Executables
 gomoku-c
+!/test_phase*.c
 /test_phase2
 /test_*
 !src/test/
