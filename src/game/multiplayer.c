@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <sys/socket.h>
 
 // 플레이어 정보
 typedef struct {
@@ -48,6 +49,10 @@ static bool mp_send_player_info(MultiplayerGame *game);
 static bool mp_handle_network_messages(MultiplayerGame *game);
 static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game);
 static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game);
+static void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator_index);
+static void mp_handle_spectator_connections(MultiplayerGame *game);
+static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message *move_msg);
+static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg);
 
 int multiplayer_run_host(int port) {
     if (port == 0) port = DEFAULT_PORT;
@@ -173,6 +178,9 @@ int multiplayer_run_host(int port) {
     bool game_running = true;
 
     while (game_running) {
+        // 관전자 연결 처리
+        mp_handle_spectator_connections(&game);
+
         // 네트워크 메시지 처리
         mp_handle_network_messages(&game);
 
@@ -421,6 +429,9 @@ static bool mp_handle_network_messages(MultiplayerGame *game) {
                                board_get_move_count(&game->board));
 
                 turn_manager_next_turn(&game->turn_mgr);
+
+                // 관전자들에게 브로드캐스트
+                mp_broadcast_move_to_spectators(game, &msg);
             }
             break;
 
@@ -432,6 +443,9 @@ static bool mp_handle_network_messages(MultiplayerGame *game) {
         case MSG_CHAT:
             // 채팅 메시지 수신
             chat_ui_add_message(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
+
+            // 관전자들에게 브로드캐스트
+            mp_broadcast_chat_to_spectators(game, &msg);
             break;
 
         case MSG_COMMAND:
@@ -507,6 +521,9 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
                         protocol_init_message(&msg, MSG_CHAT, game->network.sequence_number++);
                         strncpy(msg.payload.chat.message, msg_text, sizeof(msg.payload.chat.message) - 1);
                         network_send_message(&game->network, &msg);
+
+                        // 관전자들에게도 브로드캐스트
+                        mp_broadcast_chat_to_spectators(game, &msg);
 
                         chat_ui_add_message(&game->chat_ui, msg_text, CHAT_MSG_USER);
                     }
@@ -595,6 +612,9 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
                     msg.payload.move.stone = game->me.color;
                     network_send_message(&game->network, &msg);
 
+                    // 관전자들에게도 브로드캐스트
+                    mp_broadcast_move_to_spectators(game, &msg);
+
                     return true;
                 }
             } else {
@@ -609,4 +629,95 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
     }
 
     return false;
+}
+
+// 관전자 관련 함수들
+
+// 관전자에게 현재 게임 상태 전송
+static void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator_index) {
+    Message msg;
+    protocol_init_message(&msg, MSG_GAME_STATE, game->network.sequence_number++);
+
+    // 플레이어 정보
+    strncpy(msg.payload.game_state.player1_name, game->me.name, MAX_PLAYER_NAME);
+    strncpy(msg.payload.game_state.player2_name, game->opponent.name, MAX_PLAYER_NAME);
+
+    // 현재 턴
+    msg.payload.game_state.current_turn = turn_manager_get_current_player(&game->turn_mgr);
+
+    // 수 개수
+    msg.payload.game_state.move_count = board_get_move_count(&game->board);
+
+    // 보드 상태
+    for (int row = 0; row < BOARD_SIZE; row++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            msg.payload.game_state.board_state[row * BOARD_SIZE + col] = game->board.cells[row][col];
+        }
+    }
+
+    network_send_to_spectator(&game->network, spectator_index, &msg);
+}
+
+// 새로운 관전자 연결 처리
+static void mp_handle_spectator_connections(MultiplayerGame *game) {
+    // 관전자 연결 시도 체크
+    if (network_server_accept_spectator(&game->network)) {
+        // 새로운 관전자 연결됨
+        int new_spectator_index = game->network.spectator_count - 1;
+
+        // 관전자로부터 MSG_SPECTATOR_CONNECT 대기
+        uint8_t temp_buffer[1024];
+        int spectator_fd = game->network.spectator_fds[new_spectator_index];
+
+        // 논블로킹 recv 시도
+        ssize_t received = recv(spectator_fd, temp_buffer, sizeof(temp_buffer), MSG_DONTWAIT);
+        if (received > 0) {
+            Message connect_msg;
+            int result = protocol_deserialize(&connect_msg, temp_buffer, received);
+
+            if (result > 0 && connect_msg.header.type == MSG_SPECTATOR_CONNECT) {
+                // 관전자 이름 저장
+                strncpy(game->network.spectator_names[new_spectator_index],
+                       connect_msg.payload.spectator_connect.spectator_name,
+                       MAX_PLAYER_NAME);
+
+                // 승인 메시지 전송
+                Message ack_msg;
+                protocol_init_message(&ack_msg, MSG_SPECTATOR_CONNECT_ACK, game->network.sequence_number++);
+                ack_msg.payload.spectator_connect_ack.accepted = 1;
+                ack_msg.payload.spectator_connect_ack.error_code = ERR_NONE;
+                ack_msg.payload.spectator_connect_ack.spectator_count = game->network.spectator_count;
+                ack_msg.payload.spectator_connect_ack.max_spectators = MAX_SPECTATORS;
+                network_send_to_spectator(&game->network, new_spectator_index, &ack_msg);
+
+                // 현재 게임 상태 전송
+                mp_send_game_state_to_spectator(game, new_spectator_index);
+
+                // 다른 사람들에게 관전자 입장 알림
+                Message join_msg;
+                protocol_init_message(&join_msg, MSG_SPECTATOR_JOIN, game->network.sequence_number++);
+                strncpy(join_msg.payload.spectator_join_leave.spectator_name,
+                       game->network.spectator_names[new_spectator_index],
+                       MAX_PLAYER_NAME);
+                join_msg.payload.spectator_join_leave.spectator_count = game->network.spectator_count;
+
+                // 플레이어들과 다른 관전자들에게 알림
+                network_send_message(&game->network, &join_msg);
+                for (int i = 0; i < MAX_SPECTATORS; i++) {
+                    if (i != new_spectator_index && game->network.spectator_fds[i] >= 0) {
+                        network_send_to_spectator(&game->network, i, &join_msg);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 모든 관전자에게 메시지 브로드캐스트
+static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message *move_msg) {
+    network_broadcast_to_spectators(&game->network, move_msg);
+}
+
+static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg) {
+    network_broadcast_to_spectators(&game->network, chat_msg);
 }

@@ -2,11 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <locale.h>
+#include <string.h>
 #include "utils/terminal_check.h"
 #include "utils/arg_parser.h"
 #include "ui/menu_ui.h"
 #include "game/singleplay.h"
 #include "game/multiplayer.h"
+#include "game/spectator.h"
 #include "game/ai_engine.h"
 #include "network/network.h"
 #include <ncurses.h>
@@ -160,9 +162,27 @@ int main(int argc, char *argv[])
         }
         else if (selected_option == MENU_SPECTATOR)
         {
-            printf("=== GOMOKU GAME ===\n");
-            printf("Starting spectator mode...\n");
-            printf("(Spectator implementation coming in Phase 7)\n");
+            printf("=== GOMOKU - SPECTATOR ===\n");
+            char server_ip[64];
+            int port;
+            char spectator_name[MAX_PLAYER_NAME + 1];
+
+            printf("Enter server IP address: ");
+            scanf("%s", server_ip);
+            printf("Enter port (default 7773): ");
+            if (scanf("%d", &port) != 1) {
+                port = DEFAULT_PORT;
+            }
+            getchar();  // 버퍼 비우기
+
+            printf("Enter your name (max 8 chars): ");
+            fgets(spectator_name, sizeof(spectator_name), stdin);
+            spectator_name[strcspn(spectator_name, "\n")] = '\0';
+            if (strlen(spectator_name) == 0) {
+                strcpy(spectator_name, "Viewer");
+            }
+
+            spectator_run(server_ip, port, spectator_name);
         }
         break;
     }
@@ -184,9 +204,7 @@ int main(int argc, char *argv[])
         break;
 
     case MODE_SPECTATOR:
-        printf("=== GOMOKU GAME ===\n");
-        printf("Spectating game at %s:%d...\n", args.ip_address, args.port);
-        printf("(Spectator implementation coming in Phase 7)\n");
+        spectator_run(args.ip_address, args.port, "Viewer");
         break;
     }
 

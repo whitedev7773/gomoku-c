@@ -24,6 +24,11 @@ typedef enum {
     MSG_DISCONNECT = 11,    // 연결 종료
     MSG_COMMAND = 12,       // 명령어
     MSG_COMMAND_RESPONSE = 13,  // 명령어 응답
+    MSG_SPECTATOR_CONNECT = 14,     // 관전자 연결 요청
+    MSG_SPECTATOR_CONNECT_ACK = 15, // 관전자 연결 승인/거부
+    MSG_SPECTATOR_JOIN = 16,        // 관전자 입장 알림
+    MSG_SPECTATOR_LEAVE = 17,       // 관전자 퇴장 알림
+    MSG_GAME_STATE = 18,            // 전체 게임 상태
     MSG_ERROR = 99          // 에러
 } MessageType;
 
@@ -34,6 +39,8 @@ typedef enum {
     ERR_NOT_YOUR_TURN = 2,
     ERR_GAME_FULL = 3,
     ERR_VERSION_MISMATCH = 4,
+    ERR_NO_GAME = 5,            // 진행 중인 게임 없음
+    ERR_SPECTATOR_FULL = 6,     // 관전자 수 초과 (최대 3명)
     ERR_UNKNOWN = 99
 } ErrorCode;
 
@@ -115,6 +122,34 @@ typedef struct __attribute__((packed)) {
     char description[64];
 } ErrorMessage;
 
+// 관전자 연결 요청
+typedef struct __attribute__((packed)) {
+    char spectator_name[MAX_PLAYER_NAME];
+} SpectatorConnectMessage;
+
+// 관전자 연결 승인/거부
+typedef struct __attribute__((packed)) {
+    uint8_t accepted;       // 1 if accepted, 0 if rejected
+    uint8_t error_code;     // ErrorCode (if rejected)
+    uint8_t spectator_count;    // 현재 관전자 수
+    uint8_t max_spectators;     // 최대 관전자 수 (3)
+} SpectatorConnectAckMessage;
+
+// 관전자 입장/퇴장 알림
+typedef struct __attribute__((packed)) {
+    char spectator_name[MAX_PLAYER_NAME];
+    uint8_t spectator_count;    // 현재 관전자 수
+} SpectatorJoinLeaveMessage;
+
+// 전체 게임 상태 (관전자 접속 시)
+typedef struct __attribute__((packed)) {
+    char player1_name[MAX_PLAYER_NAME];
+    char player2_name[MAX_PLAYER_NAME];
+    uint8_t current_turn;   // Stone (BLACK or WHITE)
+    uint8_t move_count;     // 총 수 개수
+    uint8_t board_state[BOARD_SIZE * BOARD_SIZE];  // 보드 상태 (EMPTY=0, BLACK=1, WHITE=2)
+} GameStateMessage;
+
 // 전체 메시지 (헤더 + 페이로드)
 typedef struct {
     MessageHeader header;
@@ -131,6 +166,10 @@ typedef struct {
         CommandResponseMessage command_response;
         PingPongMessage ping_pong;
         ErrorMessage error;
+        SpectatorConnectMessage spectator_connect;
+        SpectatorConnectAckMessage spectator_connect_ack;
+        SpectatorJoinLeaveMessage spectator_join_leave;
+        GameStateMessage game_state;
     } payload;
 } Message;
 

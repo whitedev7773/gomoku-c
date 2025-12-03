@@ -18,6 +18,12 @@ bool network_init_server(NetworkManager *net, int port) {
     net->socket_fd = -1;
     net->client_fd = -1;
 
+    // 관전자 배열 초기화
+    for (int i = 0; i < MAX_SPECTATORS; i++) {
+        net->spectator_fds[i] = -1;
+    }
+    net->spectator_count = 0;
+
     // 소켓 생성
     net->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (net->socket_fd < 0) {
@@ -189,6 +195,15 @@ void network_cleanup(NetworkManager *net) {
         net->client_fd = -1;
     }
 
+    // 관전자 소켓 정리
+    for (int i = 0; i < MAX_SPECTATORS; i++) {
+        if (net->spectator_fds[i] >= 0) {
+            close(net->spectator_fds[i]);
+            net->spectator_fds[i] = -1;
+        }
+    }
+    net->spectator_count = 0;
+
     if (net->socket_fd >= 0) {
         close(net->socket_fd);
         net->socket_fd = -1;
@@ -330,4 +345,171 @@ void network_set_nonblocking(int socket_fd, bool nonblocking) {
 int network_get_ping_ms(NetworkManager *net) {
     // TODO: PING/PONG 메시지로 실제 RTT 측정
     return 0;
+}
+
+// 관전자 관련 함수들
+
+bool network_init_spectator(NetworkManager *net) {
+    memset(net, 0, sizeof(NetworkManager));
+    net->role = NETWORK_SPECTATOR;
+    net->state = NET_DISCONNECTED;
+    net->socket_fd = -1;
+
+    return true;
+}
+
+bool network_spectator_connect(NetworkManager *net, const char *server_ip, int port) {
+    if (net->role != NETWORK_SPECTATOR) {
+        return false;
+    }
+
+    // 소켓 생성
+    net->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (net->socket_fd < 0) {
+        perror("socket");
+        return false;
+    }
+
+    // TCP_NODELAY 설정
+    int opt = 1;
+    setsockopt(net->socket_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
+
+    // 서버 주소 설정
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0) {
+        perror("inet_pton");
+        close(net->socket_fd);
+        net->socket_fd = -1;
+        return false;
+    }
+
+    // 연결
+    net->state = NET_CONNECTING;
+    if (connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("connect");
+        close(net->socket_fd);
+        net->socket_fd = -1;
+        net->state = NET_ERROR;
+        return false;
+    }
+
+    strncpy(net->remote_ip, server_ip, sizeof(net->remote_ip) - 1);
+    net->remote_port = port;
+    net->state = NET_CONNECTED;
+
+    return true;
+}
+
+bool network_server_accept_spectator(NetworkManager *net) {
+    if (net->role != NETWORK_SERVER || net->socket_fd < 0) {
+        return false;
+    }
+
+    // 관전자 수 체크
+    if (net->spectator_count >= MAX_SPECTATORS) {
+        return false;
+    }
+
+    struct sockaddr_in spectator_addr;
+    socklen_t addr_len = sizeof(spectator_addr);
+
+    int spectator_fd = accept(net->socket_fd, (struct sockaddr *)&spectator_addr, &addr_len);
+    if (spectator_fd < 0) {
+        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+            perror("accept spectator");
+        }
+        return false;
+    }
+
+    // TCP_NODELAY 설정
+    int opt = 1;
+    setsockopt(spectator_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
+
+    // 빈 슬롯에 추가
+    for (int i = 0; i < MAX_SPECTATORS; i++) {
+        if (net->spectator_fds[i] < 0) {
+            net->spectator_fds[i] = spectator_fd;
+            net->spectator_count++;
+            return true;
+        }
+    }
+
+    // 이론적으로 여기 도달하면 안됨 (spectator_count < MAX_SPECTATORS 체크했으므로)
+    close(spectator_fd);
+    return false;
+}
+
+void network_server_remove_spectator(NetworkManager *net, int index) {
+    if (index < 0 || index >= MAX_SPECTATORS) {
+        return;
+    }
+
+    if (net->spectator_fds[index] >= 0) {
+        close(net->spectator_fds[index]);
+        net->spectator_fds[index] = -1;
+        memset(net->spectator_names[index], 0, MAX_PLAYER_NAME);
+        net->spectator_count--;
+    }
+}
+
+int network_broadcast_to_spectators(NetworkManager *net, const Message *msg) {
+    if (net->role != NETWORK_SERVER) {
+        return -1;
+    }
+
+    uint8_t buffer[RECV_BUFFER_SIZE];
+    int size = protocol_serialize(msg, buffer, sizeof(buffer));
+    if (size < 0) {
+        return -1;
+    }
+
+    int sent_count = 0;
+    for (int i = 0; i < MAX_SPECTATORS; i++) {
+        if (net->spectator_fds[i] >= 0) {
+            ssize_t sent = send(net->spectator_fds[i], buffer, size, 0);
+            if (sent > 0) {
+                sent_count++;
+            } else if (sent < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
+                // 연결 끊김, 관전자 제거
+                network_server_remove_spectator(net, i);
+            }
+        }
+    }
+
+    return sent_count;
+}
+
+int network_send_to_spectator(NetworkManager *net, int spectator_index, const Message *msg) {
+    if (net->role != NETWORK_SERVER) {
+        return -1;
+    }
+
+    if (spectator_index < 0 || spectator_index >= MAX_SPECTATORS) {
+        return -1;
+    }
+
+    if (net->spectator_fds[spectator_index] < 0) {
+        return -1;
+    }
+
+    uint8_t buffer[RECV_BUFFER_SIZE];
+    int size = protocol_serialize(msg, buffer, sizeof(buffer));
+    if (size < 0) {
+        return -1;
+    }
+
+    ssize_t sent = send(net->spectator_fds[spectator_index], buffer, size, 0);
+    if (sent < 0) {
+        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+            perror("send to spectator");
+            network_server_remove_spectator(net, spectator_index);
+        }
+        return -1;
+    }
+
+    return sent;
 }

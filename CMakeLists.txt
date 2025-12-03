@@ -48,13 +48,13 @@ endif()
 
 file(GLOB TEST_PHASE3_FILES "src/test/test_phase3_ui.c")
 if(TEST_PHASE3_FILES)
-    add_executable(test_phase3_ui ${TEST_PHASE3_FILES} ${GAME_FILES} ${UI_FILES})
+    add_executable(test_phase3_ui ${TEST_PHASE3_FILES} ${GAME_FILES} ${UI_FILES} ${NETWORK_FILES})
     target_link_libraries(test_phase3_ui ${CURSES_LIBRARIES})
 endif()
 
 file(GLOB TEST_MENU_FILES "src/test/test_menu.c")
 if(TEST_MENU_FILES)
-    add_executable(test_menu ${TEST_MENU_FILES} ${GAME_FILES} ${UI_FILES})
+    add_executable(test_menu ${TEST_MENU_FILES} ${GAME_FILES} ${UI_FILES} ${NETWORK_FILES})
     target_link_libraries(test_menu ${CURSES_LIBRARIES})
 endif()
 

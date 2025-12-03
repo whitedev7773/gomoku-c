@@ -41,6 +41,15 @@ size_t protocol_get_message_size(MessageType type) {
             return header_size;
         case MSG_ERROR:
             return header_size + sizeof(ErrorMessage);
+        case MSG_SPECTATOR_CONNECT:
+            return header_size + sizeof(SpectatorConnectMessage);
+        case MSG_SPECTATOR_CONNECT_ACK:
+            return header_size + sizeof(SpectatorConnectAckMessage);
+        case MSG_SPECTATOR_JOIN:
+        case MSG_SPECTATOR_LEAVE:
+            return header_size + sizeof(SpectatorJoinLeaveMessage);
+        case MSG_GAME_STATE:
+            return header_size + sizeof(GameStateMessage);
         default:
             return header_size;
     }
