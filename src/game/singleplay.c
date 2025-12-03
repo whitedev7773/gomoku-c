@@ -8,6 +8,7 @@
 #include "../ui/input_handler.h"
 #include "../ui/game_info_ui.h"
 #include "../ui/log_ui.h"
+#include "../ui/theme.h"
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -26,18 +27,8 @@ int singleplay_run(AIDifficulty difficulty) {
     // stdscr을 100x30으로 고정
     wresize(stdscr, 30, 100);
 
-    // 색상 초기화
-    if (has_colors()) {
-        start_color();
-        init_pair(1, COLOR_WHITE, COLOR_BLACK);  // 기본
-        init_pair(2, COLOR_BLACK, COLOR_WHITE);  // 반전
-        init_pair(3, COLOR_RED, COLOR_BLACK);    // 빨강
-        init_pair(4, COLOR_GREEN, COLOR_BLACK);  // 초록
-        init_pair(5, COLOR_YELLOW, COLOR_BLACK); // 노랑
-        init_pair(6, COLOR_BLUE, COLOR_BLACK);   // 파랑
-        init_pair(7, COLOR_CYAN, COLOR_BLACK);   // 청록
-        init_pair(8, COLOR_WHITE, COLOR_BLACK);  // 흰색
-    }
+    // 테마 초기화
+    theme_init(theme_get_current());
 
     // UI Manager 초기화
     UIManager ui_mgr;

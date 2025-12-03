@@ -6,6 +6,8 @@
 #include "utils/terminal_check.h"
 #include "utils/arg_parser.h"
 #include "ui/menu_ui.h"
+#include "ui/theme.h"
+#include "ui/theme_selector_ui.h"
 #include "game/singleplay.h"
 #include "game/multiplayer.h"
 #include "game/spectator.h"
@@ -57,18 +59,8 @@ int main(int argc, char *argv[])
         // Limit stdscr to 100x30
         wresize(stdscr, 30, 100);
 
-        if (has_colors())
-        {
-            start_color();
-            init_pair(1, COLOR_WHITE, COLOR_BLACK);
-            init_pair(2, COLOR_BLACK, COLOR_WHITE);
-            init_pair(3, COLOR_RED, COLOR_BLACK);
-            init_pair(4, COLOR_GREEN, COLOR_BLACK);
-            init_pair(5, COLOR_YELLOW, COLOR_BLACK);
-            init_pair(6, COLOR_BLUE, COLOR_BLACK);
-            init_pair(7, COLOR_CYAN, COLOR_BLACK);
-            init_pair(8, COLOR_WHITE, COLOR_BLACK);
-        }
+        // 테마 초기화
+        theme_init(THEME_WHITE);
 
         // Always use fixed 100x30 size
         WINDOW *menu_win = newwin(30, 100, 0, 0);
@@ -188,6 +180,19 @@ int main(int argc, char *argv[])
         else if (selected_option == MENU_REPLAY)
         {
             replay_run_with_selection();
+        }
+        else if (selected_option == MENU_THEME)
+        {
+            // 테마 선택 화면 실행
+            theme_selector_run();
+
+            // 메뉴로 돌아와서 테마 다시 초기화
+            theme_init(theme_get_current());
+        }
+        else if (selected_option == MENU_EXIT)
+        {
+            // 프로그램 종료
+            printf("Exiting...\n");
         }
         break;
     }

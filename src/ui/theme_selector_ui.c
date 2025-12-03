@@ -1,0 +1,194 @@
+#include "theme_selector_ui.h"
+#include <string.h>
+
+void theme_selector_init(ThemeSelectorUI *selector) {
+    if (!selector) return;
+
+    selector->selected_theme = theme_get_current();
+    selector->theme_count = theme_get_count();
+}
+
+void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector) {
+    if (!win || !selector) return;
+
+    wclear(win);
+
+    int max_y, max_x;
+    getmaxyx(win, max_y, max_x);
+
+    // 타이틀
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvwprintw(win, 2, (max_x - 20) / 2, "=== THEME SELECTOR ===");
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+    // 테마 목록 박스
+    int box_y = 5;
+    int box_x = 25;
+    int box_w = 50;
+    int box_h = 12;
+
+    // 박스 그리기
+    wattron(win, A_BOLD);
+    mvwaddch(win, box_y, box_x, ACS_ULCORNER);
+    for (int i = 1; i < box_w - 1; i++)
+        mvwaddch(win, box_y, box_x + i, ACS_HLINE);
+    mvwaddch(win, box_y, box_x + box_w - 1, ACS_URCORNER);
+
+    for (int j = 1; j < box_h - 1; j++) {
+        mvwaddch(win, box_y + j, box_x, ACS_VLINE);
+        mvwaddch(win, box_y + j, box_x + box_w - 1, ACS_VLINE);
+    }
+
+    mvwaddch(win, box_y + box_h - 1, box_x, ACS_LLCORNER);
+    for (int i = 1; i < box_w - 1; i++)
+        mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
+    mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
+    wattroff(win, A_BOLD);
+
+    // 테마 목록 표시
+    int list_y = box_y + 2;
+    int list_x = box_x + 5;
+
+    for (int i = 0; i < selector->theme_count; i++) {
+        wmove(win, list_y + i, list_x);
+
+        if (i == selector->selected_theme) {
+            wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
+            wprintw(win, " ▶  %-30s  ", theme_get_name(i));
+            wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
+        } else {
+            wprintw(win, "    %-30s  ", theme_get_name(i));
+        }
+    }
+
+    // 테마 미리보기
+    int preview_y = box_y + box_h + 2;
+    int preview_x = box_x;
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvwprintw(win, preview_y, preview_x, "Preview:");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvwprintw(win, preview_y + 1, preview_x + 2, "DEFAULT ");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
+    wprintw(win, "BLACK ");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
+    wprintw(win, "WHITE ");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_SYSTEM));
+    wprintw(win, "SYSTEM ");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_SYSTEM));
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_OPPONENT));
+    wprintw(win, "OPPONENT ");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_OPPONENT));
+
+    wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
+    wprintw(win, "INFO");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
+
+    // 안내 메시지
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
+    mvwprintw(win, max_y - 3, (max_x - 40) / 2, "↑↓: Select Theme    ↵: Apply    ESC: Back");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
+
+    wrefresh(win);
+}
+
+void theme_selector_move(ThemeSelectorUI *selector, int direction) {
+    if (!selector) return;
+
+    selector->selected_theme += direction;
+
+    if (selector->selected_theme < 0) {
+        selector->selected_theme = selector->theme_count - 1;
+    } else if (selector->selected_theme >= selector->theme_count) {
+        selector->selected_theme = 0;
+    }
+
+    // 선택한 테마 미리보기 적용
+    theme_set(selector->selected_theme);
+}
+
+ThemeType theme_selector_get_selected(const ThemeSelectorUI *selector) {
+    if (!selector) return THEME_WHITE;
+    return selector->selected_theme;
+}
+
+ThemeType theme_selector_run(void) {
+    // ncurses 초기화
+    initscr();
+    cbreak();
+    noecho();
+    curs_set(0);
+
+    if (has_colors()) {
+        start_color();
+    }
+
+    // 현재 테마로 초기화
+    ThemeType current_theme = theme_get_current();
+    if (!g_theme_manager.initialized) {
+        theme_init(current_theme);
+    }
+
+    // 100x30 윈도우 생성
+    WINDOW *selector_win = newwin(30, 100, 0, 0);
+    keypad(selector_win, TRUE);
+
+    ThemeSelectorUI selector;
+    theme_selector_init(&selector);
+
+    bool running = true;
+    ThemeType selected_theme = current_theme;
+
+    while (running) {
+        theme_selector_render(selector_win, &selector);
+
+        int ch = wgetch(selector_win);
+
+        switch (ch) {
+            case KEY_UP:
+                theme_selector_move(&selector, -1);
+                break;
+
+            case KEY_DOWN:
+                theme_selector_move(&selector, 1);
+                break;
+
+            case '\n':
+            case KEY_ENTER:
+                // 테마 적용
+                selected_theme = theme_selector_get_selected(&selector);
+                theme_set(selected_theme);
+                running = false;
+                break;
+
+            case 27:  // ESC
+                // 이전 테마로 복원
+                theme_set(current_theme);
+                selected_theme = current_theme;
+                running = false;
+                break;
+
+            case 'q':
+            case 'Q':
+                // 이전 테마로 복원
+                theme_set(current_theme);
+                selected_theme = current_theme;
+                running = false;
+                break;
+        }
+    }
+
+    delwin(selector_win);
+    endwin();
+
+    return selected_theme;
+}

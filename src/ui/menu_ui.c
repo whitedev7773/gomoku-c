@@ -6,7 +6,7 @@ void menu_ui_init(MenuUI *menu)
     if (!menu)
         return;
     menu->selected = MENU_SINGLEPLAY;
-    menu->option_count = 5;
+    menu->option_count = 6;
 }
 
 void menu_ui_draw_logo(WINDOW *win)
@@ -37,7 +37,7 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     int box_y = 16;
     int box_x = 32;
     int box_width = 33;
-    int box_height = 8;
+    int box_height = 10;
 
     // Draw box
     wattron(win, A_BOLD);
@@ -116,6 +116,32 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     else
     {
         wprintw(win, "    View Replay              ");
+    }
+
+    // Option 5: Theme
+    wmove(win, option_y + 4, option_x);
+    if (menu->selected == MENU_THEME)
+    {
+        wattron(win, A_BOLD | COLOR_PAIR(4));
+        wprintw(win, " ▶  Theme                    ");
+        wattroff(win, A_BOLD | COLOR_PAIR(4));
+    }
+    else
+    {
+        wprintw(win, "    Theme                    ");
+    }
+
+    // Option 6: Exit
+    wmove(win, option_y + 5, option_x);
+    if (menu->selected == MENU_EXIT)
+    {
+        wattron(win, A_BOLD | COLOR_PAIR(4));
+        wprintw(win, " ▶  Exit                     ");
+        wattroff(win, A_BOLD | COLOR_PAIR(4));
+    }
+    else
+    {
+        wprintw(win, "    Exit                     ");
     }
 
     // Instructions
@@ -199,9 +225,9 @@ void menu_ui_move_selection(MenuUI *menu, int direction)
 
     if (menu->selected < 0)
     {
-        menu->selected = MENU_REPLAY;
+        menu->selected = MENU_EXIT;
     }
-    else if (menu->selected > menu->option_count - 2)
+    else if (menu->selected > MENU_EXIT)
     {
         menu->selected = MENU_SINGLEPLAY;
     }

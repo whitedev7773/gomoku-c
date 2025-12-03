@@ -8,7 +8,8 @@ typedef enum {
     MENU_MULTIPLAY = 1,
     MENU_SPECTATOR = 2,
     MENU_REPLAY = 3,
-    MENU_EXIT = 4
+    MENU_THEME = 4,
+    MENU_EXIT = 5
 } MenuOption;
 
 typedef struct {
