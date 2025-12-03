@@ -167,6 +167,10 @@ ThemeType theme_selector_run(void) {
                 // 테마 적용
                 selected_theme = theme_selector_get_selected(&selector);
                 theme_set(selected_theme);
+
+                // 설정 파일에 저장
+                theme_save_to_config();
+
                 running = false;
                 break;
 

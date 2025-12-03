@@ -63,4 +63,10 @@ const char* theme_get_name(ThemeType theme);
 // 테마 개수 가져오기
 int theme_get_count(void);
 
+// 저장된 테마 불러오기 (설정 파일에서)
+ThemeType theme_load_from_config(void);
+
+// 현재 테마를 설정 파일에 저장
+bool theme_save_to_config(void);
+
 #endif // THEME_H

@@ -1,4 +1,5 @@
 #include "theme.h"
+#include "../utils/config.h"
 #include <string.h>
 
 // 전역 테마 매니저
@@ -161,4 +162,27 @@ const char* theme_get_name(ThemeType theme) {
 // 테마 개수 가져오기
 int theme_get_count(void) {
     return THEME_COUNT;
+}
+
+// 저장된 테마 불러오기 (설정 파일에서)
+ThemeType theme_load_from_config(void) {
+    GameConfig config;
+
+    if (config_load(&config)) {
+        // 설정 파일에서 테마 로드 성공
+        if (config.theme >= 0 && config.theme < THEME_COUNT) {
+            return (ThemeType)config.theme;
+        }
+    }
+
+    // 로드 실패 시 기본 테마 반환
+    return THEME_WHITE;
+}
+
+// 현재 테마를 설정 파일에 저장
+bool theme_save_to_config(void) {
+    GameConfig config;
+    config.theme = g_theme_manager.current_theme;
+
+    return config_save(&config);
 }

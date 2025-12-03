@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 #include <stdbool.h>
+#include "gamepad_input.h"
 
 typedef enum {
     INPUT_NONE = 0,
@@ -21,8 +22,25 @@ typedef struct {
     InputAction action;
     int key_code;
     char character;
+    bool from_gamepad;  // 게임패드 입력 여부
 } InputEvent;
 
+// 게임패드 상태를 포함하는 입력 핸들러
+typedef struct {
+    GamepadState gamepad;
+    bool gamepad_enabled;
+} InputHandler;
+
+// 입력 핸들러 초기화
+void input_handler_init(InputHandler *handler);
+
+// 입력 핸들러 정리
+void input_handler_cleanup(InputHandler *handler);
+
+// 게임패드 포함 입력 이벤트 가져오기
+InputEvent input_handler_get_event(InputHandler *handler, WINDOW *win);
+
+// 레거시 함수 (키보드만)
 InputEvent input_get_event(WINDOW *win);
 
 bool input_is_arrow_key(int key);

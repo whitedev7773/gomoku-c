@@ -59,8 +59,9 @@ int main(int argc, char *argv[])
         // Limit stdscr to 100x30
         wresize(stdscr, 30, 100);
 
-        // 테마 초기화
-        theme_init(THEME_WHITE);
+        // 저장된 테마 불러오기 및 초기화
+        ThemeType saved_theme = theme_load_from_config();
+        theme_init(saved_theme);
 
         // Always use fixed 100x30 size
         WINDOW *menu_win = newwin(30, 100, 0, 0);
@@ -89,10 +90,38 @@ int main(int argc, char *argv[])
             case '\n':
             case KEY_ENTER:
                 selected_option = menu_ui_get_selected(&menu);
-                running = false;
+
+                // 테마 선택은 메뉴 루프 내에서 처리
+                if (selected_option == MENU_THEME)
+                {
+                    delwin(menu_win);
+                    endwin();
+
+                    // 테마 선택 화면 실행
+                    theme_selector_run();
+
+                    // 메뉴로 돌아오기
+                    initscr();
+                    cbreak();
+                    noecho();
+                    curs_set(0);
+                    wresize(stdscr, 30, 100);
+                    theme_init(theme_get_current());
+
+                    menu_win = newwin(30, 100, 0, 0);
+                    keypad(menu_win, TRUE);
+
+                    // 루프 계속
+                    continue;
+                }
+                else
+                {
+                    running = false;
+                }
                 break;
             case 'q':
             case 'Q':
+                selected_option = MENU_EXIT;
                 running = false;
                 break;
             }
@@ -180,14 +209,6 @@ int main(int argc, char *argv[])
         else if (selected_option == MENU_REPLAY)
         {
             replay_run_with_selection();
-        }
-        else if (selected_option == MENU_THEME)
-        {
-            // 테마 선택 화면 실행
-            theme_selector_run();
-
-            // 메뉴로 돌아와서 테마 다시 초기화
-            theme_init(theme_get_current());
         }
         else if (selected_option == MENU_EXIT)
         {
