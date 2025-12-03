@@ -40,7 +40,7 @@ int singleplay_run(AIDifficulty difficulty) {
 
     // 게임 컴포넌트 초기화
     Board board;
-    board_init(&board);
+    board_init_with_rule(&board, RULE_RENJU);
 
     BoardCursor cursor;
     board_ui_init_cursor(&cursor);
@@ -64,6 +64,10 @@ int singleplay_run(AIDifficulty difficulty) {
         log_ui_add_message(&log_ui, "Game will continue without logging");
     }
 
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
+
     // 시작 메시지
     char start_msg[128];
     snprintf(start_msg, sizeof(start_msg), "Game started! You: BLACK, AI: WHITE (%s)",
@@ -80,6 +84,12 @@ int singleplay_run(AIDifficulty difficulty) {
     wtimeout(ui_mgr.board_win, 100); // 100ms timeout (AI 턴 처리 및 타이머 업데이트용)
 
     while (game_running) {
+        // 현재 플레이어에 따라 금수 마크 업데이트 (Renju Rule)
+        Stone current_player = turn_manager_get_current_player(&turn_mgr);
+        if (current_player == BLACK) {
+            board_update_forbidden_marks(&board, BLACK);
+        }
+
         // UI 렌더링
         ui_manager_clear_all(&ui_mgr);
 
@@ -94,7 +104,6 @@ int singleplay_run(AIDifficulty difficulty) {
         log_ui_render(ui_mgr.chat_win, &log_ui, 2, 1);
 
         // 우측 info 창 (현재 턴 표시)
-        Stone current_player = turn_manager_get_current_player(&turn_mgr);
         mvwprintw(ui_mgr.info_win, 0, 0, "Current: %s",
                   current_player == BLACK ? "You (BLACK)" : "AI (WHITE)");
 
@@ -149,7 +158,7 @@ int singleplay_run(AIDifficulty difficulty) {
 
         // 유저 입력 처리 (BLACK 턴일 때만)
         if (!game_over && current_player == BLACK) {
-            InputEvent event = input_get_event(ui_mgr.board_win);
+            InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
 
             if (event.action != INPUT_NONE) {
                 switch (event.action) {
@@ -167,7 +176,10 @@ int singleplay_run(AIDifficulty difficulty) {
                         break;
                     case INPUT_PLACE_STONE:
                         if (board_is_empty(&board, cursor.cursor_row, cursor.cursor_col)) {
-                            if (board_place_stone(&board, cursor.cursor_row, cursor.cursor_col, BLACK)) {
+                            // Renju Rule: 흑돌은 금수 위치에 놓을 수 없음
+                            if (board_is_forbidden(&board, cursor.cursor_row, cursor.cursor_col)) {
+                                log_ui_add_message(&log_ui, "Forbidden move! (Renju Rule)");
+                            } else if (board_place_stone(&board, cursor.cursor_row, cursor.cursor_col, BLACK)) {
                                 char move_msg[128];
                                 snprintf(move_msg, sizeof(move_msg), "You placed at %c%02d",
                                         board_ui_col_to_char(cursor.cursor_col), cursor.cursor_row + 1);
@@ -198,14 +210,15 @@ int singleplay_run(AIDifficulty difficulty) {
 
         // 게임 종료 후 q로만 나갈 수 있음
         if (game_over) {
-            int ch = wgetch(ui_mgr.board_win);
-            if (ch == 'q' || ch == 'Q') {
+            InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
+            if (event.action == INPUT_QUIT) {
                 game_running = false;
             }
         }
     }
 
     // 정리
+    input_handler_cleanup(&input_handler);
     logger_close(&logger);
     ui_manager_cleanup(&ui_mgr);
     endwin();

@@ -8,6 +8,7 @@
 #include "ui/menu_ui.h"
 #include "ui/theme.h"
 #include "ui/theme_selector_ui.h"
+#include "ui/input_handler.h"
 #include "game/singleplay.h"
 #include "game/multiplayer.h"
 #include "game/spectator.h"
@@ -67,6 +68,10 @@ int main(int argc, char *argv[])
         WINDOW *menu_win = newwin(30, 100, 0, 0);
         keypad(menu_win, TRUE);
 
+        // 게임패드 입력 핸들러 초기화
+        InputHandler input_handler;
+        input_handler_init(&input_handler);
+
         MenuUI menu;
         menu_ui_init(&menu);
 
@@ -77,23 +82,23 @@ int main(int argc, char *argv[])
         {
             menu_ui_render(menu_win, &menu);
 
-            int ch = wgetch(menu_win);
+            InputEvent event = input_handler_get_event(&input_handler, menu_win);
 
-            switch (ch)
+            switch (event.action)
             {
-            case KEY_UP:
+            case INPUT_MOVE_UP:
                 menu_ui_move_selection(&menu, -1);
                 break;
-            case KEY_DOWN:
+            case INPUT_MOVE_DOWN:
                 menu_ui_move_selection(&menu, 1);
                 break;
-            case '\n':
-            case KEY_ENTER:
+            case INPUT_PLACE_STONE:
                 selected_option = menu_ui_get_selected(&menu);
 
                 // 테마 선택은 메뉴 루프 내에서 처리
                 if (selected_option == MENU_THEME)
                 {
+                    input_handler_cleanup(&input_handler);
                     delwin(menu_win);
                     endwin();
 
@@ -111,6 +116,9 @@ int main(int argc, char *argv[])
                     menu_win = newwin(30, 100, 0, 0);
                     keypad(menu_win, TRUE);
 
+                    // 게임패드 다시 초기화
+                    input_handler_init(&input_handler);
+
                     // 루프 계속
                     continue;
                 }
@@ -119,14 +127,16 @@ int main(int argc, char *argv[])
                     running = false;
                 }
                 break;
-            case 'q':
-            case 'Q':
+            case INPUT_QUIT:
                 selected_option = MENU_EXIT;
                 running = false;
+                break;
+            default:
                 break;
             }
         }
 
+        input_handler_cleanup(&input_handler);
         delwin(menu_win);
         endwin();
 

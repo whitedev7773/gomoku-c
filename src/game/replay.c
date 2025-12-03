@@ -4,6 +4,7 @@
 #include "../ui/game_info_ui.h"
 #include "../ui/replay_list_ui.h"
 #include "../ui/theme.h"
+#include "../ui/input_handler.h"
 #include "game_logic.h"
 #include "turn_manager.h"
 #include <stdio.h>
@@ -211,6 +212,10 @@ int replay_run(const char *log_filename) {
     UIManager ui_mgr;
     ui_manager_init(&ui_mgr);
 
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
+
     Board board;
     board_init(&board);
 
@@ -238,9 +243,11 @@ int replay_run(const char *log_filename) {
         }
 
         // 입력 처리
-        int ch = wgetch(ui_mgr.board_win);
-        switch (ch) {
-            case ' ':  // Space - Play/Pause
+        InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
+        int ch = event.key_code;
+        InputAction action = event.action;
+        switch (action) {
+            case INPUT_PLACE_STONE:  // Space - Play/Pause (A button on gamepad)
                 if (replay.playing) {
                     replay.paused = !replay.paused;
                 } else {
@@ -249,16 +256,26 @@ int replay_run(const char *log_filename) {
                 }
                 break;
 
-            case KEY_RIGHT:  // 다음 수
+            case INPUT_MOVE_RIGHT:  // 다음 수
                 replay.playing = false;
                 replay_next_move(&replay, &board);
                 break;
 
-            case KEY_LEFT:  // 이전 수
+            case INPUT_MOVE_LEFT:  // 이전 수
                 replay.playing = false;
                 replay_prev_move(&replay, &board);
                 break;
 
+            case INPUT_QUIT:  // Quit
+                running = false;
+                break;
+
+            default:
+                break;
+        }
+
+        // Legacy key handling (for speed controls)
+        switch (ch) {
             case '1':  // Slow speed
                 replay.speed = REPLAY_SPEED_SLOW;
                 break;
@@ -270,15 +287,11 @@ int replay_run(const char *log_filename) {
             case '3':  // Fast speed
                 replay.speed = REPLAY_SPEED_FAST;
                 break;
-
-            case 'q':
-            case 'Q':
-                running = false;
-                break;
         }
     }
 
     // 정리
+    input_handler_cleanup(&input_handler);
     replay_cleanup(&replay);
     ui_manager_cleanup(&ui_mgr);
 
@@ -303,12 +316,17 @@ int replay_run_with_selection(void) {
     WINDOW *list_win = newwin(30, 100, 0, 0);
     keypad(list_win, TRUE);
 
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
+
     ReplayListUI list_ui;
     if (!replay_list_ui_init(&list_ui)) {
         mvwprintw(list_win, 15, 30, "No replay files found!");
         mvwprintw(list_win, 17, 25, "Press any key to exit...");
         wrefresh(list_win);
-        wgetch(list_win);
+        InputEvent event = input_handler_get_event(&input_handler, list_win);
+        input_handler_cleanup(&input_handler);
         delwin(list_win);
         endwin();
         return 1;
@@ -320,29 +338,31 @@ int replay_run_with_selection(void) {
     while (running) {
         replay_list_ui_render(list_win, &list_ui);
 
-        int ch = wgetch(list_win);
-        switch (ch) {
-            case KEY_UP:
+        InputEvent event = input_handler_get_event(&input_handler, list_win);
+        switch (event.action) {
+            case INPUT_MOVE_UP:
                 replay_list_ui_move_selection(&list_ui, -1);
                 break;
 
-            case KEY_DOWN:
+            case INPUT_MOVE_DOWN:
                 replay_list_ui_move_selection(&list_ui, 1);
                 break;
 
-            case '\n':
-            case KEY_ENTER:
+            case INPUT_PLACE_STONE:
                 selected_file = replay_list_ui_get_selected_file(&list_ui);
                 running = false;
                 break;
 
-            case 'q':
-            case 'Q':
+            case INPUT_QUIT:
                 running = false;
+                break;
+
+            default:
                 break;
         }
     }
 
+    input_handler_cleanup(&input_handler);
     delwin(list_win);
     endwin();
 

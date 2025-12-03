@@ -83,4 +83,7 @@ bool gamepad_is_button_pressed(const GamepadState *state, GamepadButton button);
 // 게임패드 축 값 가져오기
 int gamepad_get_axis(const GamepadState *state, GamepadAxis axis);
 
+// 모든 입력 장치 목록 출력 (디버깅용)
+void gamepad_list_all_devices(void);
+
 #endif // GAMEPAD_INPUT_H

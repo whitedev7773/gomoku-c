@@ -1,4 +1,5 @@
 #include "theme_selector_ui.h"
+#include "input_handler.h"
 #include <string.h>
 
 void theme_selector_init(ThemeSelectorUI *selector) {
@@ -142,6 +143,10 @@ ThemeType theme_selector_run(void) {
     WINDOW *selector_win = newwin(30, 100, 0, 0);
     keypad(selector_win, TRUE);
 
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
+
     ThemeSelectorUI selector;
     theme_selector_init(&selector);
 
@@ -151,19 +156,18 @@ ThemeType theme_selector_run(void) {
     while (running) {
         theme_selector_render(selector_win, &selector);
 
-        int ch = wgetch(selector_win);
+        InputEvent event = input_handler_get_event(&input_handler, selector_win);
 
-        switch (ch) {
-            case KEY_UP:
+        switch (event.action) {
+            case INPUT_MOVE_UP:
                 theme_selector_move(&selector, -1);
                 break;
 
-            case KEY_DOWN:
+            case INPUT_MOVE_DOWN:
                 theme_selector_move(&selector, 1);
                 break;
 
-            case '\n':
-            case KEY_ENTER:
+            case INPUT_PLACE_STONE:
                 // 테마 적용
                 selected_theme = theme_selector_get_selected(&selector);
                 theme_set(selected_theme);
@@ -174,23 +178,19 @@ ThemeType theme_selector_run(void) {
                 running = false;
                 break;
 
-            case 27:  // ESC
+            case INPUT_QUIT:
                 // 이전 테마로 복원
                 theme_set(current_theme);
                 selected_theme = current_theme;
                 running = false;
                 break;
 
-            case 'q':
-            case 'Q':
-                // 이전 테마로 복원
-                theme_set(current_theme);
-                selected_theme = current_theme;
-                running = false;
+            default:
                 break;
         }
     }
 
+    input_handler_cleanup(&input_handler);
     delwin(selector_win);
     endwin();
 

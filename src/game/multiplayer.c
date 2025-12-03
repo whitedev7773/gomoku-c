@@ -44,6 +44,7 @@ typedef struct {
     bool waiting_for_opponent;
     bool game_over;
     GameResult result;
+    bool swap_used;  // Swap Rule이 이미 사용되었는지 추적
 } MultiplayerGame;
 
 // 프로토타입 선언
@@ -51,7 +52,7 @@ static bool mp_init_ui(UIManager *ui_mgr);
 static bool mp_send_player_info(MultiplayerGame *game);
 static bool mp_handle_network_messages(MultiplayerGame *game);
 static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game);
-static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game);
+static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *input_handler);
 static void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator_index);
 static void mp_handle_spectator_connections(MultiplayerGame *game);
 static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message *move_msg);
@@ -147,7 +148,7 @@ int multiplayer_run_host(int port) {
     }
 
     // 게임 컴포넌트 초기화
-    board_init(&game.board);
+    board_init_with_rule(&game.board, RULE_RENJU);
     board_ui_init_cursor(&game.my_cursor);
     board_ui_init_cursor(&game.opponent_cursor);
     turn_manager_init(&game.turn_mgr, BLACK);
@@ -170,6 +171,10 @@ int multiplayer_run_host(int port) {
              game.me.name, game.opponent.name);
     log_ui_add_message(&game.log_ui, start_msg);
     chat_ui_add_message(&game.chat_ui, start_msg, CHAT_MSG_SYSTEM);
+
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
 
     // 게임 시작 메시지 전송
     protocol_init_message(&msg, MSG_GAME_START, game.network.sequence_number++);
@@ -217,7 +222,7 @@ int multiplayer_run_host(int port) {
         // 내 턴 처리
         Stone current_player = turn_manager_get_current_player(&game.turn_mgr);
         if (!game.game_over && current_player == game.me.color) {
-            if (mp_handle_my_turn(&ui_mgr, &game)) {
+            if (mp_handle_my_turn(&ui_mgr, &game, &input_handler)) {
                 // 수를 뒀으므로 턴 변경
                 turn_manager_next_turn(&game.turn_mgr);
             }
@@ -225,14 +230,15 @@ int multiplayer_run_host(int port) {
 
         // 게임 종료 후
         if (game.game_over) {
-            int ch = wgetch(ui_mgr.board_win);
-            if (ch == 'q' || ch == 'Q') {
+            InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
+            if (event.action == INPUT_QUIT) {
                 game_running = false;
             }
         }
     }
 
     // 정리
+    input_handler_cleanup(&input_handler);
     logger_close(&game.logger);
     ui_manager_cleanup(&ui_mgr);
     endwin();
@@ -360,6 +366,10 @@ int multiplayer_run_client(const char *server_ip, int port) {
     log_ui_add_message(&game.log_ui, start_msg);
     chat_ui_add_message(&game.chat_ui, start_msg, CHAT_MSG_SYSTEM);
 
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
+
     keypad(ui_mgr.board_win, TRUE);
     wtimeout(ui_mgr.board_win, 50);
 
@@ -394,19 +404,20 @@ int multiplayer_run_client(const char *server_ip, int port) {
 
         Stone current_player = turn_manager_get_current_player(&game.turn_mgr);
         if (!game.game_over && current_player == game.me.color) {
-            if (mp_handle_my_turn(&ui_mgr, &game)) {
+            if (mp_handle_my_turn(&ui_mgr, &game, &input_handler)) {
                 turn_manager_next_turn(&game.turn_mgr);
             }
         }
 
         if (game.game_over) {
-            int ch = wgetch(ui_mgr.board_win);
-            if (ch == 'q' || ch == 'Q') {
+            InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
+            if (event.action == INPUT_QUIT) {
                 game_running = false;
             }
         }
     }
 
+    input_handler_cleanup(&input_handler);
     logger_close(&game.logger);
     ui_manager_cleanup(&ui_mgr);
     endwin();
@@ -535,6 +546,12 @@ static bool mp_handle_network_messages(MultiplayerGame *game) {
 
 // UI 렌더링
 static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game) {
+    // 현재 플레이어에 따라 금수 마크 업데이트 (Renju Rule)
+    Stone current_player = turn_manager_get_current_player(&game->turn_mgr);
+    if (current_player == BLACK) {
+        board_update_forbidden_marks(&game->board, BLACK);
+    }
+
     ui_manager_clear_all(ui_mgr);
 
     board_ui_render(ui_mgr->board_win, &game->board, &game->my_cursor);
@@ -546,7 +563,6 @@ static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game) {
     // 채팅 입력 렌더링
     chat_ui_render_input(ui_mgr->chat_input_win, &game->chat_ui, 1, 1);
 
-    Stone current_player = turn_manager_get_current_player(&game->turn_mgr);
     const char *turn_name = (current_player == game->me.color) ? "Your Turn" : "Opponent's Turn";
     mvwprintw(ui_mgr->info_win, 0, 0, "%s", turn_name);
 
@@ -559,10 +575,11 @@ static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game) {
 }
 
 // 내 턴 처리
-static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
+static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *input_handler) {
     // 모달이 활성화되어 있으면 모달 입력만 처리
     if (modal_ui_is_active(&game->modal_ui)) {
-        int ch = wgetch(ui_mgr->board_win);
+        InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
+        int ch = event.key_code;
         if (ch != ERR) {
             ModalResult result = modal_ui_handle_input(&game->modal_ui, ch);
 
@@ -611,6 +628,7 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
                         network_send_message(&game->network, &msg);
 
                         chat_ui_add_message(&game->chat_ui, "Swap accepted", CHAT_MSG_SYSTEM);
+                        game->swap_used = true;  // Swap 사용됨으로 표시
                     }
                     break;
 
@@ -639,7 +657,8 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
 
     // 채팅 모드 확인
     if (chat_ui_is_input_mode(&game->chat_ui)) {
-        int ch = wgetch(ui_mgr->board_win);
+        InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
+        int ch = event.key_code;
         if (ch != ERR) {
             if (ch == '\n' || ch == KEY_ENTER) {
                 // 메시지 전송
@@ -676,14 +695,23 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
                                 case CMD_SWAP:
                                     // Swap 요청 전송 후 대기 모달 표시
                                     {
-                                        Message msg;
-                                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
-                                        msg.payload.command.command_type = CMD_SWAP;
-                                        network_send_message(&game->network, &msg);
+                                        // Swap Rule 제한: 백돌만, 한 번만, 3수 이후
+                                        if (game->me.color != WHITE) {
+                                            chat_ui_add_message(&game->chat_ui, "Only WHITE can use swap", CHAT_MSG_SYSTEM);
+                                        } else if (game->swap_used) {
+                                            chat_ui_add_message(&game->chat_ui, "Swap already used", CHAT_MSG_SYSTEM);
+                                        } else if (board_get_move_count(&game->board) < 3) {
+                                            chat_ui_add_message(&game->chat_ui, "Swap available after 3 moves", CHAT_MSG_SYSTEM);
+                                        } else {
+                                            Message msg;
+                                            protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                                            msg.payload.command.command_type = CMD_SWAP;
+                                            network_send_message(&game->network, &msg);
 
-                                        snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
-                                        modal_ui_show(&game->modal_ui, MODAL_SWAP_REQUEST, modal_msg);
-                                        chat_ui_add_message(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
+                                            snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
+                                            modal_ui_show(&game->modal_ui, MODAL_SWAP_REQUEST, modal_msg);
+                                            chat_ui_add_message(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
+                                        }
                                     }
                                     break;
 
@@ -725,7 +753,7 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
         return false;
     }
 
-    InputEvent event = input_get_event(ui_mgr->board_win);
+    InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
 
     if (event.action == INPUT_NONE) {
         return false;
@@ -781,7 +809,10 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
             break;
         case INPUT_PLACE_STONE:
             if (board_is_empty(&game->board, game->my_cursor.cursor_row, game->my_cursor.cursor_col)) {
-                if (board_place_stone(&game->board, game->my_cursor.cursor_row,
+                // Renju Rule: 흑돌은 금수 위치에 놓을 수 없음
+                if (game->me.color == BLACK && board_is_forbidden(&game->board, game->my_cursor.cursor_row, game->my_cursor.cursor_col)) {
+                    chat_ui_add_message(&game->chat_ui, "Forbidden move! (Renju Rule)", CHAT_MSG_SYSTEM);
+                } else if (board_place_stone(&game->board, game->my_cursor.cursor_row,
                                      game->my_cursor.cursor_col, game->me.color)) {
                     char move_msg[128];
                     snprintf(move_msg, sizeof(move_msg), "You placed at %c%02d",

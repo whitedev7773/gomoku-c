@@ -3,6 +3,7 @@
 #include "../ui/board_ui.h"
 #include "../ui/game_info_ui.h"
 #include "../ui/chat_ui.h"
+#include "../ui/input_handler.h"
 #include "game_logic.h"
 #include "turn_manager.h"
 #include "../network/protocol.h"
@@ -195,6 +196,10 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name) {
     UIManager ui_mgr;
     ui_manager_init(&ui_mgr);
 
+    // 게임패드 입력 핸들러 초기화
+    InputHandler input_handler;
+    input_handler_init(&input_handler);
+
     // 서버에 연결
     chat_ui_add_message(&game.chat_ui, "Connecting to server...", CHAT_MSG_SYSTEM);
     spectator_render_game(&ui_mgr, &game);
@@ -203,6 +208,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name) {
         chat_ui_add_message(&game.chat_ui, "Failed to connect", CHAT_MSG_SYSTEM);
         spectator_render_game(&ui_mgr, &game);
         usleep(2000000);  // 2초 대기
+        input_handler_cleanup(&input_handler);
         ui_manager_cleanup(&ui_mgr);
         network_cleanup(&game.network);
         return 1;
@@ -249,6 +255,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name) {
         chat_ui_add_message(&game.chat_ui, "Connection timeout", CHAT_MSG_SYSTEM);
         spectator_render_game(&ui_mgr, &game);
         usleep(2000000);
+        input_handler_cleanup(&input_handler);
         ui_manager_cleanup(&ui_mgr);
         network_cleanup(&game.network);
         return 1;
@@ -288,6 +295,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name) {
         chat_ui_add_message(&game.chat_ui, "Failed to load game state", CHAT_MSG_SYSTEM);
         spectator_render_game(&ui_mgr, &game);
         usleep(2000000);
+        input_handler_cleanup(&input_handler);
         ui_manager_cleanup(&ui_mgr);
         network_cleanup(&game.network);
         return 1;
@@ -304,8 +312,8 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name) {
         spectator_render_game(&ui_mgr, &game);
 
         // 입력 처리
-        int ch = wgetch(ui_mgr.board_win);
-        if (ch == 'q' || ch == 'Q') {
+        InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
+        if (event.action == INPUT_QUIT) {
             break;
         }
 
@@ -313,6 +321,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name) {
     }
 
     // 정리
+    input_handler_cleanup(&input_handler);
     ui_manager_cleanup(&ui_mgr);
     network_cleanup(&game.network);
 
