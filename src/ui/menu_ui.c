@@ -6,7 +6,7 @@ void menu_ui_init(MenuUI *menu)
     if (!menu)
         return;
     menu->selected = MENU_SINGLEPLAY;
-    menu->option_count = 4;
+    menu->option_count = 5;
 }
 
 void menu_ui_draw_logo(WINDOW *win)
@@ -93,7 +93,7 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     }
 
     // Option 3: Spectate Game (LAN)
-    wmove(win, option_y + 3, option_x);
+    wmove(win, option_y + 2, option_x);
     if (menu->selected == MENU_SPECTATOR)
     {
         wattron(win, A_BOLD | COLOR_PAIR(4));
@@ -105,9 +105,22 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
         wprintw(win, "    Spectate Game (LAN)      ");
     }
 
+    // Option 4: View Replay
+    wmove(win, option_y + 3, option_x);
+    if (menu->selected == MENU_REPLAY)
+    {
+        wattron(win, A_BOLD | COLOR_PAIR(4));
+        wprintw(win, " ▶  View Replay              ");
+        wattroff(win, A_BOLD | COLOR_PAIR(4));
+    }
+    else
+    {
+        wprintw(win, "    View Replay              ");
+    }
+
     // Instructions
     wattron(win, COLOR_PAIR(8)); // gray
-    mvwprintw(win, box_y + box_height + 1, box_x - 8, "↑↓:Move    ↵:Select    V:View Replay    S:Settings");
+    mvwprintw(win, box_y + box_height + 1, box_x - 8, "↑↓:Move    ↵:Select    Q:Exit");
     wattroff(win, COLOR_PAIR(8));
 }
 
@@ -186,7 +199,7 @@ void menu_ui_move_selection(MenuUI *menu, int direction)
 
     if (menu->selected < 0)
     {
-        menu->selected = MENU_SPECTATOR;
+        menu->selected = MENU_REPLAY;
     }
     else if (menu->selected > menu->option_count - 2)
     {

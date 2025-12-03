@@ -9,6 +9,7 @@
 #include "game/singleplay.h"
 #include "game/multiplayer.h"
 #include "game/spectator.h"
+#include "game/replay.h"
 #include "game/ai_engine.h"
 #include "network/network.h"
 #include <ncurses.h>
@@ -183,6 +184,10 @@ int main(int argc, char *argv[])
             }
 
             spectator_run(server_ip, port, spectator_name);
+        }
+        else if (selected_option == MENU_REPLAY)
+        {
+            replay_run_with_selection();
         }
         break;
     }
