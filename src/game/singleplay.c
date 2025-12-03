@@ -67,7 +67,11 @@ int singleplay_run(AIDifficulty difficulty) {
     log_ui_init(&log_ui);
 
     GameLogger logger;
-    logger_init(&logger);
+    // 로거 초기화 및 에러 체크
+    if (!logger_init(&logger)) {
+        log_ui_add_message(&log_ui, "Warning: Failed to create log file");
+        log_ui_add_message(&log_ui, "Game will continue without logging");
+    }
 
     // 시작 메시지
     char start_msg[128];

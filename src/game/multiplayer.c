@@ -10,6 +10,7 @@
 #include "../ui/game_info_ui.h"
 #include "../ui/log_ui.h"
 #include "../ui/chat_ui.h"
+#include "../ui/modal_ui.h"
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -32,6 +33,7 @@ typedef struct {
     GameInfoUI info_ui;
     LogUI log_ui;
     ChatUI chat_ui;
+    ModalUI modal_ui;
     GameLogger logger;
 
     PlayerData me;
@@ -53,6 +55,7 @@ static void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator
 static void mp_handle_spectator_connections(MultiplayerGame *game);
 static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message *move_msg);
 static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg);
+static bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const char *error_context);
 
 int multiplayer_run_host(int port) {
     if (port == 0) port = DEFAULT_PORT;
@@ -159,7 +162,16 @@ int multiplayer_run_host(int port) {
     game_info_ui_init(&game.info_ui);
     log_ui_init(&game.log_ui);
     chat_ui_init(&game.chat_ui);
-    logger_init(&game.logger);
+    modal_ui_init(&game.modal_ui);
+
+    // 로거 초기화 및 에러 체크
+    if (!logger_init(&game.logger)) {
+        char error_msg[MODAL_MAX_MESSAGE_LENGTH];
+        snprintf(error_msg, sizeof(error_msg),
+                "Failed to create game log file. The game will continue without logging.");
+        modal_ui_show(&game.modal_ui, MODAL_ERROR, error_msg);
+        log_ui_add_message(&game.log_ui, "Warning: Game logging disabled");
+    }
 
     char start_msg[128];
     snprintf(start_msg, sizeof(start_msg), "Game started! You: %s (BLACK), Opponent: %s (WHITE)",
@@ -202,6 +214,10 @@ int multiplayer_run_host(int port) {
                 }
                 log_ui_add_message(&game.log_ui, result_msg);
                 log_ui_add_message(&game.log_ui, "Press 'q' to quit");
+
+                // 게임 결과 모달 표시
+                modal_ui_show(&game.modal_ui, MODAL_GAME_RESULT, result_msg);
+
                 logger_close(&game.logger);
             }
         }
@@ -343,7 +359,16 @@ int multiplayer_run_client(const char *server_ip, int port) {
     game_info_ui_init(&game.info_ui);
     log_ui_init(&game.log_ui);
     chat_ui_init(&game.chat_ui);
-    logger_init(&game.logger);
+    modal_ui_init(&game.modal_ui);
+
+    // 로거 초기화 및 에러 체크
+    if (!logger_init(&game.logger)) {
+        char error_msg[MODAL_MAX_MESSAGE_LENGTH];
+        snprintf(error_msg, sizeof(error_msg),
+                "Failed to create game log file. The game will continue without logging.");
+        modal_ui_show(&game.modal_ui, MODAL_ERROR, error_msg);
+        log_ui_add_message(&game.log_ui, "Warning: Game logging disabled");
+    }
 
     char start_msg[128];
     snprintf(start_msg, sizeof(start_msg), "Game started! You: %s (%s), Opponent: %s (%s)",
@@ -376,6 +401,10 @@ int multiplayer_run_client(const char *server_ip, int port) {
                 }
                 log_ui_add_message(&game.log_ui, result_msg);
                 log_ui_add_message(&game.log_ui, "Press 'q' to quit");
+
+                // 게임 결과 모달 표시
+                modal_ui_show(&game.modal_ui, MODAL_GAME_RESULT, result_msg);
+
                 logger_close(&game.logger);
             }
         }
@@ -408,8 +437,33 @@ static bool mp_handle_network_messages(MultiplayerGame *game) {
     Message msg;
     int result = network_receive_message(&game->network, &msg);
 
-    if (result <= 0) {
+    // 연결 끊김 또는 에러 체크
+    if (result < 0) {
+        // 연결이 끊어졌거나 에러 발생
+        if (!network_is_connected(&game->network) ||
+            game->network.state == NET_DISCONNECTED ||
+            game->network.state == NET_ERROR) {
+
+            if (!game->game_over) {  // 아직 게임이 끝나지 않았으면
+                char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
+                snprintf(modal_msg, sizeof(modal_msg),
+                        "Connection lost with %s. Game will end.",
+                        game->opponent.name);
+                modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
+
+                char log_msg[128];
+                snprintf(log_msg, sizeof(log_msg), "Connection lost!");
+                log_ui_add_message(&game->log_ui, log_msg);
+                chat_ui_add_message(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
+
+                game->game_over = true;
+            }
+        }
         return false;
+    }
+
+    if (result == 0) {
+        return false;  // No data available
     }
 
     switch (msg.header.type) {
@@ -452,13 +506,40 @@ static bool mp_handle_network_messages(MultiplayerGame *game) {
             // 명령어 수신 (상대방이 보낸 명령어)
             {
                 CommandType cmd_type = msg.payload.command.command_type;
-                char sys_msg[128];
-                snprintf(sys_msg, sizeof(sys_msg), "Opponent sent: %s",
-                        command_type_to_string(cmd_type));
-                chat_ui_add_message(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
+                char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
 
-                // TODO: 명령어 처리 로직 구현
-                // /quit, /undo, /giveup, /swap 등
+                switch (cmd_type) {
+                    case CMD_QUIT:
+                        // 상대방 퇴장 처리
+                        snprintf(modal_msg, sizeof(modal_msg), "%s has quit the game.", game->opponent.name);
+                        modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
+                        game->game_over = true;
+                        break;
+
+                    case CMD_GIVEUP:
+                        // 상대방 기권
+                        game->game_over = true;
+                        game->result = (game->opponent.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+                        snprintf(modal_msg, sizeof(modal_msg), "%s has given up!", game->opponent.name);
+                        modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, modal_msg);
+                        chat_ui_add_message(&game->chat_ui, modal_msg, CHAT_MSG_SYSTEM);
+                        break;
+
+                    case CMD_UNDO:
+                        // 무르기 요청 수신
+                        snprintf(modal_msg, sizeof(modal_msg), "%s wants to undo the last move", game->opponent.name);
+                        modal_ui_show(&game->modal_ui, MODAL_UNDO_RESPONSE, modal_msg);
+                        break;
+
+                    case CMD_SWAP:
+                        // Swap 요청 수신
+                        snprintf(modal_msg, sizeof(modal_msg), "%s wants to swap colors", game->opponent.name);
+                        modal_ui_show(&game->modal_ui, MODAL_SWAP_RESPONSE, modal_msg);
+                        break;
+
+                    default:
+                        break;
+                }
             }
             break;
 
@@ -487,10 +568,92 @@ static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game) {
     mvwprintw(ui_mgr->info_win, 0, 0, "%s", turn_name);
 
     ui_manager_refresh_all(ui_mgr);
+
+    // 모달이 활성화되어 있으면 가장 위에 렌더링
+    if (modal_ui_is_active(&game->modal_ui)) {
+        modal_ui_render(stdscr, &game->modal_ui);
+    }
 }
 
 // 내 턴 처리
 static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
+    // 모달이 활성화되어 있으면 모달 입력만 처리
+    if (modal_ui_is_active(&game->modal_ui)) {
+        int ch = wgetch(ui_mgr->board_win);
+        if (ch != ERR) {
+            ModalResult result = modal_ui_handle_input(&game->modal_ui, ch);
+
+            // 모달 결과 처리
+            switch (result) {
+                case MODAL_RESULT_YES:
+                    // 기권 확정
+                    if (game->modal_ui.type == MODAL_GIVEUP) {
+                        game->game_over = true;
+                        game->result = (game->me.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+                        modal_ui_close(&game->modal_ui);
+
+                        // 기권 메시지 전송
+                        Message msg;
+                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                        msg.payload.command.command_type = CMD_GIVEUP;
+                        mp_send_with_error_check(game, &msg, "sending giveup");
+                    }
+                    break;
+
+                case MODAL_RESULT_NO:
+                case MODAL_RESULT_CANCEL:
+                    // 모달 닫기
+                    modal_ui_close(&game->modal_ui);
+                    break;
+
+                case MODAL_RESULT_ACCEPT:
+                    // 무르기/Swap 수락
+                    if (game->modal_ui.type == MODAL_UNDO_RESPONSE) {
+                        modal_ui_close(&game->modal_ui);
+
+                        // 수락 메시지 전송
+                        Message msg;
+                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                        msg.payload.command.command_type = CMD_UNDO;
+                        network_send_message(&game->network, &msg);
+
+                        chat_ui_add_message(&game->chat_ui, "Undo accepted", CHAT_MSG_SYSTEM);
+                    } else if (game->modal_ui.type == MODAL_SWAP_RESPONSE) {
+                        modal_ui_close(&game->modal_ui);
+
+                        // Swap 수락 메시지 전송
+                        Message msg;
+                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                        msg.payload.command.command_type = CMD_SWAP;
+                        network_send_message(&game->network, &msg);
+
+                        chat_ui_add_message(&game->chat_ui, "Swap accepted", CHAT_MSG_SYSTEM);
+                    }
+                    break;
+
+                case MODAL_RESULT_DECLINE:
+                    // 무르기/Swap 거절
+                    modal_ui_close(&game->modal_ui);
+
+                    if (game->modal_ui.type == MODAL_UNDO_RESPONSE) {
+                        chat_ui_add_message(&game->chat_ui, "Undo declined", CHAT_MSG_SYSTEM);
+                    } else if (game->modal_ui.type == MODAL_SWAP_RESPONSE) {
+                        chat_ui_add_message(&game->chat_ui, "Swap declined", CHAT_MSG_SYSTEM);
+                    }
+                    break;
+
+                case MODAL_RESULT_OK:
+                    // 게임 결과 확인 또는 에러 확인
+                    modal_ui_close(&game->modal_ui);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        return false;
+    }
+
     // 채팅 모드 확인
     if (chat_ui_is_input_mode(&game->chat_ui)) {
         int ch = wgetch(ui_mgr->board_win);
@@ -503,15 +666,58 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
                     if (command_is_command(msg_text)) {
                         CommandResult cmd = command_parse(msg_text);
                         if (cmd.valid) {
-                            // 명령어 전송
-                            Message msg;
-                            protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
-                            msg.payload.command.command_type = cmd.type;
-                            network_send_message(&game->network, &msg);
+                            char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
 
-                            char sys_msg[128];
-                            snprintf(sys_msg, sizeof(sys_msg), "Command sent: %s", msg_text);
-                            chat_ui_add_message(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
+                            // 명령어 타입에 따라 처리
+                            switch (cmd.type) {
+                                case CMD_GIVEUP:
+                                    // 기권 확인 모달 표시
+                                    snprintf(modal_msg, sizeof(modal_msg), "Are you sure you want to give up?");
+                                    modal_ui_show(&game->modal_ui, MODAL_GIVEUP, modal_msg);
+                                    break;
+
+                                case CMD_UNDO:
+                                    // 무르기 요청 전송 후 대기 모달 표시
+                                    {
+                                        Message msg;
+                                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                                        msg.payload.command.command_type = CMD_UNDO;
+                                        network_send_message(&game->network, &msg);
+
+                                        snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
+                                        modal_ui_show(&game->modal_ui, MODAL_UNDO_REQUEST, modal_msg);
+                                        chat_ui_add_message(&game->chat_ui, "Undo request sent", CHAT_MSG_SYSTEM);
+                                    }
+                                    break;
+
+                                case CMD_SWAP:
+                                    // Swap 요청 전송 후 대기 모달 표시
+                                    {
+                                        Message msg;
+                                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                                        msg.payload.command.command_type = CMD_SWAP;
+                                        network_send_message(&game->network, &msg);
+
+                                        snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
+                                        modal_ui_show(&game->modal_ui, MODAL_SWAP_REQUEST, modal_msg);
+                                        chat_ui_add_message(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
+                                    }
+                                    break;
+
+                                case CMD_QUIT:
+                                    // 퇴장 메시지 전송
+                                    {
+                                        Message msg;
+                                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                                        msg.payload.command.command_type = CMD_QUIT;
+                                        network_send_message(&game->network, &msg);
+                                        game->game_over = true;
+                                    }
+                                    break;
+
+                                default:
+                                    break;
+                            }
                         } else {
                             chat_ui_add_message(&game->chat_ui, cmd.error_message, CHAT_MSG_SYSTEM);
                         }
@@ -610,7 +816,11 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game) {
                     msg.payload.move.row = game->my_cursor.cursor_row;
                     msg.payload.move.col = game->my_cursor.cursor_col;
                     msg.payload.move.stone = game->me.color;
-                    network_send_message(&game->network, &msg);
+
+                    if (!mp_send_with_error_check(game, &msg, "sending move")) {
+                        // Send 실패, 게임이 종료됨
+                        return false;
+                    }
 
                     // 관전자들에게도 브로드캐스트
                     mp_broadcast_move_to_spectators(game, &msg);
@@ -720,4 +930,35 @@ static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message
 
 static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg) {
     network_broadcast_to_spectators(&game->network, chat_msg);
+}
+
+// 에러 체크를 포함한 네트워크 메시지 전송
+static bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const char *error_context) {
+    int result = network_send_message(&game->network, msg);
+
+    if (result < 0) {
+        // Send 실패 - 연결 상태 체크
+        if (!network_is_connected(&game->network) ||
+            game->network.state == NET_DISCONNECTED ||
+            game->network.state == NET_ERROR) {
+
+            if (!game->game_over) {  // 아직 게임이 끝나지 않았으면
+                char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
+                snprintf(modal_msg, sizeof(modal_msg),
+                        "Connection lost while %s. Game will end.",
+                        error_context ? error_context : "sending data");
+                modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
+
+                char log_msg[128];
+                snprintf(log_msg, sizeof(log_msg), "Connection lost!");
+                log_ui_add_message(&game->log_ui, log_msg);
+                chat_ui_add_message(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
+
+                game->game_over = true;
+            }
+        }
+        return false;
+    }
+
+    return true;
 }
