@@ -14,16 +14,16 @@
 ┃             \____________________/                    \__/    \_/      \___________/             ┃
 ┃                                                                                                  ┃
 ┃                                                                                                  ┃
-┃                                                                                                  ┃
 ┃                               ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓                                  ┃
 ┃                               ┃                               ┃                                  ┃
 ┃                               ┃   ▶  1 Player Game (COM)      ┃                                  ┃
 ┃                               ┃      2 Player Game (LAN)      ┃                                  ┃
 ┃                               ┃                               ┃                                  ┃
+┃                               ┃      Spectate Game (LAN)      ┃                                  ┃
+┃                               ┃                               ┃                                  ┃
 ┃                               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛                                  ┃
-┃                                      ↑↓:Move    ↵:Select                                         ┃
 ┃                                                                                                  ┃
-┃                                                                                                  ┃
+┃                       ↑↓:Move    ↵:Select    V:View Replay    S:Settings                         ┃
 ┃                                                                                                  ┃
 ┃                            https://github.com/whitedev7773/gomoku-c                              ┃
 ┃                                                                                                  ┃
