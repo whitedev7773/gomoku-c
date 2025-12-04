@@ -11,6 +11,8 @@ void board_ui_init_cursor(BoardCursor *cursor)
         return;
     cursor->cursor_row = 9;
     cursor->cursor_col = 9;
+    cursor->prev_cursor_row = 9;
+    cursor->prev_cursor_col = 9;
 }
 
 char board_ui_col_to_char(int col)
@@ -188,6 +190,10 @@ void board_ui_move_cursor(BoardCursor *cursor, int dr, int dc)
     if (!cursor)
         return;
 
+    // 이전 위치 저장 (최적화용)
+    cursor->prev_cursor_row = cursor->cursor_row;
+    cursor->prev_cursor_col = cursor->cursor_col;
+
     int new_row = cursor->cursor_row + dr;
     int new_col = cursor->cursor_col + dc;
 
@@ -200,4 +206,100 @@ void board_ui_move_cursor(BoardCursor *cursor, int dr, int dc)
     {
         cursor->cursor_col = new_col;
     }
+}
+
+// 초기 렌더링 (테두리 포함 전체 - 한 번만 호출)
+void board_ui_init(WINDOW *win)
+{
+    if (!win)
+        return;
+
+    wclear(win);
+    board_ui_draw_border(win);
+    wrefresh(win);
+}
+
+// 특정 셀만 다시 그리기 (최적화)
+void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cursor, int row, int col)
+{
+    if (!win || !board || row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
+        return;
+
+    int y = 3 + row;
+    int x = 5 + (col * 2);
+
+    Stone stone = board_get_stone(board, row, col);
+    bool is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col);
+    bool is_last_move = (board->last_row == row && board->last_col == col);
+
+    wmove(win, y, x);
+
+    if (is_cursor)
+    {
+        wattron(win, A_REVERSE);
+    }
+
+    if (stone == BLACK)
+    {
+        if (is_last_move)
+            wattron(win, COLOR_PAIR(3));
+        wprintw(win, "●");
+        if (is_last_move)
+            wattroff(win, COLOR_PAIR(3));
+    }
+    else if (stone == WHITE)
+    {
+        if (is_last_move)
+            wattron(win, COLOR_PAIR(4));
+        wprintw(win, "○");
+        if (is_last_move)
+            wattroff(win, COLOR_PAIR(4));
+    }
+    else
+    {
+        // 빈 칸: 금수 위치 확인
+        if (board_is_forbidden(board, row, col))
+        {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+            wprintw(win, "x");
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+        }
+        else
+        {
+            wprintw(win, "·");
+        }
+    }
+
+    if (is_cursor)
+    {
+        wattroff(win, A_REVERSE);
+    }
+}
+
+// 최적화된 업데이트 (변경된 부분만)
+void board_ui_update(WINDOW *win, const Board *board, const BoardCursor *cursor)
+{
+    if (!win || !board)
+        return;
+
+    // 1. 이전 커서 위치 지우기 (이전 위치만)
+    if (cursor && (cursor->prev_cursor_row != cursor->cursor_row ||
+                   cursor->prev_cursor_col != cursor->cursor_col))
+    {
+        board_ui_redraw_cell(win, board, NULL, cursor->prev_cursor_row, cursor->prev_cursor_col);
+    }
+
+    // 2. 현재 커서 위치 그리기
+    if (cursor)
+    {
+        board_ui_redraw_cell(win, board, cursor, cursor->cursor_row, cursor->cursor_col);
+    }
+
+    // 3. 마지막 수 위치 업데이트 (항상 강조 표시)
+    if (board->last_row >= 0 && board->last_col >= 0)
+    {
+        board_ui_redraw_cell(win, board, cursor, board->last_row, board->last_col);
+    }
+
+    wrefresh(win);
 }

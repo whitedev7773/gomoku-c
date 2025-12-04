@@ -59,7 +59,7 @@ static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message
 static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg);
 static bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const char *error_context);
 
-int multiplayer_run_host(int port) {
+int multiplayer_run_host(int port, GameRule rule) {
     if (port == 0) port = DEFAULT_PORT;
 
     // Locale 설정
@@ -109,10 +109,11 @@ int multiplayer_run_host(int port) {
     strcpy(game.opponent.name, "Client");
     game.opponent.color = WHITE;
 
-    // 연결 승인 메시지 전송
+    // 연결 승인 메시지 전송 (규칙 정보 포함)
     Message msg;
     protocol_init_message(&msg, MSG_CONNECT_ACK, game.network.sequence_number++);
     msg.payload.connect_ack.your_color = WHITE;
+    msg.payload.connect_ack.game_rule = rule;
     strncpy(msg.payload.connect_ack.opponent_name, game.me.name, MAX_PLAYER_NAME);
     network_send_message(&game.network, &msg);
 
@@ -148,7 +149,7 @@ int multiplayer_run_host(int port) {
     }
 
     // 게임 컴포넌트 초기화
-    board_init_with_rule(&game.board, RULE_RENJU);
+    board_init_with_rule(&game.board, rule);
     board_ui_init_cursor(&game.my_cursor);
     board_ui_init_cursor(&game.opponent_cursor);
     turn_manager_init(&game.turn_mgr, BLACK);
@@ -247,12 +248,13 @@ int multiplayer_run_host(int port) {
     return 0;
 }
 
-int multiplayer_run_client(const char *server_ip, int port) {
+int multiplayer_run_client(const char *server_ip, int port, GameRule rule) {
     // 클라이언트 구현은 호스트와 유사하나 네트워크 초기화가 다름
     setlocale(LC_ALL, "");
 
     MultiplayerGame game;
     memset(&game, 0, sizeof(game));
+    GameRule received_rule = rule;  // 호스트로부터 받을 규칙 저장용
 
     // 네트워크 초기화
     if (!network_init_client(&game.network)) {
@@ -279,7 +281,7 @@ int multiplayer_run_client(const char *server_ip, int port) {
         strcpy(game.me.name, "Client");
     }
 
-    // 연결 승인 대기
+    // 연결 승인 대기 (규칙 정보 포함)
     Message msg;
     int attempts = 0;
     bool connected = false;
@@ -287,6 +289,7 @@ int multiplayer_run_client(const char *server_ip, int port) {
         int result = network_receive_message(&game.network, &msg);
         if (result > 0 && msg.header.type == MSG_CONNECT_ACK) {
             game.me.color = msg.payload.connect_ack.your_color;
+            received_rule = msg.payload.connect_ack.game_rule;  // 호스트가 선택한 규칙 받기
             strncpy(game.opponent.name, msg.payload.connect_ack.opponent_name, MAX_PLAYER_NAME);
             game.opponent.color = (game.me.color == BLACK) ? WHITE : BLACK;
             connected = true;
@@ -341,7 +344,7 @@ int multiplayer_run_client(const char *server_ip, int port) {
         return -1;
     }
 
-    board_init(&game.board);
+    board_init_with_rule(&game.board, received_rule);
     board_ui_init_cursor(&game.my_cursor);
     board_ui_init_cursor(&game.opponent_cursor);
     turn_manager_init(&game.turn_mgr, BLACK);

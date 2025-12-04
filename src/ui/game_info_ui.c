@@ -5,6 +5,10 @@
 void game_info_ui_init(GameInfoUI *ui) {
     if (!ui) return;
     ui->game_start_time = time(NULL);
+    ui->prev_last_row = -1;
+    ui->prev_last_col = -1;
+    ui->prev_current_player = EMPTY;
+    ui->prev_elapsed_seconds = -1;
 }
 
 int game_info_ui_get_elapsed_seconds(const GameInfoUI *ui) {
@@ -96,6 +100,35 @@ void game_info_ui_draw_buttons(WINDOW *win) {
     mvwprintw(win, 3, 88, "            ");
 }
 
+// 초기 렌더링 (테두리만 - 한 번만 호출)
+void game_info_ui_init_bottom(WINDOW *win) {
+    if (!win) return;
+
+    wclear(win);
+
+    // Draw fixed size border
+    wattron(win, A_BOLD);
+    mvwaddch(win, 0, 0, ACS_ULCORNER);
+    for (int i = 1; i < 99; i++) {
+        mvwaddch(win, 0, i, ACS_HLINE);
+    }
+    mvwaddch(win, 0, 99, ACS_URCORNER);
+
+    for (int j = 1; j < 3; j++) {
+        mvwaddch(win, j, 0, ACS_VLINE);
+        mvwaddch(win, j, 99, ACS_VLINE);
+    }
+
+    mvwaddch(win, 3, 0, ACS_LLCORNER);
+    for (int i = 1; i < 99; i++) {
+        mvwaddch(win, 3, i, ACS_HLINE);
+    }
+    mvwaddch(win, 3, 99, ACS_LRCORNER);
+    wattroff(win, A_BOLD);
+
+    wrefresh(win);
+}
+
 void game_info_ui_render_bottom(WINDOW *win, const Board *board,
                                  const TurnManager *turn_mgr,
                                  const GameInfoUI *ui) {
@@ -133,4 +166,46 @@ void game_info_ui_render_bottom(WINDOW *win, const Board *board,
     }
 
     wrefresh(win);
+}
+
+// 최적화된 업데이트 (변경된 부분만)
+void game_info_ui_update_bottom(WINDOW *win, const Board *board,
+                                 const TurnManager *turn_mgr,
+                                 GameInfoUI *ui) {
+    if (!win || !board || !turn_mgr || !ui) return;
+
+    bool need_refresh = false;
+
+    // 1. Last move 변경 체크
+    Position last_move = board_get_last_move(board);
+    if (ui->prev_last_row != last_move.row || ui->prev_last_col != last_move.col) {
+        game_info_ui_draw_last_move(win, board);
+        ui->prev_last_row = last_move.row;
+        ui->prev_last_col = last_move.col;
+        need_refresh = true;
+    }
+
+    // 2. 현재 턴 변경 체크
+    Stone current_player = turn_manager_get_current_player(turn_mgr);
+    if (ui->prev_current_player != current_player) {
+        game_info_ui_draw_current_turn(win, current_player);
+        ui->prev_current_player = current_player;
+        need_refresh = true;
+    }
+
+    // 3. 타이머는 항상 업데이트 (매 초 변경)
+    game_info_ui_draw_timer(win, turn_manager_get_remaining_time(turn_mgr));
+    need_refresh = true;
+
+    // 4. 경과 시간 (초 단위로만 체크)
+    int elapsed = game_info_ui_get_elapsed_seconds(ui);
+    if (ui->prev_elapsed_seconds != elapsed) {
+        game_info_ui_draw_play_time(win, ui);
+        ui->prev_elapsed_seconds = elapsed;
+        need_refresh = true;
+    }
+
+    if (need_refresh) {
+        wrefresh(win);
+    }
 }

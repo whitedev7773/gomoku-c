@@ -60,6 +60,7 @@ typedef struct __attribute__((packed)) {
 // 연결 승인
 typedef struct __attribute__((packed)) {
     uint8_t your_color;     // Stone (BLACK or WHITE)
+    uint8_t game_rule;      // GameRule (RULE_STANDARD or RULE_RENJU)
     char opponent_name[MAX_PLAYER_NAME];
 } ConnectAckMessage;
 

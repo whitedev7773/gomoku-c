@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 
-int singleplay_run(AIDifficulty difficulty) {
+int singleplay_run(AIDifficulty difficulty, GameRule rule) {
     // Locale 설정 (UTF-8 지원)
     setlocale(LC_ALL, "");
 
@@ -40,7 +40,7 @@ int singleplay_run(AIDifficulty difficulty) {
 
     // 게임 컴포넌트 초기화
     Board board;
-    board_init_with_rule(&board, RULE_RENJU);
+    board_init_with_rule(&board, rule);
 
     BoardCursor cursor;
     board_ui_init_cursor(&cursor);

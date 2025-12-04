@@ -69,3 +69,17 @@ if(TEST_GAMEPAD_FILES)
     add_executable(test_gamepad ${TEST_GAMEPAD_FILES} src/ui/gamepad_input.c)
     target_link_libraries(test_gamepad)
 endif()
+
+# Unit tests
+file(GLOB TEST_FRAMEWORK_FILES "src/test/test_framework.c")
+file(GLOB TEST_BOARD_FILES "src/test/test_board.c")
+if(TEST_BOARD_FILES AND TEST_FRAMEWORK_FILES)
+    add_executable(test_board ${TEST_BOARD_FILES} ${TEST_FRAMEWORK_FILES} ${CORE_GAME_FILES})
+    target_link_libraries(test_board)
+endif()
+
+file(GLOB TEST_RULES_FILES "src/test/test_rules.c")
+if(TEST_RULES_FILES AND TEST_FRAMEWORK_FILES)
+    add_executable(test_rules ${TEST_RULES_FILES} ${TEST_FRAMEWORK_FILES} ${CORE_GAME_FILES})
+    target_link_libraries(test_rules)
+endif()
