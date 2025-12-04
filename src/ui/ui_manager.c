@@ -2,6 +2,85 @@
 #include "theme.h"
 #include <stdlib.h>
 #include <locale.h>
+#include <string.h>
+
+// ============================================
+// Dirty Flag 관리 함수 구현
+// ============================================
+
+void ui_render_flags_init(UIRenderFlags *flags)
+{
+    if (!flags)
+        return;
+    flags->flags = RENDER_ALL; // 초기에는 모든 것을 렌더링
+    flags->dirty_cell_count = 0;
+    memset(flags->dirty_cells, 0, sizeof(flags->dirty_cells));
+}
+
+void ui_render_flags_set(UIRenderFlags *flags, unsigned int flag)
+{
+    if (!flags)
+        return;
+    flags->flags |= flag;
+}
+
+void ui_render_flags_clear(UIRenderFlags *flags, unsigned int flag)
+{
+    if (!flags)
+        return;
+    flags->flags &= ~flag;
+}
+
+void ui_render_flags_clear_all(UIRenderFlags *flags)
+{
+    if (!flags)
+        return;
+    flags->flags = RENDER_NONE;
+    flags->dirty_cell_count = 0;
+}
+
+bool ui_render_flags_is_set(const UIRenderFlags *flags, unsigned int flag)
+{
+    if (!flags)
+        return false;
+    return (flags->flags & flag) != 0;
+}
+
+void ui_render_flags_add_dirty_cell(UIRenderFlags *flags, int row, int col)
+{
+    if (!flags)
+        return;
+    if (flags->dirty_cell_count >= 361)
+        return; // 최대 19x19
+
+    // 중복 체크
+    for (int i = 0; i < flags->dirty_cell_count; i++)
+    {
+        if (flags->dirty_cells[i][0] == row && flags->dirty_cells[i][1] == col)
+        {
+            return; // 이미 존재
+        }
+    }
+
+    flags->dirty_cells[flags->dirty_cell_count][0] = row;
+    flags->dirty_cells[flags->dirty_cell_count][1] = col;
+    flags->dirty_cell_count++;
+    flags->flags |= RENDER_BOARD_CELL;
+}
+
+void ui_render_flags_clear_dirty_cells(UIRenderFlags *flags)
+{
+    if (!flags)
+        return;
+    flags->dirty_cell_count = 0;
+}
+
+void ui_render_flags_set_all(UIRenderFlags *flags)
+{
+    if (!flags)
+        return;
+    flags->flags = RENDER_ALL;
+}
 
 bool ui_manager_check_terminal_size(void)
 {
@@ -57,6 +136,11 @@ bool ui_manager_init(UIManager *manager)
     nodelay(manager->board_win, FALSE);
 
     manager->initialized = true;
+    manager->first_render = true; // 첫 렌더링 표시
+
+    // 렌더링 플래그 초기화 (모든 것을 렌더링)
+    ui_render_flags_init(&manager->render_flags);
+
     return true;
 }
 

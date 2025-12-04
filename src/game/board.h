@@ -5,37 +5,52 @@
 
 #define BOARD_SIZE 19
 
-typedef enum {
+typedef enum
+{
     EMPTY = 0,
     BLACK = 1,
     WHITE = 2
 } Stone;
 
-typedef enum {
+typedef enum
+{
     RULE_STANDARD = 0,
     RULE_RENJU = 1
 } GameRule;
 
-typedef enum {
+typedef enum
+{
     FORBIDDEN_NONE = 0,
     FORBIDDEN_DOUBLE_THREE = 1,
     FORBIDDEN_DOUBLE_FOUR = 2,
     FORBIDDEN_OVERLINE = 3
 } ForbiddenType;
 
-typedef struct {
+typedef struct
+{
+    int row;
+    int col;
+} Position;
+
+// 수 기록 (Undo 기능용)
+#define MAX_MOVE_HISTORY (BOARD_SIZE * BOARD_SIZE)
+
+typedef struct
+{
+    Position moves[MAX_MOVE_HISTORY];
+    int count;
+} MoveHistory;
+
+typedef struct
+{
     Stone cells[BOARD_SIZE][BOARD_SIZE];
     int move_count;
     int last_row;
     int last_col;
     GameRule rule;
-    bool forbidden_marks[BOARD_SIZE][BOARD_SIZE];  // 금수 위치 표시
+    bool forbidden_marks[BOARD_SIZE][BOARD_SIZE]; // 금수 위치 표시
+    MoveHistory history;                          // 수 기록
 } Board;
-
-typedef struct {
-    int row;
-    int col;
-} Position;
 
 void board_init(Board *board);
 
@@ -62,5 +77,7 @@ GameRule board_get_rule(const Board *board);
 void board_update_forbidden_marks(Board *board, Stone current_player);
 
 bool board_is_forbidden(const Board *board, int row, int col);
+
+bool board_undo_last_move(Board *board);
 
 #endif // BOARD_H

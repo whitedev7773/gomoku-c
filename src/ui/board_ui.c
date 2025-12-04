@@ -38,21 +38,21 @@ void board_ui_draw_border(WINDOW *win)
 
     // Top border
     mvwprintw(win, 0, 0, "┏");
-    for (int i = 1; i < 49; i++)
+    for (int i = 1; i < 48; i++)
     {
         wprintw(win, "━");
     }
     wprintw(win, "┓");
 
     // Top coordinates
-    mvwprintw(win, 1, 4, "     ");
+    mvwprintw(win, 1, 0, "┃     ");
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         wprintw(win, "%c ", COL_LABELS[i]);
     }
 
     // Board frame top
-    mvwprintw(win, 2, 4, "   ┌");
+    mvwprintw(win, 2, 0, "┃   ┌");
     for (int i = 0; i < 39; i++)
     {
         wprintw(win, "─");
@@ -64,13 +64,13 @@ void board_ui_draw_border(WINDOW *win)
     {
         int y = 3 + row;
         mvwprintw(win, y, 0, "┃");
-        mvwprintw(win, y, 1, "%2d│", BOARD_SIZE - row);
-        mvwprintw(win, y, 46, "│%-2d", BOARD_SIZE - row);
-        mvwprintw(win, y, 49, "┃");
+        mvwprintw(win, y, 2, "%2d│", BOARD_SIZE - row);
+        mvwprintw(win, y, 44, "│%-2d", BOARD_SIZE - row);
+        mvwprintw(win, y, 48, "┃");
     }
 
     // Board frame bottom
-    mvwprintw(win, 22, 4, "   └");
+    mvwprintw(win, 22, 0, "┃   └");
     for (int i = 0; i < 39; i++)
     {
         wprintw(win, "─");
@@ -78,7 +78,7 @@ void board_ui_draw_border(WINDOW *win)
     wprintw(win, "┘");
 
     // Bottom coordinates
-    mvwprintw(win, 23, 4, "     ");
+    mvwprintw(win, 23, 0, "┃     ");
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         wprintw(win, "%c ", COL_LABELS[i]);
@@ -109,7 +109,7 @@ void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cur
     for (int row = 0; row < BOARD_SIZE; row++)
     {
         int y = 3 + row;
-        int x = 5;
+        int x = 6;
 
         wmove(win, y, x);
 
@@ -120,26 +120,34 @@ void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cur
             bool is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col);
             bool is_last_move = (board->last_row == row && board->last_col == col);
 
+            // 커서 위치면 '[' 출력
             if (is_cursor)
             {
-                wattron(win, A_REVERSE);
+                // 이전 공백을 '['로 대체
+                int cur_y, cur_x;
+                getyx(win, cur_y, cur_x);
+                if (cur_x > 6)
+                {
+                    mvwaddch(win, cur_y, cur_x - 1, '[');
+                    wmove(win, cur_y, cur_x);
+                }
             }
 
             if (stone == BLACK)
             {
                 if (is_last_move)
-                    wattron(win, COLOR_PAIR(3));
+                    wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
                 wprintw(win, "●");
                 if (is_last_move)
-                    wattroff(win, COLOR_PAIR(3));
+                    wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
             }
             else if (stone == WHITE)
             {
                 if (is_last_move)
-                    wattron(win, COLOR_PAIR(4));
+                    wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
                 wprintw(win, "○");
                 if (is_last_move)
-                    wattroff(win, COLOR_PAIR(4));
+                    wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
             }
             else
             {
@@ -156,14 +164,22 @@ void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cur
                 }
             }
 
-            if (is_cursor)
-            {
-                wattroff(win, A_REVERSE);
-            }
-
+            // 커서 위치면 ']' 출력, 아니면 공백
             if (col < BOARD_SIZE - 1)
             {
-                waddch(win, ' ');
+                if (is_cursor)
+                {
+                    waddch(win, ']');
+                }
+                else
+                {
+                    waddch(win, ' ');
+                }
+            }
+            else if (is_cursor)
+            {
+                // 마지막 열이면서 커서인 경우
+                waddch(win, ']');
             }
         }
     }
@@ -232,28 +248,26 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
     bool is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col);
     bool is_last_move = (board->last_row == row && board->last_col == col);
 
-    wmove(win, y, x);
+    // 커서면 '[' 출력 (이전 칸의 공백 위치에, 첫 열이라도 표시)
+    mvwaddch(win, y, x - 1, is_cursor ? '[' : ' ');
 
-    if (is_cursor)
-    {
-        wattron(win, A_REVERSE);
-    }
+    wmove(win, y, x);
 
     if (stone == BLACK)
     {
         if (is_last_move)
-            wattron(win, COLOR_PAIR(3));
+            wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
         wprintw(win, "●");
         if (is_last_move)
-            wattroff(win, COLOR_PAIR(3));
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
     }
     else if (stone == WHITE)
     {
         if (is_last_move)
-            wattron(win, COLOR_PAIR(4));
+            wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
         wprintw(win, "○");
         if (is_last_move)
-            wattroff(win, COLOR_PAIR(4));
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
     }
     else
     {
@@ -270,9 +284,14 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
         }
     }
 
-    if (is_cursor)
+    // 커서면 ']' 출력, 아니면 공백
+    if (col < BOARD_SIZE - 1)
     {
-        wattroff(win, A_REVERSE);
+        waddch(win, is_cursor ? ']' : ' ');
+    }
+    else if (is_cursor)
+    {
+        waddch(win, ']');
     }
 }
 
@@ -302,4 +321,422 @@ void board_ui_update(WINDOW *win, const Board *board, const BoardCursor *cursor)
     }
 
     wrefresh(win);
+}
+
+// ============================================
+// 선택적 렌더링 함수 (Dirty Flag 기반)
+// ============================================
+
+void board_ui_selective_render(WINDOW *win, const Board *board,
+                               const BoardCursor *cursor,
+                               UIRenderFlags *flags,
+                               bool first_render)
+{
+    if (!win || !board || !flags)
+        return;
+
+    bool need_refresh = false;
+
+    // 첫 렌더링 또는 전체 보드 렌더링 요청
+    if (first_render || ui_render_flags_is_set(flags, RENDER_BOARD_FULL))
+    {
+        wclear(win);
+        board_ui_draw_border(win);
+        board_ui_draw_board(win, board, cursor);
+        need_refresh = true;
+        ui_render_flags_clear(flags, RENDER_BOARD_FULL);
+    }
+    else
+    {
+        // 커서 이동만 있는 경우
+        if (ui_render_flags_is_set(flags, RENDER_BOARD_CURSOR))
+        {
+            // 이전 커서 위치 지우기
+            if (cursor && (cursor->prev_cursor_row != cursor->cursor_row ||
+                           cursor->prev_cursor_col != cursor->cursor_col))
+            {
+                board_ui_redraw_cell(win, board, NULL, cursor->prev_cursor_row, cursor->prev_cursor_col);
+            }
+
+            // 현재 커서 위치 그리기
+            if (cursor)
+            {
+                board_ui_redraw_cell(win, board, cursor, cursor->cursor_row, cursor->cursor_col);
+            }
+            need_refresh = true;
+            ui_render_flags_clear(flags, RENDER_BOARD_CURSOR);
+        }
+
+        // 특정 셀만 업데이트
+        if (ui_render_flags_is_set(flags, RENDER_BOARD_CELL))
+        {
+            for (int i = 0; i < flags->dirty_cell_count; i++)
+            {
+                int row = flags->dirty_cells[i][0];
+                int col = flags->dirty_cells[i][1];
+                board_ui_redraw_cell(win, board, cursor, row, col);
+            }
+            ui_render_flags_clear_dirty_cells(flags);
+            ui_render_flags_clear(flags, RENDER_BOARD_CELL);
+            need_refresh = true;
+        }
+    }
+
+    // 마지막 수 항상 강조 (새로운 돌이 놓였을 때)
+    if (board->last_row >= 0 && board->last_col >= 0)
+    {
+        board_ui_redraw_cell(win, board, cursor, board->last_row, board->last_col);
+        need_refresh = true;
+    }
+
+    if (need_refresh)
+    {
+        wrefresh(win);
+    }
+}
+
+void board_ui_move_cursor_with_flags(BoardCursor *cursor, int dr, int dc,
+                                     UIRenderFlags *flags)
+{
+    if (!cursor || !flags)
+        return;
+
+    // 이전 위치 저장
+    cursor->prev_cursor_row = cursor->cursor_row;
+    cursor->prev_cursor_col = cursor->cursor_col;
+
+    int new_row = cursor->cursor_row + dr;
+    int new_col = cursor->cursor_col + dc;
+
+    if (new_row >= 0 && new_row < BOARD_SIZE)
+    {
+        cursor->cursor_row = new_row;
+    }
+
+    if (new_col >= 0 && new_col < BOARD_SIZE)
+    {
+        cursor->cursor_col = new_col;
+    }
+
+    // 커서가 실제로 이동했으면 dirty flag 설정
+    if (cursor->prev_cursor_row != cursor->cursor_row ||
+        cursor->prev_cursor_col != cursor->cursor_col)
+    {
+        ui_render_flags_set(flags, RENDER_BOARD_CURSOR);
+    }
+}
+
+// 상대방 커서 위치 업데이트
+void board_ui_update_opponent_cursor(BoardCursor *opponent_cursor, int row, int col,
+                                     UIRenderFlags *flags)
+{
+    if (!opponent_cursor || !flags)
+        return;
+
+    // 이전 위치 저장
+    opponent_cursor->prev_cursor_row = opponent_cursor->cursor_row;
+    opponent_cursor->prev_cursor_col = opponent_cursor->cursor_col;
+
+    // 새 위치 설정
+    opponent_cursor->cursor_row = row;
+    opponent_cursor->cursor_col = col;
+
+    // 커서가 실제로 이동했으면 dirty flag 설정
+    if (opponent_cursor->prev_cursor_row != opponent_cursor->cursor_row ||
+        opponent_cursor->prev_cursor_col != opponent_cursor->cursor_col)
+    {
+        ui_render_flags_set(flags, RENDER_BOARD_CURSOR);
+    }
+}
+
+// 특정 셀 그리기 (멀티플레이용 - 내 커서와 상대방 커서 모두 고려)
+static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
+                                             const BoardCursor *my_cursor,
+                                             const BoardCursor *opponent_cursor,
+                                             int row, int col)
+{
+    if (!win || !board || row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
+        return;
+
+    int y = 3 + row;
+    int x = 5 + (col * 2);
+
+    Stone stone = board_get_stone(board, row, col);
+    bool is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col);
+    bool is_opponent_cursor = (opponent_cursor && opponent_cursor->cursor_row == row && opponent_cursor->cursor_col == col);
+    bool is_last_move = (board->last_row == row && board->last_col == col);
+
+    // 커서면 '[' 출력 (이전 칸의 공백 위치에, 첫 열이라도 표시)
+    {
+        char left_bracket = ' ';
+        if (is_my_cursor)
+            left_bracket = '[';
+        else if (is_opponent_cursor)
+        {
+            wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+            left_bracket = '[';
+        }
+        mvwaddch(win, y, x - 1, left_bracket);
+        if (is_opponent_cursor && !is_my_cursor)
+            wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+    }
+
+    wmove(win, y, x);
+
+    // 상대방 커서: 밑줄 + 파란색
+    if (is_opponent_cursor && !is_my_cursor)
+    {
+        wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+    }
+
+    if (stone == BLACK)
+    {
+        if (is_last_move)
+            wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+        wprintw(win, "●");
+        if (is_last_move)
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+    }
+    else if (stone == WHITE)
+    {
+        if (is_last_move)
+            wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+        wprintw(win, "○");
+        if (is_last_move)
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+    }
+    else
+    {
+        // 빈 칸: 금수 위치 확인
+        if (board_is_forbidden(board, row, col))
+        {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+            wprintw(win, "x");
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+        }
+        else
+        {
+            wprintw(win, "·");
+        }
+    }
+
+    // 커서면 ']' 출력, 아니면 공백
+    if (col < BOARD_SIZE - 1)
+    {
+        if (is_my_cursor)
+        {
+            waddch(win, ']');
+        }
+        else if (is_opponent_cursor)
+        {
+            waddch(win, ']');
+        }
+        else
+        {
+            waddch(win, ' ');
+        }
+    }
+    else if (is_my_cursor || is_opponent_cursor)
+    {
+        waddch(win, ']');
+    }
+
+    if (is_opponent_cursor && !is_my_cursor)
+    {
+        wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+    }
+}
+
+// 보드 전체 그리기 (멀티플레이용)
+static void board_ui_draw_board_multiplayer(WINDOW *win, const Board *board,
+                                            const BoardCursor *my_cursor,
+                                            const BoardCursor *opponent_cursor)
+{
+    for (int row = 0; row < BOARD_SIZE; row++)
+    {
+        int y = 3 + row;
+        int x = 5;
+
+        wmove(win, y, x);
+
+        for (int col = 0; col < BOARD_SIZE; col++)
+        {
+            Stone stone = board_get_stone(board, row, col);
+
+            bool is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col);
+            bool is_opponent_cursor = (opponent_cursor && opponent_cursor->cursor_row == row && opponent_cursor->cursor_col == col);
+            bool is_last_move = (board->last_row == row && board->last_col == col);
+
+            // 커서 위치면 '[' 출력 (첫 열이라도 표시)
+            if (is_my_cursor || is_opponent_cursor)
+            {
+                int cur_y, cur_x;
+                getyx(win, cur_y, cur_x);
+                if (is_opponent_cursor && !is_my_cursor)
+                    wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+                mvwaddch(win, cur_y, cur_x - 1, '[');
+                if (is_opponent_cursor && !is_my_cursor)
+                    wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+                wmove(win, cur_y, cur_x);
+            }
+
+            // 상대방 커서: 밑줄 + 파란색
+            if (is_opponent_cursor && !is_my_cursor)
+            {
+                wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+            }
+
+            if (stone == BLACK)
+            {
+                if (is_last_move)
+                    wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+                wprintw(win, "●");
+                if (is_last_move)
+                    wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+            }
+            else if (stone == WHITE)
+            {
+                if (is_last_move)
+                    wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+                wprintw(win, "○");
+                if (is_last_move)
+                    wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+            }
+            else
+            {
+                // 빈 칸: 금수 위치 확인
+                if (board_is_forbidden(board, row, col))
+                {
+                    wattron(win, COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+                    wprintw(win, "x");
+                    wattroff(win, COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+                }
+                else
+                {
+                    wprintw(win, "·");
+                }
+            }
+
+            if (is_opponent_cursor && !is_my_cursor)
+            {
+                wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+            }
+
+            // 커서 위치면 ']' 출력, 아니면 공백
+            if (col < BOARD_SIZE - 1)
+            {
+                if (is_my_cursor)
+                {
+                    waddch(win, ']');
+                }
+                else if (is_opponent_cursor)
+                {
+                    wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+                    waddch(win, ']');
+                    wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+                }
+                else
+                {
+                    waddch(win, ' ');
+                }
+            }
+            else if (is_my_cursor || is_opponent_cursor)
+            {
+                if (is_opponent_cursor && !is_my_cursor)
+                    wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+                waddch(win, ']');
+                if (is_opponent_cursor && !is_my_cursor)
+                    wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+            }
+        }
+    }
+}
+
+// 멀티플레이용 선택적 렌더링 (상대방 커서 포함)
+void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
+                                           const BoardCursor *my_cursor,
+                                           const BoardCursor *opponent_cursor,
+                                           UIRenderFlags *flags,
+                                           bool first_render)
+{
+    if (!win || !board || !flags)
+        return;
+
+    bool need_refresh = false;
+
+    // 첫 렌더링 또는 전체 보드 렌더링 요청
+    if (first_render || ui_render_flags_is_set(flags, RENDER_BOARD_FULL))
+    {
+        wclear(win);
+        board_ui_draw_border(win);
+        board_ui_draw_board_multiplayer(win, board, my_cursor, opponent_cursor);
+        need_refresh = true;
+        ui_render_flags_clear(flags, RENDER_BOARD_FULL);
+    }
+    else
+    {
+        // 커서 이동만 있는 경우
+        if (ui_render_flags_is_set(flags, RENDER_BOARD_CURSOR))
+        {
+            // 내 커서 이전 위치 지우기
+            if (my_cursor && (my_cursor->prev_cursor_row != my_cursor->cursor_row ||
+                              my_cursor->prev_cursor_col != my_cursor->cursor_col))
+            {
+                board_ui_redraw_cell_multiplayer(win, board, my_cursor, opponent_cursor,
+                                                 my_cursor->prev_cursor_row, my_cursor->prev_cursor_col);
+            }
+
+            // 상대방 커서 이전 위치 지우기
+            if (opponent_cursor && (opponent_cursor->prev_cursor_row != opponent_cursor->cursor_row ||
+                                    opponent_cursor->prev_cursor_col != opponent_cursor->cursor_col))
+            {
+                board_ui_redraw_cell_multiplayer(win, board, my_cursor, opponent_cursor,
+                                                 opponent_cursor->prev_cursor_row, opponent_cursor->prev_cursor_col);
+            }
+
+            // 내 커서 현재 위치 그리기
+            if (my_cursor)
+            {
+                board_ui_redraw_cell_multiplayer(win, board, my_cursor, opponent_cursor,
+                                                 my_cursor->cursor_row, my_cursor->cursor_col);
+            }
+
+            // 상대방 커서 현재 위치 그리기
+            if (opponent_cursor)
+            {
+                board_ui_redraw_cell_multiplayer(win, board, my_cursor, opponent_cursor,
+                                                 opponent_cursor->cursor_row, opponent_cursor->cursor_col);
+            }
+
+            need_refresh = true;
+            ui_render_flags_clear(flags, RENDER_BOARD_CURSOR);
+        }
+
+        // 특정 셀만 업데이트
+        if (ui_render_flags_is_set(flags, RENDER_BOARD_CELL))
+        {
+            for (int i = 0; i < flags->dirty_cell_count; i++)
+            {
+                int row = flags->dirty_cells[i][0];
+                int col = flags->dirty_cells[i][1];
+                board_ui_redraw_cell_multiplayer(win, board, my_cursor, opponent_cursor, row, col);
+            }
+            ui_render_flags_clear_dirty_cells(flags);
+            ui_render_flags_clear(flags, RENDER_BOARD_CELL);
+            need_refresh = true;
+        }
+    }
+
+    // 마지막 수 항상 강조 (새로운 돌이 놓였을 때)
+    if (board->last_row >= 0 && board->last_col >= 0)
+    {
+        board_ui_redraw_cell_multiplayer(win, board, my_cursor, opponent_cursor,
+                                         board->last_row, board->last_col);
+        need_refresh = true;
+    }
+
+    if (need_refresh)
+    {
+        wrefresh(win);
+    }
 }

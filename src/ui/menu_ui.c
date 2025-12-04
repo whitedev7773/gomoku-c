@@ -8,7 +8,7 @@ void menu_ui_init(MenuUI *menu)
     menu->selected = MENU_SINGLEPLAY;
     menu->option_count = 6;
     menu->current_page = 0;
-    menu->total_pages = (menu->option_count + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;  // 올림 계산
+    menu->total_pages = (menu->option_count + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE; // 올림 계산
 }
 
 void menu_ui_draw_logo(WINDOW *win)
@@ -39,7 +39,7 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     int box_y = 16;
     int box_x = 32;
     int box_width = 33;
-    int box_height = 8;  // 3개 아이템 + 여백
+    int box_height = 7; // 3개 아이템 + 여백
 
     // Draw box
     wattron(win, A_BOLD);
@@ -65,14 +65,13 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     wattroff(win, A_BOLD);
 
     // 메뉴 이름 배열
-    const char* menu_names[] = {
+    const char *menu_names[] = {
         "1 Player Game (COM)",
         "2 Player Game (LAN)",
         "Spectate Game (LAN)",
         "View Replay",
         "Theme",
-        "Exit"
-    };
+        "Exit"};
 
     // 현재 페이지에 표시할 아이템 계산
     int start_idx = menu->current_page * ITEMS_PER_PAGE;
@@ -103,13 +102,13 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
 
     // 페이지 표시
     wattron(win, COLOR_PAIR(7));
-    mvwprintw(win, box_y + box_height - 1, box_x + box_width / 2 - 3, "Page %d/%d",
+    mvwprintw(win, box_y + box_height - 1, box_x + box_width / 2 - 4, " Page %d/%d ",
               menu->current_page + 1, menu->total_pages);
     wattroff(win, COLOR_PAIR(7));
 
     // Instructions
     wattron(win, COLOR_PAIR(8)); // gray
-    mvwprintw(win, box_y + box_height + 1, box_x - 8, "↑↓:Move  ←→:Page  ↵:Select  Q:Exit");
+    mvwprintw(win, box_y + box_height + 1, box_x - 1, "↑↓:Move  ←→:Page  ↵:Select  Q:Exit");
     wattroff(win, COLOR_PAIR(8));
 }
 
