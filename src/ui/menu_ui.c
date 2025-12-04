@@ -7,6 +7,8 @@ void menu_ui_init(MenuUI *menu)
         return;
     menu->selected = MENU_SINGLEPLAY;
     menu->option_count = 6;
+    menu->current_page = 0;
+    menu->total_pages = (menu->option_count + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;  // 올림 계산
 }
 
 void menu_ui_draw_logo(WINDOW *win)
@@ -37,7 +39,7 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     int box_y = 16;
     int box_x = 32;
     int box_width = 33;
-    int box_height = 10;
+    int box_height = 8;  // 3개 아이템 + 여백
 
     // Draw box
     wattron(win, A_BOLD);
@@ -62,91 +64,52 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     wprintw(win, "┛");
     wattroff(win, A_BOLD);
 
-    // Draw options
+    // 메뉴 이름 배열
+    const char* menu_names[] = {
+        "1 Player Game (COM)",
+        "2 Player Game (LAN)",
+        "Spectate Game (LAN)",
+        "View Replay",
+        "Theme",
+        "Exit"
+    };
+
+    // 현재 페이지에 표시할 아이템 계산
+    int start_idx = menu->current_page * ITEMS_PER_PAGE;
+    int end_idx = start_idx + ITEMS_PER_PAGE;
+    if (end_idx > menu->option_count)
+        end_idx = menu->option_count;
+
+    // Draw options (현재 페이지의 아이템만)
     int option_y = box_y + 2;
     int option_x = box_x + 3;
 
-    // Option 1: 1 Player Game (COM)
-    wmove(win, option_y, option_x);
-    if (menu->selected == MENU_SINGLEPLAY)
+    for (int i = start_idx; i < end_idx; i++)
     {
-        wattron(win, A_BOLD | COLOR_PAIR(4));
-        wprintw(win, " ▶  1 Player Game (COM)      ");
-        wattroff(win, A_BOLD | COLOR_PAIR(4));
-    }
-    else
-    {
-        wprintw(win, "    1 Player Game (COM)      ");
+        int display_row = option_y + (i - start_idx);
+        wmove(win, display_row, option_x);
+
+        if (menu->selected == i)
+        {
+            wattron(win, A_BOLD | COLOR_PAIR(4));
+            wprintw(win, " ▶  %-25s", menu_names[i]);
+            wattroff(win, A_BOLD | COLOR_PAIR(4));
+        }
+        else
+        {
+            wprintw(win, "    %-25s", menu_names[i]);
+        }
     }
 
-    // Option 2: 2 Player Game (LAN)
-    wmove(win, option_y + 1, option_x);
-    if (menu->selected == MENU_MULTIPLAY)
-    {
-        wattron(win, A_BOLD | COLOR_PAIR(4));
-        wprintw(win, " ▶  2 Player Game (LAN)      ");
-        wattroff(win, A_BOLD | COLOR_PAIR(4));
-    }
-    else
-    {
-        wprintw(win, "    2 Player Game (LAN)      ");
-    }
-
-    // Option 3: Spectate Game (LAN)
-    wmove(win, option_y + 2, option_x);
-    if (menu->selected == MENU_SPECTATOR)
-    {
-        wattron(win, A_BOLD | COLOR_PAIR(4));
-        wprintw(win, " ▶  Spectate Game (LAN)      ");
-        wattroff(win, A_BOLD | COLOR_PAIR(4));
-    }
-    else
-    {
-        wprintw(win, "    Spectate Game (LAN)      ");
-    }
-
-    // Option 4: View Replay
-    wmove(win, option_y + 3, option_x);
-    if (menu->selected == MENU_REPLAY)
-    {
-        wattron(win, A_BOLD | COLOR_PAIR(4));
-        wprintw(win, " ▶  View Replay              ");
-        wattroff(win, A_BOLD | COLOR_PAIR(4));
-    }
-    else
-    {
-        wprintw(win, "    View Replay              ");
-    }
-
-    // Option 5: Theme
-    wmove(win, option_y + 4, option_x);
-    if (menu->selected == MENU_THEME)
-    {
-        wattron(win, A_BOLD | COLOR_PAIR(4));
-        wprintw(win, " ▶  Theme                    ");
-        wattroff(win, A_BOLD | COLOR_PAIR(4));
-    }
-    else
-    {
-        wprintw(win, "    Theme                    ");
-    }
-
-    // Option 6: Exit
-    wmove(win, option_y + 5, option_x);
-    if (menu->selected == MENU_EXIT)
-    {
-        wattron(win, A_BOLD | COLOR_PAIR(4));
-        wprintw(win, " ▶  Exit                     ");
-        wattroff(win, A_BOLD | COLOR_PAIR(4));
-    }
-    else
-    {
-        wprintw(win, "    Exit                     ");
-    }
+    // 페이지 표시
+    wattron(win, COLOR_PAIR(7));
+    mvwprintw(win, box_y + box_height - 1, box_x + box_width / 2 - 3, "Page %d/%d",
+              menu->current_page + 1, menu->total_pages);
+    wattroff(win, COLOR_PAIR(7));
 
     // Instructions
     wattron(win, COLOR_PAIR(8)); // gray
-    mvwprintw(win, box_y + box_height + 1, box_x - 8, "↑↓:Move    ↵:Select    Q:Exit");
+    mvwprintw(win, box_y + box_height + 1, box_x - 8, "↑↓:Move  ←→:Page  ↵:Select  Q:Exit");
     wattroff(win, COLOR_PAIR(8));
 }
 
@@ -221,16 +184,44 @@ void menu_ui_move_selection(MenuUI *menu, int direction)
     if (!menu)
         return;
 
+    // 현재 페이지의 범위 계산
+    int page_start = menu->current_page * ITEMS_PER_PAGE;
+    int page_end = page_start + ITEMS_PER_PAGE - 1;
+    if (page_end >= menu->option_count)
+        page_end = menu->option_count - 1;
+
     menu->selected += direction;
 
-    if (menu->selected < 0)
+    // 현재 페이지 범위 내에서만 이동
+    if (menu->selected < page_start)
     {
-        menu->selected = MENU_EXIT;
+        menu->selected = page_start;
     }
-    else if (menu->selected > MENU_EXIT)
+    else if (menu->selected > page_end)
     {
-        menu->selected = MENU_SINGLEPLAY;
+        menu->selected = page_end;
     }
+}
+
+void menu_ui_change_page(MenuUI *menu, int direction)
+{
+    if (!menu)
+        return;
+
+    menu->current_page += direction;
+
+    // 페이지 순환
+    if (menu->current_page < 0)
+    {
+        menu->current_page = menu->total_pages - 1;
+    }
+    else if (menu->current_page >= menu->total_pages)
+    {
+        menu->current_page = 0;
+    }
+
+    // 페이지 변경 시 해당 페이지의 첫 번째 아이템 선택
+    menu->selected = menu->current_page * ITEMS_PER_PAGE;
 }
 
 MenuOption menu_ui_get_selected(const MenuUI *menu)

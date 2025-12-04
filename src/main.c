@@ -92,6 +92,12 @@ int main(int argc, char *argv[])
             case INPUT_MOVE_DOWN:
                 menu_ui_move_selection(&menu, 1);
                 break;
+            case INPUT_MOVE_LEFT:
+                menu_ui_change_page(&menu, -1);
+                break;
+            case INPUT_MOVE_RIGHT:
+                menu_ui_change_page(&menu, 1);
+                break;
             case INPUT_PLACE_STONE:
                 selected_option = menu_ui_get_selected(&menu);
 
