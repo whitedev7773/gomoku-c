@@ -12,6 +12,7 @@
 #include "../ui/chat_ui.h"
 #include "../ui/modal_ui.h"
 #include "../ui/theme.h"
+#include "../ui/ingame_border.h"
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -173,6 +174,10 @@ int multiplayer_run_host(int port, GameRule rule)
         network_cleanup(&game.network);
         return -1;
     }
+
+    // 인게임 Border 그리기
+    ingame_border_draw();
+    refresh();
 
     // 게임 컴포넌트 초기화
     board_init_with_rule(&game.board, rule);
@@ -451,6 +456,10 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule)
         network_cleanup(&game.network);
         return -1;
     }
+
+    // 인게임 Border 그리기
+    ingame_border_draw();
+    refresh();
 
     board_init_with_rule(&game.board, received_rule);
     board_ui_init_cursor(&game.my_cursor);

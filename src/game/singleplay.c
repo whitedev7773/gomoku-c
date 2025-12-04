@@ -8,7 +8,9 @@
 #include "../ui/input_handler.h"
 #include "../ui/game_info_ui.h"
 #include "../ui/log_ui.h"
+#include "../ui/modal_ui.h"
 #include "../ui/theme.h"
+#include "../ui/ingame_border.h"
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -40,6 +42,10 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
         return -1;
     }
 
+    // 인게임 Border 그리기
+    ingame_border_draw();
+    refresh();
+
     // 게임 컴포넌트 초기화
     Board board;
     board_init_with_rule(&board, rule);
@@ -58,6 +64,9 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
 
     LogUI log_ui;
     log_ui_init(&log_ui);
+
+    ModalUI modal_ui;
+    modal_ui_init(&modal_ui);
 
     GameLogger logger;
     // 로거 초기화 및 에러 체크
@@ -157,11 +166,23 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                     snprintf(result_msg, sizeof(result_msg), "Game ended in a DRAW!");
                 }
                 log_ui_add_message(&log_ui, result_msg);
-                log_ui_add_message(&log_ui, "Press 'q' to quit");
+
+                // 모달 표시
+                modal_ui_show(&modal_ui, MODAL_GAME_RESULT, result_msg);
 
                 logger_close(&logger);
                 continue;
             }
+        }
+
+        // 유저 턴 타임아웃 체크 (BLACK 턴일 때만)
+        if (!game_over && current_player == BLACK && turn_manager_is_timeout(&turn_mgr))
+        {
+            game_over = true;
+            log_ui_add_message(&log_ui, "Time's up! You LOSE!");
+            modal_ui_show(&modal_ui, MODAL_GAME_RESULT, "Time's up! You LOSE!");
+            logger_close(&logger);
+            continue;
         }
 
         // AI 턴 처리
@@ -277,7 +298,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                     break;
                 case INPUT_RESIGN:
                     log_ui_add_message(&log_ui, "You resigned. AI WINS!");
-                    log_ui_add_message(&log_ui, "Press 'q' to quit");
+                    modal_ui_show(&modal_ui, MODAL_GAME_RESULT, "You resigned. AI WINS!");
                     game_over = true;
                     break;
                 default:
@@ -286,11 +307,29 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
             }
         }
 
-        // 게임 종료 후 q로만 나갈 수 있음
+        // 게임 종료 후 모달 처리
         if (game_over)
         {
+            // 모달 렌더링
+            if (modal_ui_is_active(&modal_ui))
+            {
+                modal_ui_render(stdscr, &modal_ui);
+            }
+
             InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
-            if (event.action == INPUT_QUIT)
+            int ch = event.key_code;
+
+            // 모달이 활성화되어 있으면 모달 입력 처리
+            if (modal_ui_is_active(&modal_ui) && ch != ERR)
+            {
+                ModalResult result = modal_ui_handle_input(&modal_ui, ch);
+                if (result == MODAL_RESULT_OK || result == MODAL_RESULT_CANCEL)
+                {
+                    modal_ui_close(&modal_ui);
+                    game_running = false; // 메인 화면으로 이동
+                }
+            }
+            else if (event.action == INPUT_QUIT)
             {
                 game_running = false;
             }

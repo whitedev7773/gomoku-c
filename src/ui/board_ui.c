@@ -47,7 +47,7 @@ void board_ui_draw_border(WINDOW *win)
     }
 
     // 보드 프레임 상단
-    mvwprintw(win, 1, 2, "┌");
+    mvwprintw(win, 1, 3, "┌");
     for (int i = 0; i < 39; i++)
     {
         wprintw(win, "─");
@@ -58,12 +58,12 @@ void board_ui_draw_border(WINDOW *win)
     for (int row = 0; row < BOARD_SIZE; row++)
     {
         int y = 2 + row;
-        mvwprintw(win, y, 0, "%2d│", BOARD_SIZE - row);
-        mvwprintw(win, y, 42, "│%-2d", BOARD_SIZE - row);
+        mvwprintw(win, y, 1, "%2d│", BOARD_SIZE - row);
+        mvwprintw(win, y, 43, "│%-2d", BOARD_SIZE - row);
     }
 
     // 보드 프레임 하단
-    mvwprintw(win, 21, 2, "└");
+    mvwprintw(win, 21, 3, "└");
     for (int i = 0; i < 39; i++)
     {
         wprintw(win, "─");
@@ -84,7 +84,7 @@ void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cur
     {
         // board_win 내부 좌표: 보드 시작 y=2 (프레임 상단 아래), x=4 (행번호+│ 뒤)
         int y = 2 + row;
-        int x = 4;
+        int x = 5;
 
         wmove(win, y, x);
 
@@ -215,7 +215,7 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
 
     // board_win 내부 좌표에 맞춤
     int y = 2 + row;
-    int x = 4 + (col * 2);
+    int x = 5 + (col * 2);
 
     Stone stone = board_get_stone(board, row, col);
     bool is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col);
@@ -274,7 +274,7 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
     // 커서면 ']' 출력, 오른쪽 셀이 커서면 '[' 출력, 아니면 공백
     bool right_is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col + 1);
 
-    if (col < BOARD_SIZE - 1)
+    if (col < BOARD_SIZE)
     {
         if (is_cursor)
         {

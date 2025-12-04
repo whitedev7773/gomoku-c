@@ -5,6 +5,7 @@
 #include "../ui/chat_ui.h"
 #include "../ui/modal_ui.h"
 #include "../ui/input_handler.h"
+#include "../ui/ingame_border.h"
 #include "game_logic.h"
 #include "turn_manager.h"
 #include "../network/protocol.h"
@@ -278,6 +279,10 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
     // UI 초기화
     UIManager ui_mgr;
     ui_manager_init(&ui_mgr);
+
+    // 인게임 Border 그리기
+    ingame_border_draw();
+    refresh();
 
     // 게임패드 입력 핸들러 초기화
     InputHandler input_handler;
