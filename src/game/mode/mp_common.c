@@ -10,14 +10,14 @@
 // 모달 입력 처리 (공통)
 // ============================================================================
 
-MpModalResult mp_handle_modal_input(MultiplayerGame *game, int ch)
+MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
 {
-    if (!modal_ui_is_active(&game->modal_ui) || ch == ERR)
+    if (!modal_ui_is_active(&game->modal_ui) || action == INPUT_NONE)
     {
         return MP_MODAL_NONE;
     }
 
-    ModalResult result = modal_ui_handle_input(&game->modal_ui, ch);
+    ModalResult result = modal_ui_handle_action(&game->modal_ui, action);
     MpModalResult ret = MP_MODAL_NONE;
 
     switch (result)
@@ -664,10 +664,9 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
     if (modal_ui_is_active(&game->modal_ui))
     {
         InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
-        int ch = event.key_code;
-        if (ch != ERR)
+        if (event.action != INPUT_NONE)
         {
-            mp_handle_modal_input(game, ch);
+            mp_handle_modal_input(game, event.action);
         }
         return false;
     }
@@ -787,10 +786,9 @@ void mp_handle_opponent_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHand
     if (modal_ui_is_active(&game->modal_ui))
     {
         InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
-        int ch = event.key_code;
-        if (ch != ERR)
+        if (event.action != INPUT_NONE)
         {
-            mp_handle_modal_input(game, ch);
+            mp_handle_modal_input(game, event.action);
         }
         return;
     }
@@ -927,11 +925,10 @@ bool mp_handle_game_over_input(UIManager *ui_mgr, MultiplayerGame *game, InputHa
     }
 
     InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
-    int ch = event.key_code;
 
-    if (modal_ui_is_active(&game->modal_ui) && ch != ERR)
+    if (modal_ui_is_active(&game->modal_ui) && event.action != INPUT_NONE)
     {
-        ModalResult result = modal_ui_handle_input(&game->modal_ui, ch);
+        ModalResult result = modal_ui_handle_action(&game->modal_ui, event.action);
         if (result == MODAL_RESULT_OK || result == MODAL_RESULT_CANCEL)
         {
             modal_ui_close(&game->modal_ui);

@@ -317,12 +317,11 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
             }
 
             InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
-            int ch = event.key_code;
 
             // 모달이 활성화되어 있으면 모달 입력 처리
-            if (modal_ui_is_active(&modal_ui) && ch != ERR)
+            if (modal_ui_is_active(&modal_ui) && event.action != INPUT_NONE)
             {
-                ModalResult result = modal_ui_handle_input(&modal_ui, ch);
+                ModalResult result = modal_ui_handle_action(&modal_ui, event.action);
                 if (result == MODAL_RESULT_OK || result == MODAL_RESULT_CANCEL)
                 {
                     modal_ui_close(&modal_ui);

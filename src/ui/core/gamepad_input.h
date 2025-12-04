@@ -4,47 +4,54 @@
 #include <stdbool.h>
 
 // Xbox Controller 버튼 매핑
-typedef enum {
-    GAMEPAD_BTN_A = 0,          // 돌 놓기 (Space)
-    GAMEPAD_BTN_B = 1,          // 취소/뒤로 (ESC)
-    GAMEPAD_BTN_X = 2,          // 무르기 요청
-    GAMEPAD_BTN_Y = 3,          // 기권
-    GAMEPAD_BTN_LB = 4,         // 왼쪽 범퍼
-    GAMEPAD_BTN_RB = 5,         // 오른쪽 범퍼
-    GAMEPAD_BTN_BACK = 6,       // Back/Select (나가기)
-    GAMEPAD_BTN_START = 7,      // Start (채팅 모드)
-    GAMEPAD_BTN_LSTICK = 8,     // 왼쪽 스틱 클릭
-    GAMEPAD_BTN_RSTICK = 9,     // 오른쪽 스틱 클릭
+typedef enum
+{
+    GAMEPAD_BTN_A = 0,      // 돌 놓기 (Space)
+    GAMEPAD_BTN_B = 1,      // 취소/뒤로 (ESC)
+    GAMEPAD_BTN_X = 2,      // 무르기 요청
+    GAMEPAD_BTN_Y = 3,      // 기권
+    GAMEPAD_BTN_LB = 4,     // 왼쪽 범퍼
+    GAMEPAD_BTN_RB = 5,     // 오른쪽 범퍼
+    GAMEPAD_BTN_BACK = 6,   // Back/Select (나가기)
+    GAMEPAD_BTN_START = 7,  // Start (채팅 모드)
+    GAMEPAD_BTN_LSTICK = 8, // 왼쪽 스틱 클릭
+    GAMEPAD_BTN_RSTICK = 9, // 오른쪽 스틱 클릭
 } GamepadButton;
 
 // 게임패드 축 매핑
-typedef enum {
-    GAMEPAD_AXIS_LX = 0,        // 왼쪽 스틱 X축
-    GAMEPAD_AXIS_LY = 1,        // 왼쪽 스틱 Y축
-    GAMEPAD_AXIS_LT = 2,        // 왼쪽 트리거
-    GAMEPAD_AXIS_RX = 3,        // 오른쪽 스틱 X축
-    GAMEPAD_AXIS_RY = 4,        // 오른쪽 스틱 Y축
-    GAMEPAD_AXIS_RT = 5,        // 오른쪽 트리거
-    GAMEPAD_AXIS_DPAD_X = 6,    // D-Pad X축
-    GAMEPAD_AXIS_DPAD_Y = 7,    // D-Pad Y축
+typedef enum
+{
+    GAMEPAD_AXIS_LX = 0,     // 왼쪽 스틱 X축
+    GAMEPAD_AXIS_LY = 1,     // 왼쪽 스틱 Y축
+    GAMEPAD_AXIS_LT = 2,     // 왼쪽 트리거
+    GAMEPAD_AXIS_RX = 3,     // 오른쪽 스틱 X축
+    GAMEPAD_AXIS_RY = 4,     // 오른쪽 스틱 Y축
+    GAMEPAD_AXIS_RT = 5,     // 오른쪽 트리거
+    GAMEPAD_AXIS_DPAD_X = 6, // D-Pad X축
+    GAMEPAD_AXIS_DPAD_Y = 7, // D-Pad Y축
 } GamepadAxis;
 
 // 게임패드 이벤트 타입
-typedef enum {
+typedef enum
+{
     GAMEPAD_EVENT_BUTTON,
     GAMEPAD_EVENT_AXIS,
     GAMEPAD_EVENT_NONE
 } GamepadEventType;
 
 // 게임패드 이벤트
-typedef struct {
+typedef struct
+{
     GamepadEventType type;
-    union {
-        struct {
+    union
+    {
+        struct
+        {
             int button;
             bool pressed;
         } button;
-        struct {
+        struct
+        {
             int axis;
             int value;
         } axis;
@@ -52,17 +59,27 @@ typedef struct {
 } GamepadEvent;
 
 // 게임패드 상태
-typedef struct {
-    int fd;                     // 파일 디스크립터
-    bool connected;             // 연결 상태
-    bool buttons[16];           // 버튼 상태
-    int axes[8];                // 축 상태
+typedef struct
+{
+    int fd;           // 파일 디스크립터
+    bool connected;   // 연결 상태
+    bool buttons[16]; // 버튼 상태
+    int axes[8];      // 축 상태
 
-    // 스틱 입력 디바운스용
-    bool stick_moved;           // 스틱이 이동했는가
-    int last_stick_x;
-    int last_stick_y;
-    int stick_threshold;        // 데드존 임계값
+    // 스틱 입력 디바운스용 (X/Y축 분리)
+    bool stick_moved_x;  // X축 스틱이 이동했는가
+    bool stick_moved_y;  // Y축 스틱이 이동했는가
+    int stick_threshold; // 데드존 임계값
+
+    // D-Pad 상태 추적
+    int dpad_x; // D-Pad X 상태 (-1, 0, 1)
+    int dpad_y; // D-Pad Y 상태 (-1, 0, 1)
+
+    // 반복 입력 타이머 (밀리초)
+    long long last_move_time; // 마지막 이동 시간
+    int repeat_delay;         // 첫 반복까지 딜레이 (ms)
+    int repeat_rate;          // 반복 간격 (ms)
+    bool repeat_started;      // 반복 입력 시작됨
 } GamepadState;
 
 // 게임패드 초기화
@@ -82,6 +99,9 @@ bool gamepad_is_button_pressed(const GamepadState *state, GamepadButton button);
 
 // 게임패드 축 값 가져오기
 int gamepad_get_axis(const GamepadState *state, GamepadAxis axis);
+
+// 현재 시간 가져오기 (밀리초)
+long long gamepad_get_time_ms(void);
 
 // 모든 입력 장치 목록 출력 (디버깅용)
 void gamepad_list_all_devices(void);

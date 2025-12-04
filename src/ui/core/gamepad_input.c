@@ -7,10 +7,21 @@
 #include <linux/joystick.h>
 #include <linux/input.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <errno.h>
 
 #define MAX_JOYSTICK_DEVICES 16
-#define STICK_DEADZONE 10000 // 데드존 임계값 (-32768~32767 범위)
+#define STICK_DEADZONE 10000     // 데드존 임계값 (-32768~32767 범위)
+#define DEFAULT_REPEAT_DELAY 400 // 첫 반복까지 딜레이 (ms)
+#define DEFAULT_REPEAT_RATE 80   // 반복 간격 (ms)
+
+// 현재 시간 가져오기 (밀리초)
+long long gamepad_get_time_ms(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (long long)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
 
 // Xbox 컨트롤러인지 확인
 static bool is_xbox_controller(const char *device_name)
@@ -120,6 +131,14 @@ bool gamepad_init(GamepadState *state)
 
     memset(state, 0, sizeof(GamepadState));
     state->stick_threshold = STICK_DEADZONE;
+    state->repeat_delay = DEFAULT_REPEAT_DELAY;
+    state->repeat_rate = DEFAULT_REPEAT_RATE;
+    state->last_move_time = 0;
+    state->repeat_started = false;
+    state->stick_moved_x = false;
+    state->stick_moved_y = false;
+    state->dpad_x = 0;
+    state->dpad_y = 0;
 
     // Xbox 컨트롤러 자동 감지
     state->fd = find_xbox_controller();

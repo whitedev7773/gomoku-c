@@ -440,9 +440,9 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
             last_render_time = current_time;
         }
 
-        // non-blocking 입력 처리
-        int ch = wgetch(ui_mgr.board_win);
-        if (ch == 'q' || ch == 'Q')
+        // non-blocking 입력 처리 (게임패드 지원)
+        InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
+        if (event.action == INPUT_QUIT)
         {
             break;
         }

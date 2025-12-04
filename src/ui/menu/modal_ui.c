@@ -3,8 +3,10 @@
 #include <stdlib.h>
 
 // 초기화
-void modal_ui_init(ModalUI *modal) {
-    if (!modal) return;
+void modal_ui_init(ModalUI *modal)
+{
+    if (!modal)
+        return;
 
     memset(modal, 0, sizeof(ModalUI));
     modal->type = MODAL_NONE;
@@ -14,65 +16,72 @@ void modal_ui_init(ModalUI *modal) {
 }
 
 // 모달 버튼 설정
-static void modal_ui_setup_buttons(ModalUI *modal) {
+static void modal_ui_setup_buttons(ModalUI *modal)
+{
     modal->button_count = 0;
 
-    switch (modal->type) {
-        case MODAL_GIVEUP:
-            modal->buttons[0] = BUTTON_YES;
-            modal->buttons[1] = BUTTON_NO;
-            modal->button_count = 2;
-            modal->selected_button = 1;  // 기본값: No
-            break;
+    switch (modal->type)
+    {
+    case MODAL_GIVEUP:
+        modal->buttons[0] = BUTTON_YES;
+        modal->buttons[1] = BUTTON_NO;
+        modal->button_count = 2;
+        modal->selected_button = 1; // 기본값: No
+        break;
 
-        case MODAL_UNDO_REQUEST:
-            // 무르기 요청은 표시만 (상대방 응답 대기)
-            modal->button_count = 0;
-            break;
+    case MODAL_UNDO_REQUEST:
+        // 무르기 요청은 표시만 (상대방 응답 대기)
+        modal->button_count = 0;
+        break;
 
-        case MODAL_UNDO_RESPONSE:
-            modal->buttons[0] = BUTTON_ACCEPT;
-            modal->buttons[1] = BUTTON_DECLINE;
-            modal->button_count = 2;
-            modal->selected_button = 0;
-            break;
+    case MODAL_UNDO_RESPONSE:
+        modal->buttons[0] = BUTTON_ACCEPT;
+        modal->buttons[1] = BUTTON_DECLINE;
+        modal->button_count = 2;
+        modal->selected_button = 0;
+        break;
 
-        case MODAL_SWAP_REQUEST:
-            // Swap 요청은 표시만
-            modal->button_count = 0;
-            break;
+    case MODAL_SWAP_REQUEST:
+        // Swap 요청은 표시만
+        modal->button_count = 0;
+        break;
 
-        case MODAL_SWAP_RESPONSE:
-            modal->buttons[0] = BUTTON_ACCEPT;
-            modal->buttons[1] = BUTTON_DECLINE;
-            modal->button_count = 2;
-            modal->selected_button = 0;
-            break;
+    case MODAL_SWAP_RESPONSE:
+        modal->buttons[0] = BUTTON_ACCEPT;
+        modal->buttons[1] = BUTTON_DECLINE;
+        modal->button_count = 2;
+        modal->selected_button = 0;
+        break;
 
-        case MODAL_GAME_RESULT:
-        case MODAL_ERROR:
-            modal->buttons[0] = BUTTON_OK;
-            modal->button_count = 1;
-            modal->selected_button = 0;
-            break;
+    case MODAL_GAME_RESULT:
+    case MODAL_ERROR:
+        modal->buttons[0] = BUTTON_OK;
+        modal->button_count = 1;
+        modal->selected_button = 0;
+        break;
 
-        default:
-            modal->button_count = 0;
-            break;
+    default:
+        modal->button_count = 0;
+        break;
     }
 }
 
 // 모달 표시
-void modal_ui_show(ModalUI *modal, ModalType type, const char *message) {
-    if (!modal) return;
+void modal_ui_show(ModalUI *modal, ModalType type, const char *message)
+{
+    if (!modal)
+        return;
 
     modal->type = type;
     modal->active = true;
 
-    if (message) {
+    if (message)
+    {
         strncpy(modal->message, message, MODAL_MAX_MESSAGE_LENGTH - 1);
         modal->message[MODAL_MAX_MESSAGE_LENGTH - 1] = '\0';
-    } else {
+    }
+    else
+    {
         modal->message[0] = '\0';
     }
 
@@ -80,8 +89,10 @@ void modal_ui_show(ModalUI *modal, ModalType type, const char *message) {
 }
 
 // 모달 닫기
-void modal_ui_close(ModalUI *modal) {
-    if (!modal) return;
+void modal_ui_close(ModalUI *modal)
+{
+    if (!modal)
+        return;
 
     modal->active = false;
     modal->type = MODAL_NONE;
@@ -89,26 +100,38 @@ void modal_ui_close(ModalUI *modal) {
 }
 
 // 모달 활성화 여부
-bool modal_ui_is_active(const ModalUI *modal) {
+bool modal_ui_is_active(const ModalUI *modal)
+{
     return modal && modal->active;
 }
 
 // 버튼 이름 가져오기
-const char* modal_ui_get_button_name(ModalButton button) {
-    switch (button) {
-        case BUTTON_OK: return "OK";
-        case BUTTON_CANCEL: return "Cancel";
-        case BUTTON_ACCEPT: return "Accept";
-        case BUTTON_DECLINE: return "Decline";
-        case BUTTON_YES: return "Yes";
-        case BUTTON_NO: return "No";
-        default: return "Unknown";
+const char *modal_ui_get_button_name(ModalButton button)
+{
+    switch (button)
+    {
+    case BUTTON_OK:
+        return "OK";
+    case BUTTON_CANCEL:
+        return "Cancel";
+    case BUTTON_ACCEPT:
+        return "Accept";
+    case BUTTON_DECLINE:
+        return "Decline";
+    case BUTTON_YES:
+        return "Yes";
+    case BUTTON_NO:
+        return "No";
+    default:
+        return "Unknown";
     }
 }
 
 // 모달 렌더링
-void modal_ui_render(WINDOW *parent_win, const ModalUI *modal) {
-    if (!parent_win || !modal || !modal->active) return;
+void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
+{
+    if (!parent_win || !modal || !modal->active)
+        return;
 
     int parent_h, parent_w;
     getmaxyx(parent_win, parent_h, parent_w);
@@ -124,8 +147,10 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal) {
 
     // 배경 그리기 (어두운 배경)
     wattron(modal_win, COLOR_PAIR(2));
-    for (int y = 0; y < modal_h; y++) {
-        for (int x = 0; x < modal_w; x++) {
+    for (int y = 0; y < modal_h; y++)
+    {
+        for (int x = 0; x < modal_w; x++)
+        {
             mvwaddch(modal_win, y, x, ' ');
         }
     }
@@ -137,34 +162,36 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal) {
 
     // 타이틀
     const char *title = NULL;
-    switch (modal->type) {
-        case MODAL_GIVEUP:
-            title = " Confirm Giveup ";
-            break;
-        case MODAL_UNDO_REQUEST:
-            title = " Undo Request ";
-            break;
-        case MODAL_UNDO_RESPONSE:
-            title = " Undo Request ";
-            break;
-        case MODAL_SWAP_REQUEST:
-            title = " Swap Request ";
-            break;
-        case MODAL_SWAP_RESPONSE:
-            title = " Swap Request ";
-            break;
-        case MODAL_GAME_RESULT:
-            title = " Game Result ";
-            break;
-        case MODAL_ERROR:
-            title = " Error ";
-            break;
-        default:
-            title = " Message ";
-            break;
+    switch (modal->type)
+    {
+    case MODAL_GIVEUP:
+        title = " Confirm Giveup ";
+        break;
+    case MODAL_UNDO_REQUEST:
+        title = " Undo Request ";
+        break;
+    case MODAL_UNDO_RESPONSE:
+        title = " Undo Request ";
+        break;
+    case MODAL_SWAP_REQUEST:
+        title = " Swap Request ";
+        break;
+    case MODAL_SWAP_RESPONSE:
+        title = " Swap Request ";
+        break;
+    case MODAL_GAME_RESULT:
+        title = " Game Result ";
+        break;
+    case MODAL_ERROR:
+        title = " Error ";
+        break;
+    default:
+        title = " Message ";
+        break;
     }
 
-    if (title) {
+    if (title)
+    {
         mvwprintw(modal_win, 0, (modal_w - strlen(title)) / 2, "%s", title);
     }
     wattroff(modal_win, A_BOLD);
@@ -179,16 +206,20 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal) {
     char *line = msg_copy;
     int line_count = 0;
 
-    while (line && *line && line_count < 3) {
+    while (line && *line && line_count < 3)
+    {
         int line_len = strlen(line);
-        if (line_len > max_line_width) {
+        if (line_len > max_line_width)
+        {
             // 긴 줄은 잘라서 표시
             char temp = line[max_line_width];
             line[max_line_width] = '\0';
             mvwprintw(modal_win, msg_y + line_count, msg_x, "%s", line);
             line[max_line_width] = temp;
             line += max_line_width;
-        } else {
+        }
+        else
+        {
             mvwprintw(modal_win, msg_y + line_count, msg_x, "%s", line);
             break;
         }
@@ -197,36 +228,45 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal) {
     free(msg_copy);
 
     // 버튼 렌더링
-    if (modal->button_count > 0) {
+    if (modal->button_count > 0)
+    {
         int button_y = modal_h - 3;
         int total_button_width = 0;
 
         // 전체 버튼 너비 계산
-        for (int i = 0; i < modal->button_count; i++) {
+        for (int i = 0; i < modal->button_count; i++)
+        {
             total_button_width += strlen(modal_ui_get_button_name(modal->buttons[i])) + 4;
-            if (i < modal->button_count - 1) {
-                total_button_width += 4;  // 간격
+            if (i < modal->button_count - 1)
+            {
+                total_button_width += 4; // 간격
             }
         }
 
         int button_x = (modal_w - total_button_width) / 2;
 
         // 버튼 그리기
-        for (int i = 0; i < modal->button_count; i++) {
+        for (int i = 0; i < modal->button_count; i++)
+        {
             const char *btn_name = modal_ui_get_button_name(modal->buttons[i]);
             int btn_width = strlen(btn_name) + 4;
 
-            if (i == modal->selected_button) {
+            if (i == modal->selected_button)
+            {
                 wattron(modal_win, A_REVERSE | A_BOLD);
                 mvwprintw(modal_win, button_y, button_x, "[ %s ]", btn_name);
                 wattroff(modal_win, A_REVERSE | A_BOLD);
-            } else {
+            }
+            else
+            {
                 mvwprintw(modal_win, button_y, button_x, "[ %s ]", btn_name);
             }
 
             button_x += btn_width + 4;
         }
-    } else {
+    }
+    else
+    {
         // 버튼이 없으면 "Waiting..." 표시
         wattron(modal_win, COLOR_PAIR(5));
         mvwprintw(modal_win, modal_h - 3, (modal_w - 13) / 2, "Waiting...");
@@ -238,56 +278,120 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal) {
 }
 
 // 모달 입력 처리
-ModalResult modal_ui_handle_input(ModalUI *modal, int ch) {
-    if (!modal || !modal->active) {
+ModalResult modal_ui_handle_input(ModalUI *modal, int ch)
+{
+    if (!modal || !modal->active)
+    {
         return MODAL_RESULT_NONE;
     }
 
     // 버튼이 없으면 입력 무시 (대기 중)
-    if (modal->button_count == 0) {
+    if (modal->button_count == 0)
+    {
         return MODAL_RESULT_NONE;
     }
 
-    switch (ch) {
-        case KEY_LEFT:
-        case 'h':
-            if (modal->button_count > 1) {
-                modal->selected_button = (modal->selected_button - 1 + modal->button_count) % modal->button_count;
-            }
-            return MODAL_RESULT_NONE;
+    switch (ch)
+    {
+    case KEY_LEFT:
+    case 'h':
+        if (modal->button_count > 1)
+        {
+            modal->selected_button = (modal->selected_button - 1 + modal->button_count) % modal->button_count;
+        }
+        return MODAL_RESULT_NONE;
 
-        case KEY_RIGHT:
-        case 'l':
-            if (modal->button_count > 1) {
-                modal->selected_button = (modal->selected_button + 1) % modal->button_count;
-            }
-            return MODAL_RESULT_NONE;
+    case KEY_RIGHT:
+    case 'l':
+        if (modal->button_count > 1)
+        {
+            modal->selected_button = (modal->selected_button + 1) % modal->button_count;
+        }
+        return MODAL_RESULT_NONE;
 
-        case '\n':
-        case KEY_ENTER:
-        case ' ':
-            // 선택된 버튼에 따라 결과 반환
-            switch (modal->buttons[modal->selected_button]) {
-                case BUTTON_OK:
-                    return MODAL_RESULT_OK;
-                case BUTTON_CANCEL:
-                    return MODAL_RESULT_CANCEL;
-                case BUTTON_ACCEPT:
-                    return MODAL_RESULT_ACCEPT;
-                case BUTTON_DECLINE:
-                    return MODAL_RESULT_DECLINE;
-                case BUTTON_YES:
-                    return MODAL_RESULT_YES;
-                case BUTTON_NO:
-                    return MODAL_RESULT_NO;
-                default:
-                    return MODAL_RESULT_NONE;
-            }
-
-        case 27:  // ESC
+    case '\n':
+    case KEY_ENTER:
+    case ' ':
+        // 선택된 버튼에 따라 결과 반환
+        switch (modal->buttons[modal->selected_button])
+        {
+        case BUTTON_OK:
+            return MODAL_RESULT_OK;
+        case BUTTON_CANCEL:
             return MODAL_RESULT_CANCEL;
-
+        case BUTTON_ACCEPT:
+            return MODAL_RESULT_ACCEPT;
+        case BUTTON_DECLINE:
+            return MODAL_RESULT_DECLINE;
+        case BUTTON_YES:
+            return MODAL_RESULT_YES;
+        case BUTTON_NO:
+            return MODAL_RESULT_NO;
         default:
             return MODAL_RESULT_NONE;
+        }
+
+    case 27: // ESC
+        return MODAL_RESULT_CANCEL;
+
+    default:
+        return MODAL_RESULT_NONE;
+    }
+}
+
+// 모달 입력 처리 (게임패드 지원)
+ModalResult modal_ui_handle_action(ModalUI *modal, InputAction action)
+{
+    if (!modal || !modal->active)
+    {
+        return MODAL_RESULT_NONE;
+    }
+
+    // 버튼이 없으면 입력 무시 (대기 중)
+    if (modal->button_count == 0)
+    {
+        return MODAL_RESULT_NONE;
+    }
+
+    switch (action)
+    {
+    case INPUT_MOVE_LEFT:
+        if (modal->button_count > 1)
+        {
+            modal->selected_button = (modal->selected_button - 1 + modal->button_count) % modal->button_count;
+        }
+        return MODAL_RESULT_NONE;
+
+    case INPUT_MOVE_RIGHT:
+        if (modal->button_count > 1)
+        {
+            modal->selected_button = (modal->selected_button + 1) % modal->button_count;
+        }
+        return MODAL_RESULT_NONE;
+
+    case INPUT_PLACE_STONE: // A 버튼 = 확인
+        switch (modal->buttons[modal->selected_button])
+        {
+        case BUTTON_OK:
+            return MODAL_RESULT_OK;
+        case BUTTON_CANCEL:
+            return MODAL_RESULT_CANCEL;
+        case BUTTON_ACCEPT:
+            return MODAL_RESULT_ACCEPT;
+        case BUTTON_DECLINE:
+            return MODAL_RESULT_DECLINE;
+        case BUTTON_YES:
+            return MODAL_RESULT_YES;
+        case BUTTON_NO:
+            return MODAL_RESULT_NO;
+        default:
+            return MODAL_RESULT_NONE;
+        }
+
+    case INPUT_QUIT: // B 버튼 = 취소
+        return MODAL_RESULT_CANCEL;
+
+    default:
+        return MODAL_RESULT_NONE;
     }
 }

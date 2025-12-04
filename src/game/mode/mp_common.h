@@ -69,10 +69,10 @@ typedef enum
 } MpModalResult;
 
 /**
- * 공통 모달 입력 처리
+ * 공통 모달 입력 처리 (게임패드 지원)
  * @return MpModalResult
  */
-MpModalResult mp_handle_modal_input(MultiplayerGame *game, int ch);
+MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action);
 
 /**
  * 채팅 입력 처리 (명령어 포함)
