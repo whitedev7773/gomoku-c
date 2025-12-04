@@ -2,35 +2,38 @@
 #define REPLAY_H
 
 #include "game_logger.h"
-#include "board.h"
+#include "../core/board.h"
 #include <stdbool.h>
 
 #define MAX_LOG_FILES 100
-#define REPLAY_SPEED_SLOW 2000000    // 2초 (microseconds)
-#define REPLAY_SPEED_NORMAL 1000000  // 1초
-#define REPLAY_SPEED_FAST 500000     // 0.5초
+#define REPLAY_SPEED_SLOW 2000000   // 2초 (microseconds)
+#define REPLAY_SPEED_NORMAL 1000000 // 1초
+#define REPLAY_SPEED_FAST 500000    // 0.5초
 
 // 로그 파일 정보
-typedef struct {
+typedef struct
+{
     char filename[LOG_FILENAME_SIZE];
-    char display_name[LOG_FILENAME_SIZE + 16];  // 표시용 이름
+    char display_name[LOG_FILENAME_SIZE + 16]; // 표시용 이름
     time_t modified_time;
 } LogFileInfo;
 
 // 로그 파일 목록
-typedef struct {
+typedef struct
+{
     LogFileInfo files[MAX_LOG_FILES];
     int file_count;
 } LogFileList;
 
 // 리플레이 상태
-typedef struct {
+typedef struct
+{
     GameLogger logger;
     int current_move;
     int total_moves;
     bool playing;
     bool paused;
-    int speed;  // microseconds delay between moves
+    int speed; // microseconds delay between moves
 } ReplayState;
 
 // 로그 파일 목록 가져오기

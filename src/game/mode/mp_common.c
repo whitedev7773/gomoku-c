@@ -1,6 +1,6 @@
 #include "mp_common.h"
-#include "../ui/theme.h"
-#include "../ui/ingame_border.h"
+#include "../../ui/core/theme.h"
+#include "../../ui/game/ingame_border.h"
 #include <string.h>
 #include <sys/socket.h>
 #include <ncurses.h>

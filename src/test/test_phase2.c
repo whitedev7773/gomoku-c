@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <assert.h>
-#include "../game/board.h"
-#include "../game/game_logic.h"
-#include "../game/turn_manager.h"
-#include "../game/game_logger.h"
-#include "../game/rules.h"
+#include "../game/core/board.h"
+#include "../game/core/game_logic.h"
+#include "../game/core/turn_manager.h"
+#include "../game/feature/game_logger.h"
+#include "../game/core/rules.h"
 
-void test_board() {
+void test_board()
+{
     printf("Testing Board...\n");
 
     Board board;
@@ -25,7 +26,8 @@ void test_board() {
     printf("Board tests PASSED!\n\n");
 }
 
-void test_game_logic() {
+void test_game_logic()
+{
     printf("Testing Game Logic...\n");
 
     Board board;
@@ -43,7 +45,8 @@ void test_game_logic() {
     printf("Game Logic tests PASSED!\n\n");
 }
 
-void test_turn_manager() {
+void test_turn_manager()
+{
     printf("Testing Turn Manager...\n");
 
     TurnManager manager;
@@ -60,7 +63,8 @@ void test_turn_manager() {
     printf("Turn Manager tests PASSED!\n\n");
 }
 
-void test_game_logger() {
+void test_game_logger()
+{
     printf("Testing Game Logger...\n");
 
     GameLogger logger;
@@ -75,7 +79,8 @@ void test_game_logger() {
     printf("Game Logger tests PASSED!\n\n");
 }
 
-void test_renju_rules() {
+void test_renju_rules()
+{
     printf("Testing Renju Rules...\n");
 
     Board board;
@@ -93,7 +98,8 @@ void test_renju_rules() {
     printf("Renju Rules tests PASSED!\n\n");
 }
 
-void test_swap_rules() {
+void test_swap_rules()
+{
     printf("Testing Swap Rules...\n");
 
     Board board;
@@ -115,7 +121,8 @@ void test_swap_rules() {
     printf("Swap Rules tests PASSED!\n\n");
 }
 
-int main() {
+int main()
+{
     printf("=== Phase 2 Tests ===\n\n");
 
     test_board();

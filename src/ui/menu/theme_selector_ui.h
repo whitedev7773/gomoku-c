@@ -1,10 +1,11 @@
 #ifndef THEME_SELECTOR_UI_H
 #define THEME_SELECTOR_UI_H
 
-#include "theme.h"
+#include "../core/theme.h"
 #include <ncurses.h>
 
-typedef struct {
+typedef struct
+{
     int selected_theme;
     int theme_count;
 } ThemeSelectorUI;

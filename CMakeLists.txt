@@ -28,12 +28,12 @@ file(GLOB_RECURSE NETWORK_FILES "src/network/*.c")
 
 # Core game files without singleplay (for tests that don't need UI)
 set(CORE_GAME_FILES
-    src/game/board.c
-    src/game/game_logic.c
-    src/game/game_logger.c
-    src/game/turn_manager.c
-    src/game/rules.c
-    src/game/ai_engine.c
+    src/game/core/board.c
+    src/game/core/game_logic.c
+    src/game/feature/game_logger.c
+    src/game/core/turn_manager.c
+    src/game/core/rules.c
+    src/game/ai/ai_engine.c
 )
 
 add_executable(gomoku-c ${SRC_FILES} ${UTIL_FILES} ${GAME_FILES} ${UI_FILES} ${NETWORK_FILES})
@@ -66,7 +66,7 @@ endif()
 
 file(GLOB TEST_GAMEPAD_FILES "src/test/test_gamepad.c")
 if(TEST_GAMEPAD_FILES)
-    add_executable(test_gamepad ${TEST_GAMEPAD_FILES} src/ui/gamepad_input.c)
+    add_executable(test_gamepad ${TEST_GAMEPAD_FILES} src/ui/core/gamepad_input.c)
     target_link_libraries(test_gamepad)
 endif()
 
@@ -86,6 +86,6 @@ endif()
 
 file(GLOB TEST_INGAME_BORDER_FILES "src/test/test_ingame_border.c")
 if(TEST_INGAME_BORDER_FILES)
-    add_executable(test_ingame_border ${TEST_INGAME_BORDER_FILES} src/ui/ingame_border.c src/ui/theme.c src/utils/config.c)
+    add_executable(test_ingame_border ${TEST_INGAME_BORDER_FILES} src/ui/game/ingame_border.c src/ui/core/theme.c src/utils/config.c)
     target_link_libraries(test_ingame_border ${CURSES_LIBRARIES})
 endif()

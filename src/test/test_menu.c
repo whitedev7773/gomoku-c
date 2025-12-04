@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <locale.h>
-#include "../ui/menu_ui.h"
+#include "../ui/menu/menu_ui.h"
 
 int main()
 {

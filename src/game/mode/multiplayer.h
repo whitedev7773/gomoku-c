@@ -1,8 +1,8 @@
 #ifndef MULTIPLAYER_H
 #define MULTIPLAYER_H
 
-#include "../network/network.h"
-#include "board.h"
+#include "../../network/network.h"
+#include "../core/board.h"
 
 /**
  * 멀티플레이 게임 실행 - 호스트 모드

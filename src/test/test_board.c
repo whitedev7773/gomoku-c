@@ -1,9 +1,10 @@
 #include "test_framework.h"
-#include "../game/board.h"
+#include "../game/core/board.h"
 #include <stdio.h>
 
 // 보드 초기화 테스트
-void test_board_init() {
+void test_board_init()
+{
     TEST_CASE("Board Initialization");
 
     Board board;
@@ -15,9 +16,12 @@ void test_board_init() {
 
     // 모든 칸이 비어있는지 확인
     bool all_empty = true;
-    for (int row = 0; row < BOARD_SIZE; row++) {
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            if (board.cells[row][col] != EMPTY) {
+    for (int row = 0; row < BOARD_SIZE; row++)
+    {
+        for (int col = 0; col < BOARD_SIZE; col++)
+        {
+            if (board.cells[row][col] != EMPTY)
+            {
                 all_empty = false;
                 break;
             }
@@ -27,7 +31,8 @@ void test_board_init() {
 }
 
 // Renju Rule 초기화 테스트
-void test_board_init_with_rule() {
+void test_board_init_with_rule()
+{
     TEST_CASE("Board Initialization with Renju Rule");
 
     Board board;
@@ -38,7 +43,8 @@ void test_board_init_with_rule() {
 }
 
 // 돌 놓기 테스트
-void test_board_place_stone() {
+void test_board_place_stone()
+{
     TEST_CASE("Place Stone");
 
     Board board;
@@ -65,7 +71,8 @@ void test_board_place_stone() {
 }
 
 // 범위 밖 테스트
-void test_board_out_of_bounds() {
+void test_board_out_of_bounds()
+{
     TEST_CASE("Out of Bounds Check");
 
     Board board;
@@ -86,7 +93,8 @@ void test_board_out_of_bounds() {
 }
 
 // 빈 칸 체크 테스트
-void test_board_is_empty() {
+void test_board_is_empty()
+{
     TEST_CASE("Is Empty Check");
 
     Board board;
@@ -101,7 +109,8 @@ void test_board_is_empty() {
 }
 
 // 금수 마크 업데이트 테스트
-void test_board_forbidden_marks() {
+void test_board_forbidden_marks()
+{
     TEST_CASE("Forbidden Marks Update");
 
     Board board;
@@ -109,9 +118,12 @@ void test_board_forbidden_marks() {
 
     // 초기에는 모든 금수 마크가 false
     bool all_not_forbidden = true;
-    for (int row = 0; row < BOARD_SIZE; row++) {
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            if (board.forbidden_marks[row][col]) {
+    for (int row = 0; row < BOARD_SIZE; row++)
+    {
+        for (int col = 0; col < BOARD_SIZE; col++)
+        {
+            if (board.forbidden_marks[row][col])
+            {
                 all_not_forbidden = false;
                 break;
             }
@@ -125,7 +137,8 @@ void test_board_forbidden_marks() {
 }
 
 // 보드 상태 복사 테스트 (나중에 무르기 기능에 필요)
-void test_board_get_move_count() {
+void test_board_get_move_count()
+{
     TEST_CASE("Get Move Count");
 
     Board board;
@@ -141,7 +154,8 @@ void test_board_get_move_count() {
 }
 
 // 모든 보드 테스트 실행
-void run_board_tests() {
+void run_board_tests()
+{
     TEST_SUITE("Board Logic Tests");
 
     test_board_init();
@@ -153,7 +167,8 @@ void run_board_tests() {
     test_board_get_move_count();
 }
 
-int main() {
+int main()
+{
     test_init();
     run_board_tests();
     test_summary();

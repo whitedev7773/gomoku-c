@@ -1,9 +1,9 @@
 #ifndef GAME_INFO_UI_H
 #define GAME_INFO_UI_H
 
-#include "../game/board.h"
-#include "../game/turn_manager.h"
-#include "ui_manager.h"
+#include "../../game/core/board.h"
+#include "../../game/core/turn_manager.h"
+#include "../core/ui_manager.h"
 #include <ncurses.h>
 #include <time.h>
 

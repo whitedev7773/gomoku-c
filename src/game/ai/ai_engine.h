@@ -1,17 +1,19 @@
 #ifndef AI_ENGINE_H
 #define AI_ENGINE_H
 
-#include "board.h"
+#include "../core/board.h"
 #include <stdbool.h>
 
-typedef enum {
+typedef enum
+{
     AI_EASY = 0,
     AI_HARD = 1
 } AIDifficulty;
 
-typedef struct {
+typedef struct
+{
     AIDifficulty difficulty;
-    Stone ai_stone;  // AI가 사용하는 돌 색상
+    Stone ai_stone; // AI가 사용하는 돌 색상
 } AIEngine;
 
 /**

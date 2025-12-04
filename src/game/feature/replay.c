@@ -1,12 +1,12 @@
 #include "replay.h"
-#include "../ui/ui_manager.h"
-#include "../ui/board_ui.h"
-#include "../ui/game_info_ui.h"
-#include "../ui/replay_list_ui.h"
-#include "../ui/theme.h"
-#include "../ui/input_handler.h"
-#include "game_logic.h"
-#include "turn_manager.h"
+#include "../../ui/core/ui_manager.h"
+#include "../../ui/game/board_ui.h"
+#include "../../ui/game/game_info_ui.h"
+#include "../../ui/menu/replay_list_ui.h"
+#include "../../ui/core/theme.h"
+#include "../../ui/core/input_handler.h"
+#include "../core/game_logic.h"
+#include "../core/turn_manager.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -16,36 +16,44 @@
 #include <ncurses.h>
 
 // 로그 파일 목록 가져오기
-bool replay_get_log_files(LogFileList *list) {
-    if (!list) return false;
+bool replay_get_log_files(LogFileList *list)
+{
+    if (!list)
+        return false;
 
     memset(list, 0, sizeof(LogFileList));
 
     DIR *dir = opendir(".");
-    if (!dir) return false;
+    if (!dir)
+        return false;
 
     struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL && list->file_count < MAX_LOG_FILES) {
+    while ((entry = readdir(dir)) != NULL && list->file_count < MAX_LOG_FILES)
+    {
         // "gomoku-" 로 시작하고 ".log"로 끝나는 파일 찾기
         if (strncmp(entry->d_name, "gomoku-", 7) == 0 &&
-            strstr(entry->d_name, ".log") != NULL) {
+            strstr(entry->d_name, ".log") != NULL)
+        {
 
             LogFileInfo *info = &list->files[list->file_count];
             strncpy(info->filename, entry->d_name, LOG_FILENAME_SIZE - 1);
 
             // 파일 수정 시간 가져오기
             struct stat file_stat;
-            if (stat(entry->d_name, &file_stat) == 0) {
+            if (stat(entry->d_name, &file_stat) == 0)
+            {
                 info->modified_time = file_stat.st_mtime;
 
                 // 표시용 이름 생성
                 struct tm *t = localtime(&info->modified_time);
                 snprintf(info->display_name, sizeof(info->display_name),
-                        "%s (%04d-%02d-%02d %02d:%02d)",
-                        entry->d_name,
-                        t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-                        t->tm_hour, t->tm_min);
-            } else {
+                         "%s (%04d-%02d-%02d %02d:%02d)",
+                         entry->d_name,
+                         t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+                         t->tm_hour, t->tm_min);
+            }
+            else
+            {
                 strcpy(info->display_name, entry->d_name);
             }
 
@@ -56,9 +64,12 @@ bool replay_get_log_files(LogFileList *list) {
     closedir(dir);
 
     // 최신 파일이 위로 오도록 정렬 (bubble sort)
-    for (int i = 0; i < list->file_count - 1; i++) {
-        for (int j = 0; j < list->file_count - i - 1; j++) {
-            if (list->files[j].modified_time < list->files[j + 1].modified_time) {
+    for (int i = 0; i < list->file_count - 1; i++)
+    {
+        for (int j = 0; j < list->file_count - i - 1; j++)
+        {
+            if (list->files[j].modified_time < list->files[j + 1].modified_time)
+            {
                 LogFileInfo temp = list->files[j];
                 list->files[j] = list->files[j + 1];
                 list->files[j + 1] = temp;
@@ -70,12 +81,15 @@ bool replay_get_log_files(LogFileList *list) {
 }
 
 // 리플레이 초기화
-bool replay_init(ReplayState *replay, const char *log_filename) {
-    if (!replay || !log_filename) return false;
+bool replay_init(ReplayState *replay, const char *log_filename)
+{
+    if (!replay || !log_filename)
+        return false;
 
     memset(replay, 0, sizeof(ReplayState));
 
-    if (!logger_load_from_file(&replay->logger, log_filename)) {
+    if (!logger_load_from_file(&replay->logger, log_filename))
+    {
         return false;
     }
 
@@ -89,22 +103,28 @@ bool replay_init(ReplayState *replay, const char *log_filename) {
 }
 
 // 리플레이 정리
-void replay_cleanup(ReplayState *replay) {
-    if (!replay) return;
+void replay_cleanup(ReplayState *replay)
+{
+    if (!replay)
+        return;
     // 추가 정리 작업이 필요하면 여기에
 }
 
 // 다음 수 재생
-bool replay_next_move(ReplayState *replay, Board *board) {
-    if (!replay || !board) return false;
+bool replay_next_move(ReplayState *replay, Board *board)
+{
+    if (!replay || !board)
+        return false;
 
-    if (replay->current_move >= replay->total_moves) {
-        return false;  // 더 이상 수가 없음
+    if (replay->current_move >= replay->total_moves)
+    {
+        return false; // 더 이상 수가 없음
     }
 
     const LogEntry *entry = &replay->logger.entries[replay->current_move];
 
-    if (board_place_stone(board, entry->row, entry->col, entry->player)) {
+    if (board_place_stone(board, entry->row, entry->col, entry->player))
+    {
         replay->current_move++;
         return true;
     }
@@ -113,11 +133,14 @@ bool replay_next_move(ReplayState *replay, Board *board) {
 }
 
 // 이전 수로 되돌리기
-bool replay_prev_move(ReplayState *replay, Board *board) {
-    if (!replay || !board) return false;
+bool replay_prev_move(ReplayState *replay, Board *board)
+{
+    if (!replay || !board)
+        return false;
 
-    if (replay->current_move <= 0) {
-        return false;  // 더 이상 되돌릴 수 없음
+    if (replay->current_move <= 0)
+    {
+        return false; // 더 이상 되돌릴 수 없음
     }
 
     // 보드를 초기화하고 현재 수 -1까지 다시 재생
@@ -126,7 +149,8 @@ bool replay_prev_move(ReplayState *replay, Board *board) {
     int target_move = replay->current_move - 1;
     replay->current_move = 0;
 
-    for (int i = 0; i < target_move; i++) {
+    for (int i = 0; i < target_move; i++)
+    {
         const LogEntry *entry = &replay->logger.entries[i];
         board_place_stone(board, entry->row, entry->col, entry->player);
         replay->current_move++;
@@ -136,7 +160,8 @@ bool replay_prev_move(ReplayState *replay, Board *board) {
 }
 
 // 리플레이 UI 렌더링
-static void replay_render(UIManager *ui_mgr, const Board *board, const ReplayState *replay) {
+static void replay_render(UIManager *ui_mgr, const Board *board, const ReplayState *replay)
+{
     // 보드 렌더링
     board_ui_render(ui_mgr->board_win, board, NULL);
 
@@ -151,21 +176,25 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
 
     // 진행률 바
     int progress_width = 30;
-    int filled = (replay->total_moves > 0) ?
-                 (replay->current_move * progress_width / replay->total_moves) : 0;
+    int filled = (replay->total_moves > 0) ? (replay->current_move * progress_width / replay->total_moves) : 0;
 
     mvwprintw(ui_mgr->info_win, 6, 2, "Progress: [");
-    for (int i = 0; i < progress_width; i++) {
-        if (i < filled) {
+    for (int i = 0; i < progress_width; i++)
+    {
+        if (i < filled)
+        {
             waddch(ui_mgr->info_win, '=');
-        } else {
+        }
+        else
+        {
             waddch(ui_mgr->info_win, '-');
         }
     }
     wprintw(ui_mgr->info_win, "]");
 
     // 현재 수 정보
-    if (replay->current_move > 0) {
+    if (replay->current_move > 0)
+    {
         const LogEntry *entry = &replay->logger.entries[replay->current_move - 1];
         const char *player_str = (entry->player == BLACK) ? "BLACK" : "WHITE";
         char col_char = 'A' + entry->col;
@@ -175,15 +204,17 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
     }
 
     // 재생 상태
-    const char *status = replay->playing ?
-                        (replay->paused ? "PAUSED" : "PLAYING") : "STOPPED";
+    const char *status = replay->playing ? (replay->paused ? "PAUSED" : "PLAYING") : "STOPPED";
     mvwprintw(ui_mgr->info_win, 10, 2, "Status: %s", status);
 
     // 속도
     const char *speed_str;
-    if (replay->speed == REPLAY_SPEED_SLOW) speed_str = "SLOW";
-    else if (replay->speed == REPLAY_SPEED_FAST) speed_str = "FAST";
-    else speed_str = "NORMAL";
+    if (replay->speed == REPLAY_SPEED_SLOW)
+        speed_str = "SLOW";
+    else if (replay->speed == REPLAY_SPEED_FAST)
+        speed_str = "FAST";
+    else
+        speed_str = "NORMAL";
     mvwprintw(ui_mgr->info_win, 11, 2, "Speed: %s", speed_str);
 
     // 조작 안내
@@ -201,9 +232,11 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
 }
 
 // 리플레이 실행
-int replay_run(const char *log_filename) {
+int replay_run(const char *log_filename)
+{
     ReplayState replay;
-    if (!replay_init(&replay, log_filename)) {
+    if (!replay_init(&replay, log_filename))
+    {
         printf("Failed to load replay file: %s\n", log_filename);
         return 1;
     }
@@ -220,23 +253,26 @@ int replay_run(const char *log_filename) {
     board_init(&board);
 
     keypad(ui_mgr.board_win, TRUE);
-    wtimeout(ui_mgr.board_win, 50);  // 50ms timeout for non-blocking input
+    wtimeout(ui_mgr.board_win, 50); // 50ms timeout for non-blocking input
 
     bool running = true;
     time_t last_auto_play = time(NULL);
 
-    while (running) {
+    while (running)
+    {
         // UI 렌더링
         replay_render(&ui_mgr, &board, &replay);
 
         // 자동 재생
-        if (replay.playing && !replay.paused) {
+        if (replay.playing && !replay.paused)
+        {
             struct timespec ts;
             ts.tv_sec = replay.speed / 1000000;
             ts.tv_nsec = (replay.speed % 1000000) * 1000;
             nanosleep(&ts, NULL);
 
-            if (!replay_next_move(&replay, &board)) {
+            if (!replay_next_move(&replay, &board))
+            {
                 // 끝까지 재생 완료
                 replay.playing = false;
             }
@@ -246,47 +282,52 @@ int replay_run(const char *log_filename) {
         InputEvent event = input_handler_get_event(&input_handler, ui_mgr.board_win);
         int ch = event.key_code;
         InputAction action = event.action;
-        switch (action) {
-            case INPUT_PLACE_STONE:  // Space - Play/Pause (A button on gamepad)
-                if (replay.playing) {
-                    replay.paused = !replay.paused;
-                } else {
-                    replay.playing = true;
-                    replay.paused = false;
-                }
-                break;
+        switch (action)
+        {
+        case INPUT_PLACE_STONE: // Space - Play/Pause (A button on gamepad)
+            if (replay.playing)
+            {
+                replay.paused = !replay.paused;
+            }
+            else
+            {
+                replay.playing = true;
+                replay.paused = false;
+            }
+            break;
 
-            case INPUT_MOVE_RIGHT:  // 다음 수
-                replay.playing = false;
-                replay_next_move(&replay, &board);
-                break;
+        case INPUT_MOVE_RIGHT: // 다음 수
+            replay.playing = false;
+            replay_next_move(&replay, &board);
+            break;
 
-            case INPUT_MOVE_LEFT:  // 이전 수
-                replay.playing = false;
-                replay_prev_move(&replay, &board);
-                break;
+        case INPUT_MOVE_LEFT: // 이전 수
+            replay.playing = false;
+            replay_prev_move(&replay, &board);
+            break;
 
-            case INPUT_QUIT:  // Quit
-                running = false;
-                break;
+        case INPUT_QUIT: // Quit
+            running = false;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
 
         // Legacy key handling (for speed controls)
-        switch (ch) {
-            case '1':  // Slow speed
-                replay.speed = REPLAY_SPEED_SLOW;
-                break;
+        switch (ch)
+        {
+        case '1': // Slow speed
+            replay.speed = REPLAY_SPEED_SLOW;
+            break;
 
-            case '2':  // Normal speed
-                replay.speed = REPLAY_SPEED_NORMAL;
-                break;
+        case '2': // Normal speed
+            replay.speed = REPLAY_SPEED_NORMAL;
+            break;
 
-            case '3':  // Fast speed
-                replay.speed = REPLAY_SPEED_FAST;
-                break;
+        case '3': // Fast speed
+            replay.speed = REPLAY_SPEED_FAST;
+            break;
         }
     }
 
@@ -299,7 +340,8 @@ int replay_run(const char *log_filename) {
 }
 
 // 파일 선택 후 리플레이 실행
-int replay_run_with_selection(void) {
+int replay_run_with_selection(void)
+{
     // Locale 설정
     setlocale(LC_ALL, "");
 
@@ -321,7 +363,8 @@ int replay_run_with_selection(void) {
     input_handler_init(&input_handler);
 
     ReplayListUI list_ui;
-    if (!replay_list_ui_init(&list_ui)) {
+    if (!replay_list_ui_init(&list_ui))
+    {
         mvwprintw(list_win, 15, 30, "No replay files found!");
         mvwprintw(list_win, 17, 25, "Press any key to exit...");
         wrefresh(list_win);
@@ -335,30 +378,32 @@ int replay_run_with_selection(void) {
     bool running = true;
     const char *selected_file = NULL;
 
-    while (running) {
+    while (running)
+    {
         replay_list_ui_render(list_win, &list_ui);
 
         InputEvent event = input_handler_get_event(&input_handler, list_win);
-        switch (event.action) {
-            case INPUT_MOVE_UP:
-                replay_list_ui_move_selection(&list_ui, -1);
-                break;
+        switch (event.action)
+        {
+        case INPUT_MOVE_UP:
+            replay_list_ui_move_selection(&list_ui, -1);
+            break;
 
-            case INPUT_MOVE_DOWN:
-                replay_list_ui_move_selection(&list_ui, 1);
-                break;
+        case INPUT_MOVE_DOWN:
+            replay_list_ui_move_selection(&list_ui, 1);
+            break;
 
-            case INPUT_PLACE_STONE:
-                selected_file = replay_list_ui_get_selected_file(&list_ui);
-                running = false;
-                break;
+        case INPUT_PLACE_STONE:
+            selected_file = replay_list_ui_get_selected_file(&list_ui);
+            running = false;
+            break;
 
-            case INPUT_QUIT:
-                running = false;
-                break;
+        case INPUT_QUIT:
+            running = false;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 
@@ -367,7 +412,8 @@ int replay_run_with_selection(void) {
     endwin();
 
     // 파일이 선택되었으면 리플레이 실행
-    if (selected_file) {
+    if (selected_file)
+    {
         return replay_run(selected_file);
     }
 

@@ -1,14 +1,15 @@
 #ifndef GAME_LOGGER_H
 #define GAME_LOGGER_H
 
-#include "board.h"
+#include "../core/board.h"
 #include <stdio.h>
 #include <time.h>
 
 #define MAX_LOG_ENTRIES 400
 #define LOG_FILENAME_SIZE 64
 
-typedef struct {
+typedef struct
+{
     Stone player;
     int row;
     int col;
@@ -16,7 +17,8 @@ typedef struct {
     int move_number;
 } LogEntry;
 
-typedef struct {
+typedef struct
+{
     LogEntry entries[MAX_LOG_ENTRIES];
     int entry_count;
     char filename[LOG_FILENAME_SIZE];

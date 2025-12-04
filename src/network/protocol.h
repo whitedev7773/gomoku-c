@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "../game/board.h"
+#include "../game/core/board.h"
 
 #define MAX_PLAYER_NAME 8
 #define PROTOCOL_VERSION 1

@@ -5,15 +5,15 @@
 #include <string.h>
 #include "utils/terminal_check.h"
 #include "utils/arg_parser.h"
-#include "ui/menu_ui.h"
-#include "ui/theme.h"
-#include "ui/theme_selector_ui.h"
-#include "ui/input_handler.h"
-#include "game/singleplay.h"
-#include "game/multiplayer.h"
-#include "game/spectator.h"
-#include "game/replay.h"
-#include "game/ai_engine.h"
+#include "ui/menu/menu_ui.h"
+#include "ui/core/theme.h"
+#include "ui/menu/theme_selector_ui.h"
+#include "ui/core/input_handler.h"
+#include "game/mode/singleplay.h"
+#include "game/mode/multiplayer.h"
+#include "game/mode/spectator.h"
+#include "game/feature/replay.h"
+#include "game/ai/ai_engine.h"
 #include "network/network.h"
 #include <ncurses.h>
 
@@ -170,11 +170,16 @@ int main(int argc, char *argv[])
 
             GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
 
-            if (difficulty_choice == '1') {
+            if (difficulty_choice == '1')
+            {
                 singleplay_run(AI_EASY, rule);
-            } else if (difficulty_choice == '2') {
+            }
+            else if (difficulty_choice == '2')
+            {
                 singleplay_run(AI_HARD, rule);
-            } else {
+            }
+            else
+            {
                 printf("Invalid choice. Returning to menu.\n");
             }
         }
@@ -189,9 +194,10 @@ int main(int argc, char *argv[])
 
             char mode_choice;
             scanf(" %c", &mode_choice);
-            getchar();  // 버퍼 비우기
+            getchar(); // 버퍼 비우기
 
-            if (mode_choice == '1') {
+            if (mode_choice == '1')
+            {
                 // 호스트: 규칙 선택
                 printf("\nSelect game rule:\n");
                 printf("  1. Standard (No forbidden moves)\n");
@@ -200,24 +206,29 @@ int main(int argc, char *argv[])
 
                 char rule_choice;
                 scanf(" %c", &rule_choice);
-                getchar();  // 버퍼 비우기
+                getchar(); // 버퍼 비우기
 
                 GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
                 multiplayer_run_host(DEFAULT_PORT, rule);
-            } else if (mode_choice == '2') {
+            }
+            else if (mode_choice == '2')
+            {
                 // 클라이언트: 규칙은 호스트로부터 받음
                 char server_ip[64];
                 int port;
                 printf("Enter server IP address: ");
                 scanf("%s", server_ip);
                 printf("Enter port (default 7773): ");
-                if (scanf("%d", &port) != 1) {
+                if (scanf("%d", &port) != 1)
+                {
                     port = DEFAULT_PORT;
                 }
-                getchar();  // 버퍼 비우기
+                getchar(); // 버퍼 비우기
 
-                multiplayer_run_client(server_ip, port, RULE_STANDARD);  // 규칙은 호스트로부터 받을 예정
-            } else {
+                multiplayer_run_client(server_ip, port, RULE_STANDARD); // 규칙은 호스트로부터 받을 예정
+            }
+            else
+            {
                 printf("Invalid choice. Returning to menu.\n");
             }
         }
@@ -231,15 +242,17 @@ int main(int argc, char *argv[])
             printf("Enter server IP address: ");
             scanf("%s", server_ip);
             printf("Enter port (default 7773): ");
-            if (scanf("%d", &port) != 1) {
+            if (scanf("%d", &port) != 1)
+            {
                 port = DEFAULT_PORT;
             }
-            getchar();  // 버퍼 비우기
+            getchar(); // 버퍼 비우기
 
             printf("Enter your name (max 8 chars): ");
             fgets(spectator_name, sizeof(spectator_name), stdin);
             spectator_name[strcspn(spectator_name, "\n")] = '\0';
-            if (strlen(spectator_name) == 0) {
+            if (strlen(spectator_name) == 0)
+            {
                 strcpy(spectator_name, "Viewer");
             }
 
@@ -258,19 +271,19 @@ int main(int argc, char *argv[])
     }
 
     case MODE_SINGLEPLAY_EASY:
-        singleplay_run(AI_EASY, RULE_RENJU);  // CLI 모드는 기본 Renju Rule
+        singleplay_run(AI_EASY, RULE_RENJU); // CLI 모드는 기본 Renju Rule
         break;
 
     case MODE_SINGLEPLAY_HARD:
-        singleplay_run(AI_HARD, RULE_RENJU);  // CLI 모드는 기본 Renju Rule
+        singleplay_run(AI_HARD, RULE_RENJU); // CLI 모드는 기본 Renju Rule
         break;
 
     case MODE_MULTIPLAY_HOST:
-        multiplayer_run_host(args.port > 0 ? args.port : DEFAULT_PORT, RULE_RENJU);  // CLI 모드는 기본 Renju Rule
+        multiplayer_run_host(args.port > 0 ? args.port : DEFAULT_PORT, RULE_RENJU); // CLI 모드는 기본 Renju Rule
         break;
 
     case MODE_MULTIPLAY_CLIENT:
-        multiplayer_run_client(args.ip_address, args.port, RULE_STANDARD);  // 규칙은 호스트로부터 받음
+        multiplayer_run_client(args.ip_address, args.port, RULE_STANDARD); // 규칙은 호스트로부터 받음
         break;
 
     case MODE_SPECTATOR:

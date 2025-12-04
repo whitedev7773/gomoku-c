@@ -1,16 +1,20 @@
 #include "theme_selector_ui.h"
-#include "input_handler.h"
+#include "../core/input_handler.h"
 #include <string.h>
 
-void theme_selector_init(ThemeSelectorUI *selector) {
-    if (!selector) return;
+void theme_selector_init(ThemeSelectorUI *selector)
+{
+    if (!selector)
+        return;
 
     selector->selected_theme = theme_get_current();
     selector->theme_count = theme_get_count();
 }
 
-void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector) {
-    if (!win || !selector) return;
+void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector)
+{
+    if (!win || !selector)
+        return;
 
     wclear(win);
 
@@ -35,7 +39,8 @@ void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector) {
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y, box_x + box_w - 1, ACS_URCORNER);
 
-    for (int j = 1; j < box_h - 1; j++) {
+    for (int j = 1; j < box_h - 1; j++)
+    {
         mvwaddch(win, box_y + j, box_x, ACS_VLINE);
         mvwaddch(win, box_y + j, box_x + box_w - 1, ACS_VLINE);
     }
@@ -50,14 +55,18 @@ void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector) {
     int list_y = box_y + 2;
     int list_x = box_x + 5;
 
-    for (int i = 0; i < selector->theme_count; i++) {
+    for (int i = 0; i < selector->theme_count; i++)
+    {
         wmove(win, list_y + i, list_x);
 
-        if (i == selector->selected_theme) {
+        if (i == selector->selected_theme)
+        {
             wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
             wprintw(win, " ▶  %-30s  ", theme_get_name(i));
             wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
-        } else {
+        }
+        else
+        {
             wprintw(win, "    %-30s  ", theme_get_name(i));
         }
     }
@@ -102,14 +111,19 @@ void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector) {
     wrefresh(win);
 }
 
-void theme_selector_move(ThemeSelectorUI *selector, int direction) {
-    if (!selector) return;
+void theme_selector_move(ThemeSelectorUI *selector, int direction)
+{
+    if (!selector)
+        return;
 
     selector->selected_theme += direction;
 
-    if (selector->selected_theme < 0) {
+    if (selector->selected_theme < 0)
+    {
         selector->selected_theme = selector->theme_count - 1;
-    } else if (selector->selected_theme >= selector->theme_count) {
+    }
+    else if (selector->selected_theme >= selector->theme_count)
+    {
         selector->selected_theme = 0;
     }
 
@@ -117,25 +131,30 @@ void theme_selector_move(ThemeSelectorUI *selector, int direction) {
     theme_set(selector->selected_theme);
 }
 
-ThemeType theme_selector_get_selected(const ThemeSelectorUI *selector) {
-    if (!selector) return THEME_WHITE;
+ThemeType theme_selector_get_selected(const ThemeSelectorUI *selector)
+{
+    if (!selector)
+        return THEME_WHITE;
     return selector->selected_theme;
 }
 
-ThemeType theme_selector_run(void) {
+ThemeType theme_selector_run(void)
+{
     // ncurses 초기화
     initscr();
     cbreak();
     noecho();
     curs_set(0);
 
-    if (has_colors()) {
+    if (has_colors())
+    {
         start_color();
     }
 
     // 현재 테마로 초기화
     ThemeType current_theme = theme_get_current();
-    if (!g_theme_manager.initialized) {
+    if (!g_theme_manager.initialized)
+    {
         theme_init(current_theme);
     }
 
@@ -153,40 +172,42 @@ ThemeType theme_selector_run(void) {
     bool running = true;
     ThemeType selected_theme = current_theme;
 
-    while (running) {
+    while (running)
+    {
         theme_selector_render(selector_win, &selector);
 
         InputEvent event = input_handler_get_event(&input_handler, selector_win);
 
-        switch (event.action) {
-            case INPUT_MOVE_UP:
-                theme_selector_move(&selector, -1);
-                break;
+        switch (event.action)
+        {
+        case INPUT_MOVE_UP:
+            theme_selector_move(&selector, -1);
+            break;
 
-            case INPUT_MOVE_DOWN:
-                theme_selector_move(&selector, 1);
-                break;
+        case INPUT_MOVE_DOWN:
+            theme_selector_move(&selector, 1);
+            break;
 
-            case INPUT_PLACE_STONE:
-                // 테마 적용
-                selected_theme = theme_selector_get_selected(&selector);
-                theme_set(selected_theme);
+        case INPUT_PLACE_STONE:
+            // 테마 적용
+            selected_theme = theme_selector_get_selected(&selector);
+            theme_set(selected_theme);
 
-                // 설정 파일에 저장
-                theme_save_to_config();
+            // 설정 파일에 저장
+            theme_save_to_config();
 
-                running = false;
-                break;
+            running = false;
+            break;
 
-            case INPUT_QUIT:
-                // 이전 테마로 복원
-                theme_set(current_theme);
-                selected_theme = current_theme;
-                running = false;
-                break;
+        case INPUT_QUIT:
+            // 이전 테마로 복원
+            theme_set(current_theme);
+            selected_theme = current_theme;
+            running = false;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 

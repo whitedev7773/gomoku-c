@@ -1,12 +1,13 @@
 #ifndef REPLAY_LIST_UI_H
 #define REPLAY_LIST_UI_H
 
-#include "../game/replay.h"
+#include "../../game/feature/replay.h"
 #include <ncurses.h>
 #include <stdbool.h>
 
 // 리플레이 목록 UI 상태
-typedef struct {
+typedef struct
+{
     LogFileList file_list;
     int selected_index;
     int scroll_offset;
@@ -22,6 +23,6 @@ void replay_list_ui_render(WINDOW *win, const ReplayListUI *ui);
 void replay_list_ui_move_selection(ReplayListUI *ui, int delta);
 
 // 선택된 파일 가져오기
-const char* replay_list_ui_get_selected_file(const ReplayListUI *ui);
+const char *replay_list_ui_get_selected_file(const ReplayListUI *ui);
 
 #endif // REPLAY_LIST_UI_H

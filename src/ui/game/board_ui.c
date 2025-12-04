@@ -1,5 +1,5 @@
 #include "board_ui.h"
-#include "theme.h"
+#include "../core/theme.h"
 #include <string.h>
 
 // Column labels (A-T, excluding I)

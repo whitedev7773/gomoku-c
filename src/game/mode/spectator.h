@@ -1,8 +1,8 @@
 #ifndef SPECTATOR_H
 #define SPECTATOR_H
 
-#include "../network/network.h"
-#include "board.h"
+#include "../../network/network.h"
+#include "../core/board.h"
 
 // 관전자 모드로 게임 관전
 // server_ip: 서버 IP 주소

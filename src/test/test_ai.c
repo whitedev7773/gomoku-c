@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "../game/board.h"
-#include "../game/ai_engine.h"
-#include "../game/game_logic.h"
+#include "../game/core/board.h"
+#include "../game/ai/ai_engine.h"
+#include "../game/core/game_logic.h"
 
-void test_ai_initialization() {
+void test_ai_initialization()
+{
     printf("Testing AI initialization...\n");
 
     AIEngine ai_easy, ai_hard;
@@ -20,7 +21,8 @@ void test_ai_initialization() {
     printf("✓ AI initialization test passed\n");
 }
 
-void test_ai_first_move() {
+void test_ai_first_move()
+{
     printf("Testing AI first move (should be center)...\n");
 
     Board board;
@@ -39,7 +41,8 @@ void test_ai_first_move() {
     printf("✓ AI first move test passed (center: %d, %d)\n", move.row, move.col);
 }
 
-void test_ai_winning_move() {
+void test_ai_winning_move()
+{
     printf("Testing AI winning move detection...\n");
 
     Board board;
@@ -66,7 +69,8 @@ void test_ai_winning_move() {
     printf("✓ AI winning move test passed (move: %d, %d)\n", move.row, move.col);
 }
 
-void test_ai_blocking_move() {
+void test_ai_blocking_move()
+{
     printf("Testing AI blocking opponent's winning move...\n");
 
     Board board;
@@ -92,7 +96,8 @@ void test_ai_blocking_move() {
     printf("✓ AI blocking move test passed (block at: %d, %d)\n", move.row, move.col);
 }
 
-void test_ai_hard_vs_easy() {
+void test_ai_hard_vs_easy()
+{
     printf("Testing AI Hard vs AI Easy...\n");
 
     Board board;
@@ -107,13 +112,17 @@ void test_ai_hard_vs_easy() {
     int move_count = 0;
     const int MAX_MOVES = 20;
 
-    while (move_count < MAX_MOVES) {
+    while (move_count < MAX_MOVES)
+    {
         Position move;
         bool result;
 
-        if (current_player == BLACK) {
+        if (current_player == BLACK)
+        {
             result = ai_get_next_move(&ai_easy, &board, &move);
-        } else {
+        }
+        else
+        {
             result = ai_get_next_move(&ai_hard, &board, &move);
         }
 
@@ -125,13 +134,19 @@ void test_ai_hard_vs_easy() {
 
         // 승리 체크
         GameResult game_result = game_check_winner(&board);
-        if (game_result != GAME_ONGOING) {
+        if (game_result != GAME_ONGOING)
+        {
             printf("  Game ended after %d moves: ", move_count + 1);
-            if (game_result == GAME_BLACK_WIN) {
+            if (game_result == GAME_BLACK_WIN)
+            {
                 printf("BLACK (Easy) wins\n");
-            } else if (game_result == GAME_WHITE_WIN) {
+            }
+            else if (game_result == GAME_WHITE_WIN)
+            {
                 printf("WHITE (Hard) wins\n");
-            } else {
+            }
+            else
+            {
                 printf("Draw\n");
             }
             break;
@@ -144,7 +159,8 @@ void test_ai_hard_vs_easy() {
     printf("✓ AI vs AI test passed (%d moves played)\n", move_count);
 }
 
-int main() {
+int main()
+{
     printf("=== AI Engine Tests ===\n\n");
 
     test_ai_initialization();

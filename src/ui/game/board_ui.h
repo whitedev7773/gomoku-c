@@ -1,8 +1,8 @@
 #ifndef BOARD_UI_H
 #define BOARD_UI_H
 
-#include "../game/board.h"
-#include "ui_manager.h"
+#include "../../game/core/board.h"
+#include "../core/ui_manager.h"
 #include <ncurses.h>
 
 typedef struct

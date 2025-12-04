@@ -1,8 +1,8 @@
 #define _XOPEN_SOURCE_EXTENDED
 
 #include "ingame_border.h"
-#include "ui_manager.h"
-#include "theme.h"
+#include "../core/ui_manager.h"
+#include "../core/theme.h"
 #include <wchar.h>
 #include <ncurses.h>
 #include <string.h>

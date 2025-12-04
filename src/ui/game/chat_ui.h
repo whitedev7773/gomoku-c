@@ -4,7 +4,7 @@
 #include <ncurses.h>
 #include <stdbool.h>
 #include <time.h>
-#include "ui_manager.h"
+#include "../core/ui_manager.h"
 
 #define MAX_CHAT_MESSAGES 10
 #define MAX_CHAT_MESSAGE_LENGTH 15

@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <locale.h>
 #include <ncurses.h>
-#include "../ui/ingame_border.h"
-#include "../ui/theme.h"
+#include "../ui/game/ingame_border.h"
+#include "../ui/core/theme.h"
 
 // 테스트: ingame_border.c 모듈
 // 인게임 레이아웃 테두리가 올바르게 그려지는지 확인

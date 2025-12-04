@@ -1,20 +1,20 @@
 #ifndef MP_COMMON_H
 #define MP_COMMON_H
 
-#include "board.h"
-#include "game_logic.h"
-#include "turn_manager.h"
-#include "game_logger.h"
-#include "command.h"
-#include "../ui/ui_manager.h"
-#include "../ui/board_ui.h"
-#include "../ui/game_info_ui.h"
-#include "../ui/log_ui.h"
-#include "../ui/chat_ui.h"
-#include "../ui/modal_ui.h"
-#include "../ui/input_handler.h"
-#include "../network/network.h"
-#include "../network/protocol.h"
+#include "../core/board.h"
+#include "../core/game_logic.h"
+#include "../core/turn_manager.h"
+#include "../feature/game_logger.h"
+#include "../feature/command.h"
+#include "../../ui/core/ui_manager.h"
+#include "../../ui/game/board_ui.h"
+#include "../../ui/game/game_info_ui.h"
+#include "../../ui/game/log_ui.h"
+#include "../../ui/game/chat_ui.h"
+#include "../../ui/menu/modal_ui.h"
+#include "../../ui/core/input_handler.h"
+#include "../../network/network.h"
+#include "../../network/protocol.h"
 
 // 게임 결과 정의 (관전자 브로드캐스트용)
 #define RESULT_BLACK_WIN 0
