@@ -1,379 +1,210 @@
+#define _XOPEN_SOURCE_EXTENDED
+
 #include "ingame_border.h"
 #include "ui_manager.h"
 #include "theme.h"
+#include <wchar.h>
+#include <ncurses.h>
+#include <string.h>
+#include <stdlib.h>
 
 // 인게임 전체 Border를 stdscr에 그림
 // 레이아웃 참조: example-ui/ingame.txt
-//
-// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┯━━━━━━━━━━━━━━┯━━━━━━━━━━━━┯━━━━━━━━━━━┓
-// ┃     (Board Area - 51 cols)                    ┃ (Info Area - 49 cols)                          ┃
-// ┃                                               ┣━━━━━━━━━━┷━━━━━━━━━━━━━━┷━━━━━━━━━━━━┷━━━━━━━━━━━┫
-// ┃                                               ┃                                                  ┃
-// ┃                                               ┃  (Chat Area - 21 rows)                          ┃
-// ┃                                               ┃                                                  ┃
-// ┃                                               ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┯━━━━━━━━━━┫
-// ┃                                               ┃ (Chat Input Area - 3 rows)           │          ┃
-// ┣━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━┯━━━━━━━━━━┷━━━━━━━━━━┫
-// ┃  (Last Move)    ┃ (Now Turn)  ┃  (Timer/Progress Bar)   │ (Play Time)                           ┃
-// ┠─────────────────╂─────────────╊━━━━━━━━━━━━━━━━━━━━━━━━━━┷━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-// ┃  (Last Move     ┃ (Turn       ┃ (System Log Area)                                                ┃
-// ┃   Display)      ┃  Display)   ┃                                                                  ┃
-// ┗━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+// 방향 비트 정의
+#define UP 1    // 0001
+#define DOWN 2  // 0010
+#define LEFT 4  // 0100
+#define RIGHT 8 // 1000
+
+// 문자에 해당하는 비트마스크를 반환하는 함수
+int get_mask_from_char(const char *str)
+{
+    // 3바이트 UTF-8 문자열 비교 (환경에 따라 수정 가능)
+    // 넓은 문자(wchar_t)를 사용하는 것이 더 정확하지만,
+    // 여기서는 사용자가 제공한 문자열 형식을 따릅니다.
+
+    // 코너
+    if (strcmp(str, "┏") == 0)
+        return DOWN | RIGHT;
+    if (strcmp(str, "┓") == 0)
+        return DOWN | LEFT;
+    if (strcmp(str, "┗") == 0)
+        return UP | RIGHT;
+    if (strcmp(str, "┛") == 0)
+        return UP | LEFT;
+
+    // 직선
+    if (strcmp(str, "━") == 0)
+        return LEFT | RIGHT;
+    if (strcmp(str, "┃") == 0)
+        return UP | DOWN;
+
+    // T자형 및 십자
+    if (strcmp(str, "┣") == 0)
+        return UP | DOWN | RIGHT;
+    if (strcmp(str, "┫") == 0)
+        return UP | DOWN | LEFT;
+    if (strcmp(str, "┳") == 0)
+        return LEFT | RIGHT | DOWN;
+    if (strcmp(str, "┻") == 0)
+        return LEFT | RIGHT | UP;
+    if (strcmp(str, "╋") == 0)
+        return UP | DOWN | LEFT | RIGHT;
+
+    return 0; // 박스 문자가 아닌 경우
+}
+
+// 비트마스크에 해당하는 문자를 반환하는 함수
+const char *get_char_from_mask(int mask)
+{
+    switch (mask)
+    {
+    case LEFT | RIGHT:
+        return "━";
+    case UP | DOWN:
+        return "┃";
+    case DOWN | RIGHT:
+        return "┏";
+    case DOWN | LEFT:
+        return "┓";
+    case UP | RIGHT:
+        return "┗";
+    case UP | LEFT:
+        return "┛";
+
+    case UP | DOWN | RIGHT:
+        return "┣";
+    case UP | DOWN | LEFT:
+        return "┫";
+    case LEFT | RIGHT | DOWN:
+        return "┳";
+    case LEFT | RIGHT | UP:
+        return "┻";
+
+    case UP | DOWN | LEFT | RIGHT:
+        return "╋";
+
+    default:
+        return " "; // 매칭되지 않는 경우
+    }
+}
+
+void smart_box_draw(WINDOW *win, int y, int x, const char *new_char_str)
+{
+    cchar_t existing_cell;
+    char existing_str[10] = {0};
+
+    // 1. 현재 위치의 문자를 읽어옴
+    if (mvwin_wch(win, y, x, &existing_cell) != OK)
+    {
+        // 읽기 실패 시 그냥 덮어쓰기
+        mvwprintw(win, y, x, "%s", new_char_str);
+        return;
+    }
+
+    // cchar_t에서 문자열 추출 (ncursesw 사용 시)
+    wchar_t wch[2];
+    attr_t attrs;
+    short color_pair;
+    getcchar(&existing_cell, wch, &attrs, &color_pair, NULL);
+    wcstombs(existing_str, wch, sizeof(existing_str));
+
+    // 2. 마스크 계산 (기존 문자 + 새 문자)
+    int old_mask = get_mask_from_char(existing_str);
+    int new_mask = get_mask_from_char(new_char_str);
+
+    // 3. 두 마스크를 합침 (OR 연산)
+    // 예: "━"(좌우) 위에 "┃"(상하)를 그리면 -> 좌우상하("╋")가 됨
+    int final_mask = old_mask | new_mask;
+
+    // 4. 합쳐진 마스크에 해당하는 문자로 출력
+    // 만약 기존에 아무것도 없었다면(0), 새 문자 그대로 출력됨
+    if (final_mask > 0)
+    {
+        mvwprintw(win, y, x, "%s", get_char_from_mask(final_mask));
+    }
+    else
+    {
+        mvwprintw(win, y, x, "%s", new_char_str);
+    }
+}
 
 // 박스 먼저 그리기 (박스를 그리고 세부 조정하는 방향으로)
 void ingame_draw_box(const int start_x, const int start_y,
                      const int width, const int height)
 {
-    // Bold 속성으로 테두리 그리기
-    attron(A_BOLD);
+    wattron(stdscr, A_BOLD);
 
-    // Top border
-    mvaddch(start_y, start_x, ACS_ULCORNER);
+    // 상단 (Top)
+    smart_box_draw(stdscr, start_y, start_x, "┏");
     for (int i = 1; i < width - 1; i++)
-        addch(ACS_HLINE);
-    addch(ACS_URCORNER);
+    {
+        smart_box_draw(stdscr, start_y, start_x + i, "━");
+    }
+    smart_box_draw(stdscr, start_y, start_x + width - 1, "┓");
 
-    // Side borders
+    // 중단 (Middle)
     for (int j = 1; j < height - 1; j++)
     {
-        mvaddch(start_y + j, start_x, ACS_VLINE);
-        mvaddch(start_y + j, start_x + width - 1, ACS_VLINE);
+        smart_box_draw(stdscr, start_y + j, start_x, "┃");
+        smart_box_draw(stdscr, start_y + j, start_x + width - 1, "┃");
     }
 
-    // Bottom border
-    mvaddch(start_y + height - 1, start_x, ACS_LLCORNER);
+    // 하단 (Bottom)
+    smart_box_draw(stdscr, start_y + height - 1, start_x, "┗");
     for (int i = 1; i < width - 1; i++)
-        addch(ACS_HLINE);
-    addch(ACS_LRCORNER);
+    {
+        smart_box_draw(stdscr, start_y + height - 1, start_x + i, "━");
+    }
+    smart_box_draw(stdscr, start_y + height - 1, start_x + width - 1, "┛");
 
-    // Bold 속성 해제
-    attroff(A_BOLD);
+    wattroff(stdscr, A_BOLD);
 }
 
+// 100*30
 void ingame_border_draw(void)
 {
-    // Bold 속성으로 테두리 그리기
-    attron(A_BOLD);
-
-    // ========================================
-    // Row 0: 최상단 테두리
-    // ========================================
-    mvaddstr(0, 0, "┏");
-    for (int i = 1; i < 50; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 51; i < 61; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 62; i < 76; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 77; i < 88; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 89; i < 99; i++)
-        addstr("━");
-    addstr("┓");
-
-    // ========================================
-    // Row 1: Info 영역 상단 (플레이어 이름, Viewers, PING, PORT)
-    // ========================================
-    mvaddstr(1, 0, "┃");
-    mvaddstr(1, 50, "┃");
-    mvaddstr(1, 99, "┃");
-
-    // ========================================
-    // Row 2: Board/Chat 구분선
-    // ========================================
-    mvaddstr(2, 0, "┃");
-    mvaddstr(2, 50, "┣");
-    for (int i = 51; i < 61; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 62; i < 76; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 77; i < 88; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 89; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // ========================================
-    // Row 3-22: Board 영역 왼쪽 테두리 + Chat 영역 오른쪽 테두리
-    // ========================================
-    for (int row = 3; row <= 22; row++)
-    {
-        mvaddstr(row, 0, "┃");
-        mvaddstr(row, 50, "┃");
-        mvaddstr(row, 99, "┃");
-    }
-
-    // ========================================
-    // Row 23: Chat Input 구분선
-    // ========================================
-    mvaddstr(23, 0, "┃");
-    mvaddstr(23, 50, "┣");
-    for (int i = 51; i < 91; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 92; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // ========================================
-    // Row 24: Chat Input 영역
-    // ========================================
-    mvaddstr(24, 0, "┃");
-    mvaddstr(24, 50, "┃");
-    mvaddstr(24, 91, "│");
-    mvaddstr(24, 99, "┃");
-
-    // ========================================
-    // Row 25: Bottom 영역 상단 구분선
-    // ========================================
-    mvaddstr(25, 0, "┣");
-    for (int i = 1; i < 18; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 19; i < 32; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 33; i < 50; i++)
-        addstr("━");
-    addstr("┻");
-    for (int i = 51; i < 81; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 82; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // ========================================
-    // Row 26: Bottom 영역 (Last Move, Now Turn, Timer, Play Time)
-    // ========================================
-    mvaddstr(26, 0, "┃");
-    mvaddstr(26, 18, "┃");
-    mvaddstr(26, 32, "┃");
-    mvaddstr(26, 81, "│");
-    mvaddstr(26, 99, "┃");
-
-    // ========================================
-    // Row 27: Bottom 영역 중간 구분선
-    // ========================================
-    mvaddstr(27, 0, "┠");
-    for (int i = 1; i < 18; i++)
-        addstr("─");
-    addstr("╂");
-    for (int i = 19; i < 32; i++)
-        addstr("─");
-    addstr("╊");
-    for (int i = 33; i < 81; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 82; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // ========================================
-    // Row 28: Log 영역 (Last Move Display, Turn Display, System Log)
-    // ========================================
-    mvaddstr(28, 0, "┃");
-    mvaddstr(28, 18, "┃");
-    mvaddstr(28, 32, "┃");
-    mvaddstr(28, 99, "┃");
-
-    // ========================================
-    // Row 29: 최하단 테두리
-    // ========================================
-    mvaddstr(29, 0, "┗");
-    for (int i = 1; i < 18; i++)
-        addstr("━");
-    addstr("┻");
-    for (int i = 19; i < 32; i++)
-        addstr("━");
-    addstr("┻");
-    for (int i = 33; i < 99; i++)
-        addstr("━");
-    addstr("┛");
-
-    attroff(A_BOLD);
-
-    refresh();
+    // 여기에 전부 그리면 됨
+    ingame_border_redraw_board_area();  // 오목판이 표시될 공간
+    ingame_border_redraw_info_area();   // 상단에 게임 정보가 표시될 공간 (상대방 이름, N of Viewers, PING nnms, PORT nnnn)
+    ingame_border_redraw_chat_area();   // 우측 채팅 공간
+    ingame_border_redraw_bottom_area(); // 하단 게임 정보 공간 (이전에 둔 위치, 현재 차례(P1, P2 / ME, AI), Time Progress, Play Time, System Log)
 }
 
 // Board 영역 테두리만 재그리기
 void ingame_border_redraw_board_area(void)
 {
-    attron(A_BOLD);
-
-    // 왼쪽 세로 테두리
-    for (int row = 0; row <= 25; row++)
-    {
-        mvaddstr(row, 0, "┃");
-    }
-
-    // Row 0 상단
-    mvaddstr(0, 0, "┏");
-    for (int i = 1; i < 50; i++)
-        addstr("━");
-    addstr("┳");
-
-    // Row 25 하단 구분선
-    mvaddstr(25, 0, "┣");
-    for (int i = 1; i < 18; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 19; i < 32; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 33; i < 50; i++)
-        addstr("━");
-    addstr("┻");
-
-    attroff(A_BOLD);
-    refresh();
+    ingame_draw_box(0, 0, 49, 25); // 보드 영역
 }
 
-// Info 영역 테두리만 재그리기
+// 상단 Info 영역 테두리만 재그리기
 void ingame_border_redraw_info_area(void)
 {
-    attron(A_BOLD);
-
-    // Row 0 상단
-    mvaddstr(0, 50, "┳");
-    for (int i = 51; i < 61; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 62; i < 76; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 77; i < 88; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 89; i < 99; i++)
-        addstr("━");
-    addstr("┓");
-
-    // Row 1
-    mvaddstr(1, 50, "┃");
-    mvaddstr(1, 99, "┃");
-
-    // Row 2 구분선
-    mvaddstr(2, 50, "┣");
-    for (int i = 51; i < 61; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 62; i < 76; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 77; i < 88; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 89; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    attroff(A_BOLD);
-    refresh();
+    ingame_draw_box(48, 0, 12, 3); // 플레이어 이름
+    ingame_draw_box(59, 0, 16, 3); // N of Viewers
+    ingame_draw_box(74, 0, 14, 3); // PING
+    ingame_draw_box(87, 0, 13, 3); // PORT
 }
 
 // Chat 영역 테두리만 재그리기
 void ingame_border_redraw_chat_area(void)
 {
-    attron(A_BOLD);
-
-    // Chat 영역 세로 테두리 (Row 3-22)
-    for (int row = 3; row <= 22; row++)
-    {
-        mvaddstr(row, 50, "┃");
-        mvaddstr(row, 99, "┃");
-    }
-
-    // Chat Input 구분선 (Row 23)
-    mvaddstr(23, 50, "┣");
-    for (int i = 51; i < 91; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 92; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // Chat Input 영역 (Row 24)
-    mvaddstr(24, 50, "┃");
-    mvaddstr(24, 91, "│");
-    mvaddstr(24, 99, "┃");
-
-    attroff(A_BOLD);
-    refresh();
+    ingame_draw_box(48, 2, 52, 21); // CHAT AREA
+    ingame_draw_box(48, 22, 52, 3); // INPUT AREA
+    ingame_draw_box(92, 22, 8, 3);  // SEND
 }
 
 // Bottom 영역 테두리만 재그리기
 void ingame_border_redraw_bottom_area(void)
 {
-    attron(A_BOLD);
-
-    // Row 25 상단 구분선
-    mvaddstr(25, 0, "┣");
-    for (int i = 1; i < 18; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 19; i < 32; i++)
-        addstr("━");
-    addstr("┳");
-    for (int i = 33; i < 50; i++)
-        addstr("━");
-    addstr("┻");
-    for (int i = 51; i < 81; i++)
-        addstr("━");
-    addstr("┯");
-    for (int i = 82; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // Row 26
-    mvaddstr(26, 0, "┃");
-    mvaddstr(26, 18, "┃");
-    mvaddstr(26, 32, "┃");
-    mvaddstr(26, 81, "│");
-    mvaddstr(26, 99, "┃");
-
-    // Row 27 중간 구분선
-    mvaddstr(27, 0, "┠");
-    for (int i = 1; i < 18; i++)
-        addstr("─");
-    addstr("╂");
-    for (int i = 19; i < 32; i++)
-        addstr("─");
-    addstr("╊");
-    for (int i = 33; i < 81; i++)
-        addstr("━");
-    addstr("┷");
-    for (int i = 82; i < 99; i++)
-        addstr("━");
-    addstr("┫");
-
-    // Row 28
-    mvaddstr(28, 0, "┃");
-    mvaddstr(28, 18, "┃");
-    mvaddstr(28, 32, "┃");
-    mvaddstr(28, 99, "┃");
-
-    // Row 29 최하단 테두리
-    mvaddstr(29, 0, "┗");
-    for (int i = 1; i < 18; i++)
-        addstr("━");
-    addstr("┻");
-    for (int i = 19; i < 32; i++)
-        addstr("━");
-    addstr("┻");
-    for (int i = 33; i < 99; i++)
-        addstr("━");
-    addstr("┛");
-
-    attroff(A_BOLD);
-    refresh();
+    ingame_draw_box(0, 24, 19, 3);  // LAST MOVE - TOP
+    ingame_draw_box(0, 24, 19, 7);  // LAST MOVE - BOTTOM
+    ingame_draw_box(18, 24, 15, 3); // NOW TURN - TOP
+    ingame_draw_box(18, 24, 15, 7); // NOW TURN - BOTTOM
+    ingame_draw_box(32, 24, 48, 3); // TIMER
+    ingame_draw_box(79, 24, 21, 3); // PLAY TIME
+    ingame_draw_box(32, 26, 68, 5); // SYSTEM LOG
 }
 
 // 전체 Border 재그리기

@@ -4,35 +4,40 @@
 #include <ncurses.h>
 #include <stdbool.h>
 
-// Window dimensions based on 100x30 layout
+// Window dimensions based on 100x30 layout (ingame_border.c 기준)
 #define UI_MIN_WIDTH 100
 #define UI_MIN_HEIGHT 30
 
-// Layout constants
-#define BOARD_WINDOW_WIDTH 51
-#define BOARD_WINDOW_HEIGHT 26
-#define BOARD_WINDOW_X 0
-#define BOARD_WINDOW_Y 0
+// Layout constants - ingame_border.c 레이아웃과 일치하도록 수정
+// Board 영역: (0,0) ~ (48,24) - 테두리 내부
+#define BOARD_WINDOW_WIDTH 47
+#define BOARD_WINDOW_HEIGHT 23
+#define BOARD_WINDOW_X 1
+#define BOARD_WINDOW_Y 1
 
-#define INFO_WINDOW_WIDTH 49
-#define INFO_WINDOW_HEIGHT 2
-#define INFO_WINDOW_X 51
-#define INFO_WINDOW_Y 0
+// Info 영역 (상단 우측): (49,1) - 테두리 내부
+#define INFO_WINDOW_WIDTH 50
+#define INFO_WINDOW_HEIGHT 1
+#define INFO_WINDOW_X 49
+#define INFO_WINDOW_Y 1
 
-#define CHAT_WINDOW_WIDTH 49
-#define CHAT_WINDOW_HEIGHT 21
-#define CHAT_WINDOW_X 51
-#define CHAT_WINDOW_Y 2
+// Chat 영역: (49,3) ~ (98,21) - 테두리 내부
+#define CHAT_WINDOW_WIDTH 50
+#define CHAT_WINDOW_HEIGHT 18
+#define CHAT_WINDOW_X 49
+#define CHAT_WINDOW_Y 3
 
-#define CHAT_INPUT_WIDTH 49
-#define CHAT_INPUT_HEIGHT 3
-#define CHAT_INPUT_X 51
+// Chat Input 영역: (49,23) - 테두리 내부
+#define CHAT_INPUT_WIDTH 50
+#define CHAT_INPUT_HEIGHT 1
+#define CHAT_INPUT_X 49
 #define CHAT_INPUT_Y 23
 
-#define BOTTOM_WINDOW_WIDTH 100
-#define BOTTOM_WINDOW_HEIGHT 4
-#define BOTTOM_WINDOW_X 0
-#define BOTTOM_WINDOW_Y 26
+// Bottom 영역: (1,25) ~ (98,29) - 테두리 내부
+#define BOTTOM_WINDOW_WIDTH 98
+#define BOTTOM_WINDOW_HEIGHT 5
+#define BOTTOM_WINDOW_X 1
+#define BOTTOM_WINDOW_Y 25
 
 // ============================================
 // Dirty Flag 기반 선택적 렌더링 시스템
