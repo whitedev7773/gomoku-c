@@ -125,37 +125,15 @@ void game_info_ui_draw_buttons(WINDOW *win)
     mvwprintw(win, 3, 88, "            ");
 }
 
-// 초기 렌더링 (테두리만 - 한 번만 호출)
+// 초기 렌더링 (테두리는 ingame_border.c가 담당)
 void game_info_ui_init_bottom(WINDOW *win)
 {
     if (!win)
         return;
 
     wclear(win);
-
-    // Draw fixed size border
-    wattron(win, A_BOLD);
-    mvwaddch(win, 0, 0, ACS_ULCORNER);
-    for (int i = 1; i < 99; i++)
-    {
-        mvwaddch(win, 0, i, ACS_HLINE);
-    }
-    mvwaddch(win, 0, 99, ACS_URCORNER);
-
-    for (int j = 1; j < 3; j++)
-    {
-        mvwaddch(win, j, 0, ACS_VLINE);
-        mvwaddch(win, j, 99, ACS_VLINE);
-    }
-
-    mvwaddch(win, 3, 0, ACS_LLCORNER);
-    for (int i = 1; i < 99; i++)
-    {
-        mvwaddch(win, 3, i, ACS_HLINE);
-    }
-    mvwaddch(win, 3, 99, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
-
+    // 테두리는 ingame_border.c에서 stdscr에 그림
+    // 여기서는 내용만 그림
     wrefresh(win);
 }
 
@@ -167,30 +145,7 @@ void game_info_ui_render_bottom(WINDOW *win, const Board *board,
         return;
 
     wclear(win);
-
-    // Always render with fixed 100x4 size (BOTTOM_WINDOW_WIDTH x BOTTOM_WINDOW_HEIGHT)
-    // Draw fixed size border
-    wattron(win, A_BOLD);
-    mvwaddch(win, 0, 0, ACS_ULCORNER);
-    for (int i = 1; i < 99; i++)
-    {
-        mvwaddch(win, 0, i, ACS_HLINE);
-    }
-    mvwaddch(win, 0, 99, ACS_URCORNER);
-
-    for (int j = 1; j < 3; j++)
-    {
-        mvwaddch(win, j, 0, ACS_VLINE);
-        mvwaddch(win, j, 99, ACS_VLINE);
-    }
-
-    mvwaddch(win, 3, 0, ACS_LLCORNER);
-    for (int i = 1; i < 99; i++)
-    {
-        mvwaddch(win, 3, i, ACS_HLINE);
-    }
-    mvwaddch(win, 3, 99, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    // 테두리는 ingame_border.c에서 stdscr에 그림
 
     if (board && turn_mgr && ui)
     {
@@ -202,9 +157,7 @@ void game_info_ui_render_bottom(WINDOW *win, const Board *board,
     }
 
     wrefresh(win);
-}
-
-// 최적화된 업데이트 (변경된 부분만)
+} // 최적화된 업데이트 (변경된 부분만)
 void game_info_ui_update_bottom(WINDOW *win, const Board *board,
                                 const TurnManager *turn_mgr,
                                 GameInfoUI *ui)
@@ -272,33 +225,10 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
 
     bool need_refresh = false;
 
-    // 첫 렌더링: 테두리 및 버튼 포함 전체 렌더링
+    // 첫 렌더링: 버튼 포함 전체 렌더링 (테두리는 ingame_border.c가 담당)
     if (first_render || ui_render_flags_is_set(flags, RENDER_BOTTOM_BORDER))
     {
         wclear(win);
-
-        // 테두리 그리기
-        wattron(win, A_BOLD);
-        mvwaddch(win, 0, 0, ACS_ULCORNER);
-        for (int i = 1; i < 99; i++)
-        {
-            mvwaddch(win, 0, i, ACS_HLINE);
-        }
-        mvwaddch(win, 0, 99, ACS_URCORNER);
-
-        for (int j = 1; j < 3; j++)
-        {
-            mvwaddch(win, j, 0, ACS_VLINE);
-            mvwaddch(win, j, 99, ACS_VLINE);
-        }
-
-        mvwaddch(win, 3, 0, ACS_LLCORNER);
-        for (int i = 1; i < 99; i++)
-        {
-            mvwaddch(win, 3, i, ACS_HLINE);
-        }
-        mvwaddch(win, 3, 99, ACS_LRCORNER);
-        wattroff(win, A_BOLD);
 
         // 버튼 그리기 (고정)
         game_info_ui_draw_buttons(win);

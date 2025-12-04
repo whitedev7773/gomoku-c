@@ -8,32 +8,40 @@
 #define UI_MIN_WIDTH 100
 #define UI_MIN_HEIGHT 30
 
-// Layout constants - ingame_border.c 레이아웃과 일치하도록 수정
-// Board 영역: (0,0) ~ (48,24) - 테두리 내부
+// Layout constants - ingame_border.c 레이아웃과 일치
+// Board 영역: ingame_border (0,0)~(48,24) = 49x25
+// 내부 콘텐츠는 테두리 안쪽 (1,1)~(47,23)
 #define BOARD_WINDOW_WIDTH 47
 #define BOARD_WINDOW_HEIGHT 23
 #define BOARD_WINDOW_X 1
 #define BOARD_WINDOW_Y 1
 
-// Info 영역 (상단 우측): (49,1) - 테두리 내부
+// Info 영역 (상단 우측): ingame_border (48,0)~(99,2)
+// 4개 박스로 나뉨, 내부 콘텐츠는 테두리 안쪽
 #define INFO_WINDOW_WIDTH 50
 #define INFO_WINDOW_HEIGHT 1
 #define INFO_WINDOW_X 49
 #define INFO_WINDOW_Y 1
 
-// Chat 영역: (49,3) ~ (98,21) - 테두리 내부
+// Chat 영역: ingame_border (48,2)~(99,22) = 52x21
+// 내부 콘텐츠는 테두리 안쪽 (49,3)~(98,21)
 #define CHAT_WINDOW_WIDTH 50
 #define CHAT_WINDOW_HEIGHT 18
 #define CHAT_WINDOW_X 49
 #define CHAT_WINDOW_Y 3
 
-// Chat Input 영역: (49,23) - 테두리 내부
-#define CHAT_INPUT_WIDTH 50
+// Chat Input 영역: ingame_border (48,22)~(99,24) = 52x3
+// 내부 콘텐츠는 테두리 안쪽 (49,23)
+#define CHAT_INPUT_WIDTH 42
 #define CHAT_INPUT_HEIGHT 1
 #define CHAT_INPUT_X 49
 #define CHAT_INPUT_Y 23
 
-// Bottom 영역: (1,25) ~ (98,29) - 테두리 내부
+// Bottom 영역: ingame_border (0,24)~(99,30)
+// LAST MOVE: (0,24) 19x6, NOW TURN: (18,24) 15x6
+// TIMER: (32,24) 48x3, PLAY TIME: (79,24) 21x3
+// SYSTEM LOG: (32,26) 68x5
+// 내부 콘텐츠 좌표
 #define BOTTOM_WINDOW_WIDTH 98
 #define BOTTOM_WINDOW_HEIGHT 5
 #define BOTTOM_WINDOW_X 1

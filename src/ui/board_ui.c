@@ -34,82 +34,57 @@ int board_ui_char_to_col(char c)
 
 void board_ui_draw_border(WINDOW *win)
 {
-    wattron(win, A_BOLD);
+    // ingame_border.c가 stdscr에 테두리를 그리므로
+    // 여기서는 좌표 레이블과 보드 프레임만 그림
+    // Board 영역: ingame_border (0,0)~(48,24) = 49x25
+    // board_win은 (1,1)~(47,23) = 47x23 크기
 
-    // Top border
-    mvwprintw(win, 0, 0, "┏");
-    for (int i = 1; i < 48; i++)
-    {
-        wprintw(win, "━");
-    }
-    wprintw(win, "┓");
-
-    // Top coordinates
-    mvwprintw(win, 1, 0, "┃     ");
+    // 상단 좌표 레이블 (A-T)
+    mvwprintw(win, 0, 4, " ");
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         wprintw(win, "%c ", COL_LABELS[i]);
     }
 
-    // Board frame top
-    mvwprintw(win, 2, 0, "┃   ┌");
+    // 보드 프레임 상단
+    mvwprintw(win, 1, 2, "┌");
     for (int i = 0; i < 39; i++)
     {
         wprintw(win, "─");
     }
     wprintw(win, "┐");
 
-    // Side borders and row numbers
+    // 행 번호와 세로선
     for (int row = 0; row < BOARD_SIZE; row++)
     {
-        int y = 3 + row;
-        mvwprintw(win, y, 0, "┃");
-        mvwprintw(win, y, 2, "%2d│", BOARD_SIZE - row);
-        mvwprintw(win, y, 44, "│%-2d", BOARD_SIZE - row);
-        mvwprintw(win, y, 48, "┃");
+        int y = 2 + row;
+        mvwprintw(win, y, 0, "%2d│", BOARD_SIZE - row);
+        mvwprintw(win, y, 42, "│%-2d", BOARD_SIZE - row);
     }
 
-    // Board frame bottom
-    mvwprintw(win, 22, 0, "┃   └");
+    // 보드 프레임 하단
+    mvwprintw(win, 21, 2, "└");
     for (int i = 0; i < 39; i++)
     {
         wprintw(win, "─");
     }
     wprintw(win, "┘");
 
-    // Bottom coordinates
-    mvwprintw(win, 23, 0, "┃     ");
+    // 하단 좌표 레이블 (A-T)
+    mvwprintw(win, 22, 4, " ");
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         wprintw(win, "%c ", COL_LABELS[i]);
     }
-
-    // Bottom border
-    mvwprintw(win, 24, 0, "┣");
-    for (int i = 1; i < 17; i++)
-        wprintw(win, "━");
-    wprintw(win, "┳");
-    for (int i = 19; i < 32; i++)
-        wprintw(win, "━");
-    wprintw(win, "┳");
-    for (int i = 34; i < 49; i++)
-        wprintw(win, "━");
-    wprintw(win, "┻");
-
-    mvwprintw(win, 25, 0, "┃");
-    mvwprintw(win, 25, 17, "┃");
-    mvwprintw(win, 25, 32, "┃");
-    mvwprintw(win, 25, 49, "┃");
-
-    wattroff(win, A_BOLD);
 }
 
 void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cursor)
 {
     for (int row = 0; row < BOARD_SIZE; row++)
     {
-        int y = 3 + row;
-        int x = 6;
+        // board_win 내부 좌표: 보드 시작 y=2 (프레임 상단 아래), x=4 (행번호+│ 뒤)
+        int y = 2 + row;
+        int x = 4;
 
         wmove(win, y, x);
 
@@ -238,8 +213,9 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
     if (!win || !board || row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
         return;
 
-    int y = 3 + row;
-    int x = 6 + (col * 2);
+    // board_win 내부 좌표에 맞춤
+    int y = 2 + row;
+    int x = 4 + (col * 2);
 
     Stone stone = board_get_stone(board, row, col);
     bool is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col);
@@ -482,8 +458,9 @@ static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
     if (!win || !board || row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
         return;
 
-    int y = 3 + row;
-    int x = 6 + (col * 2);
+    // board_win 내부 좌표에 맞춤
+    int y = 2 + row;
+    int x = 4 + (col * 2);
 
     Stone stone = board_get_stone(board, row, col);
     bool is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col);
@@ -608,8 +585,9 @@ static void board_ui_draw_board_multiplayer(WINDOW *win, const Board *board,
 {
     for (int row = 0; row < BOARD_SIZE; row++)
     {
-        int y = 3 + row;
-        int x = 6;
+        // board_win 내부 좌표에 맞춤
+        int y = 2 + row;
+        int x = 4;
 
         wmove(win, y, x);
 
