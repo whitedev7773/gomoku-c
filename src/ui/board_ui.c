@@ -123,14 +123,11 @@ void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cur
             // 커서 위치면 '[' 출력
             if (is_cursor)
             {
-                // 이전 공백을 '['로 대체
                 int cur_y, cur_x;
                 getyx(win, cur_y, cur_x);
-                if (cur_x > 6)
-                {
-                    mvwaddch(win, cur_y, cur_x - 1, '[');
-                    wmove(win, cur_y, cur_x);
-                }
+                // 첫 번째 열이라도 x-1 위치에 '[' 출력
+                mvwaddch(win, cur_y, cur_x - 1, '[');
+                wmove(win, cur_y, cur_x);
             }
 
             if (stone == BLACK)
@@ -242,14 +239,28 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
         return;
 
     int y = 3 + row;
-    int x = 5 + (col * 2);
+    int x = 6 + (col * 2);
 
     Stone stone = board_get_stone(board, row, col);
     bool is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col);
     bool is_last_move = (board->last_row == row && board->last_col == col);
 
-    // 커서면 '[' 출력 (이전 칸의 공백 위치에, 첫 열이라도 표시)
-    mvwaddch(win, y, x - 1, is_cursor ? '[' : ' ');
+    // 왼쪽 셀이 커서인지 확인 (현재 셀의 x-1 위치에 ']'를 출력해야 함)
+    bool left_is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col - 1);
+
+    // x-1 위치 처리: 커서면 '[', 왼쪽 셀이 커서면 ']', 아니면 공백
+    if (is_cursor)
+    {
+        mvwaddch(win, y, x - 1, '[');
+    }
+    else if (left_is_cursor)
+    {
+        mvwaddch(win, y, x - 1, ']');
+    }
+    else
+    {
+        mvwaddch(win, y, x - 1, ' ');
+    }
 
     wmove(win, y, x);
 
@@ -284,10 +295,23 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
         }
     }
 
-    // 커서면 ']' 출력, 아니면 공백
+    // 커서면 ']' 출력, 오른쪽 셀이 커서면 '[' 출력, 아니면 공백
+    bool right_is_cursor = (cursor && cursor->cursor_row == row && cursor->cursor_col == col + 1);
+
     if (col < BOARD_SIZE - 1)
     {
-        waddch(win, is_cursor ? ']' : ' ');
+        if (is_cursor)
+        {
+            waddch(win, ']');
+        }
+        else if (right_is_cursor)
+        {
+            waddch(win, '[');
+        }
+        else
+        {
+            waddch(win, ' ');
+        }
     }
     else if (is_cursor)
     {
@@ -459,26 +483,43 @@ static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
         return;
 
     int y = 3 + row;
-    int x = 5 + (col * 2);
+    int x = 6 + (col * 2);
 
     Stone stone = board_get_stone(board, row, col);
     bool is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col);
     bool is_opponent_cursor = (opponent_cursor && opponent_cursor->cursor_row == row && opponent_cursor->cursor_col == col);
     bool is_last_move = (board->last_row == row && board->last_col == col);
 
-    // 커서면 '[' 출력 (이전 칸의 공백 위치에, 첫 열이라도 표시)
+    // 왼쪽 셀이 커서인지 확인
+    bool left_is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col - 1);
+    bool left_is_opponent_cursor = (opponent_cursor && opponent_cursor->cursor_row == row && opponent_cursor->cursor_col == col - 1);
+
+    // x-1 위치 처리: 커서면 '[', 왼쪽 셀이 커서면 ']', 아니면 공백
     {
-        char left_bracket = ' ';
         if (is_my_cursor)
-            left_bracket = '[';
+        {
+            mvwaddch(win, y, x - 1, '[');
+        }
         else if (is_opponent_cursor)
         {
             wattron(win, A_UNDERLINE | COLOR_PAIR(6));
-            left_bracket = '[';
-        }
-        mvwaddch(win, y, x - 1, left_bracket);
-        if (is_opponent_cursor && !is_my_cursor)
+            mvwaddch(win, y, x - 1, '[');
             wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+        }
+        else if (left_is_my_cursor)
+        {
+            mvwaddch(win, y, x - 1, ']');
+        }
+        else if (left_is_opponent_cursor)
+        {
+            wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+            mvwaddch(win, y, x - 1, ']');
+            wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
+        }
+        else
+        {
+            mvwaddch(win, y, x - 1, ' ');
+        }
     }
 
     wmove(win, y, x);
@@ -520,7 +561,10 @@ static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
         }
     }
 
-    // 커서면 ']' 출력, 아니면 공백
+    // 커서면 ']' 출력, 오른쪽 셀이 커서면 '[', 아니면 공백
+    bool right_is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col + 1);
+    bool right_is_opponent_cursor = (opponent_cursor && opponent_cursor->cursor_row == row && opponent_cursor->cursor_col == col + 1);
+
     if (col < BOARD_SIZE - 1)
     {
         if (is_my_cursor)
@@ -530,6 +574,16 @@ static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
         else if (is_opponent_cursor)
         {
             waddch(win, ']');
+        }
+        else if (right_is_my_cursor)
+        {
+            waddch(win, '[');
+        }
+        else if (right_is_opponent_cursor)
+        {
+            wattron(win, A_UNDERLINE | COLOR_PAIR(6));
+            waddch(win, '[');
+            wattroff(win, A_UNDERLINE | COLOR_PAIR(6));
         }
         else
         {
@@ -555,7 +609,7 @@ static void board_ui_draw_board_multiplayer(WINDOW *win, const Board *board,
     for (int row = 0; row < BOARD_SIZE; row++)
     {
         int y = 3 + row;
-        int x = 5;
+        int x = 6;
 
         wmove(win, y, x);
 

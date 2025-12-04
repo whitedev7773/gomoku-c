@@ -171,6 +171,10 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
             Position ai_move;
             if (ai_get_next_move(&ai, &board, &ai_move))
             {
+                // 이전 마지막 수 위치 저장 (강조 제거용)
+                int prev_last_row = board.last_row;
+                int prev_last_col = board.last_col;
+
                 if (board_place_stone(&board, ai_move.row, ai_move.col, WHITE))
                 {
                     // 로그 기록
@@ -182,6 +186,11 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                     logger_log_move(&logger, WHITE, ai_move.row, ai_move.col,
                                     board_get_move_count(&board));
 
+                    // 이전 마지막 수 위치도 dirty로 마킹 (강조 제거)
+                    if (prev_last_row >= 0 && prev_last_col >= 0)
+                    {
+                        ui_render_flags_add_dirty_cell(render_flags, prev_last_row, prev_last_col);
+                    }
                     // 돌이 놓인 셀을 dirty로 마킹
                     ui_render_flags_add_dirty_cell(render_flags, ai_move.row, ai_move.col);
                     ui_render_flags_set(render_flags, RENDER_LAST_MOVE);
@@ -227,23 +236,35 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                         {
                             log_ui_add_message(&log_ui, "Forbidden move! (Renju Rule)");
                         }
-                        else if (board_place_stone(&board, cursor.cursor_row, cursor.cursor_col, BLACK))
+                        else
                         {
-                            char move_msg[128];
-                            snprintf(move_msg, sizeof(move_msg), "You placed at %c%02d",
-                                     board_ui_col_to_char(cursor.cursor_col), cursor.cursor_row + 1);
-                            log_ui_add_message(&log_ui, move_msg);
+                            // 이전 마지막 수 위치 저장 (강조 제거용)
+                            int prev_last_row = board.last_row;
+                            int prev_last_col = board.last_col;
 
-                            logger_log_move(&logger, BLACK, cursor.cursor_row, cursor.cursor_col,
-                                            board_get_move_count(&board));
+                            if (board_place_stone(&board, cursor.cursor_row, cursor.cursor_col, BLACK))
+                            {
+                                char move_msg[128];
+                                snprintf(move_msg, sizeof(move_msg), "You placed at %c%02d",
+                                         board_ui_col_to_char(cursor.cursor_col), cursor.cursor_row + 1);
+                                log_ui_add_message(&log_ui, move_msg);
 
-                            // 돌이 놓인 셀을 dirty로 마킹
-                            ui_render_flags_add_dirty_cell(render_flags, cursor.cursor_row, cursor.cursor_col);
-                            ui_render_flags_set(render_flags, RENDER_LAST_MOVE);
-                            ui_render_flags_set(render_flags, RENDER_CURRENT_TURN);
-                            ui_render_flags_set(render_flags, RENDER_INFO);
+                                logger_log_move(&logger, BLACK, cursor.cursor_row, cursor.cursor_col,
+                                                board_get_move_count(&board));
 
-                            turn_manager_next_turn(&turn_mgr);
+                                // 이전 마지막 수 위치도 dirty로 마킹 (강조 제거)
+                                if (prev_last_row >= 0 && prev_last_col >= 0)
+                                {
+                                    ui_render_flags_add_dirty_cell(render_flags, prev_last_row, prev_last_col);
+                                }
+                                // 돌이 놓인 셀을 dirty로 마킹
+                                ui_render_flags_add_dirty_cell(render_flags, cursor.cursor_row, cursor.cursor_col);
+                                ui_render_flags_set(render_flags, RENDER_LAST_MOVE);
+                                ui_render_flags_set(render_flags, RENDER_CURRENT_TURN);
+                                ui_render_flags_set(render_flags, RENDER_INFO);
+
+                                turn_manager_next_turn(&turn_mgr);
+                            }
                         }
                     }
                     else
