@@ -19,6 +19,16 @@
 #include <time.h>
 #include <sys/socket.h>
 
+// 게임 결과 정의 (관전자 브로드캐스트용)
+#define RESULT_BLACK_WIN 0
+#define RESULT_WHITE_WIN 1
+#define RESULT_DRAW 2
+
+#define REASON_FIVE_IN_A_ROW 0
+#define REASON_GIVEUP 1
+#define REASON_QUIT 2
+#define REASON_TIMEOUT 3
+
 // 플레이어 정보
 typedef struct
 {
@@ -62,6 +72,8 @@ static void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator
 static void mp_handle_spectator_connections(MultiplayerGame *game);
 static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message *move_msg);
 static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg);
+static void mp_broadcast_cursor_to_spectators(MultiplayerGame *game, int row, int col);
+static void mp_broadcast_game_result_to_spectators(MultiplayerGame *game, uint8_t result_type, uint8_t reason, const char *winner_name, const char *message);
 static bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const char *error_context);
 
 int multiplayer_run_host(int port, GameRule rule)
@@ -222,13 +234,20 @@ int multiplayer_run_host(int port, GameRule rule)
             {
                 game.game_over = true;
                 char result_msg[128];
+                const char *winner_name = NULL;
+                uint8_t result_type = RESULT_DRAW;
+
                 if (game.result == GAME_BLACK_WIN)
                 {
                     snprintf(result_msg, sizeof(result_msg), "%s (BLACK) WINS!", game.me.name);
+                    winner_name = game.me.name;
+                    result_type = RESULT_BLACK_WIN;
                 }
                 else if (game.result == GAME_WHITE_WIN)
                 {
                     snprintf(result_msg, sizeof(result_msg), "%s (WHITE) WINS!", game.opponent.name);
+                    winner_name = game.opponent.name;
+                    result_type = RESULT_WHITE_WIN;
                 }
                 else
                 {
@@ -240,8 +259,34 @@ int multiplayer_run_host(int port, GameRule rule)
                 // 게임 결과 모달 표시
                 modal_ui_show(&game.modal_ui, MODAL_GAME_RESULT, result_msg);
 
+                // 관전자에게 게임 결과 전송
+                mp_broadcast_game_result_to_spectators(&game, result_type, REASON_FIVE_IN_A_ROW, winner_name, result_msg);
+
                 logger_close(&game.logger);
             }
+        }
+
+        // 턴 타임아웃 체크
+        if (!game.game_over && turn_manager_is_timeout(&game.turn_mgr))
+        {
+            Stone timed_out_player = turn_manager_get_current_player(&game.turn_mgr);
+            game.game_over = true;
+            game.result = (timed_out_player == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+
+            char timeout_msg[128];
+            const char *loser_name = (timed_out_player == game.me.color) ? game.me.name : game.opponent.name;
+            const char *winner_name = (timed_out_player == game.me.color) ? game.opponent.name : game.me.name;
+            snprintf(timeout_msg, sizeof(timeout_msg), "%s ran out of time! %s wins!", loser_name, winner_name);
+
+            modal_ui_show(&game.modal_ui, MODAL_GAME_RESULT, timeout_msg);
+            chat_ui_add_message(&game.chat_ui, timeout_msg, CHAT_MSG_SYSTEM);
+            log_ui_add_message(&game.log_ui, timeout_msg);
+
+            // 관전자에게 타임아웃 결과 전송
+            uint8_t timeout_result = (game.result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+            mp_broadcast_game_result_to_spectators(&game, timeout_result, REASON_TIMEOUT, winner_name, timeout_msg);
+
+            logger_close(&game.logger);
         }
 
         // 내 턴 처리
@@ -478,6 +523,30 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule)
             }
         }
 
+        // 턴 타임아웃 체크
+        if (!game.game_over && turn_manager_is_timeout(&game.turn_mgr))
+        {
+            Stone timed_out_player = turn_manager_get_current_player(&game.turn_mgr);
+            game.game_over = true;
+            game.result = (timed_out_player == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+
+            char timeout_msg[128];
+            if (timed_out_player == game.me.color)
+            {
+                snprintf(timeout_msg, sizeof(timeout_msg), "Time's up! You LOSE!");
+            }
+            else
+            {
+                snprintf(timeout_msg, sizeof(timeout_msg), "Opponent ran out of time! You WIN!");
+            }
+
+            modal_ui_show(&game.modal_ui, MODAL_GAME_RESULT, timeout_msg);
+            chat_ui_add_message(&game.chat_ui, timeout_msg, CHAT_MSG_SYSTEM);
+            log_ui_add_message(&game.log_ui, timeout_msg);
+
+            logger_close(&game.logger);
+        }
+
         Stone current_player = turn_manager_get_current_player(&game.turn_mgr);
         if (!game.game_over && current_player == game.me.color)
         {
@@ -621,6 +690,11 @@ static bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
                                         msg.payload.cursor.row,
                                         msg.payload.cursor.col,
                                         &ui_mgr->render_flags);
+        // 호스트라면 관전자에게도 전달 (현재 턴 플레이어의 커서)
+        if (game->network.role == NETWORK_SERVER)
+        {
+            mp_broadcast_cursor_to_spectators(game, msg.payload.cursor.row, msg.payload.cursor.col);
+        }
         break;
 
     case MSG_CHAT:
@@ -644,6 +718,11 @@ static bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
                 snprintf(modal_msg, sizeof(modal_msg), "%s has quit the game.", game->opponent.name);
                 modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
                 game->game_over = true;
+                // 관전자에게 quit 결과 전송
+                {
+                    uint8_t quit_result = (game->me.color == BLACK) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+                    mp_broadcast_game_result_to_spectators(game, quit_result, REASON_QUIT, game->me.name, modal_msg);
+                }
                 break;
 
             case CMD_GIVEUP:
@@ -653,6 +732,12 @@ static bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
                 snprintf(modal_msg, sizeof(modal_msg), "%s has given up!", game->opponent.name);
                 modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, modal_msg);
                 chat_ui_add_message(&game->chat_ui, modal_msg, CHAT_MSG_SYSTEM);
+                // 관전자에게 기권 결과 전송
+                {
+                    uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+                    const char *winner = (game->result == GAME_BLACK_WIN) ? ((game->me.color == BLACK) ? game->me.name : game->opponent.name) : ((game->me.color == WHITE) ? game->me.name : game->opponent.name);
+                    mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, winner, modal_msg);
+                }
                 break;
 
             case CMD_UNDO:
@@ -749,10 +834,13 @@ static void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
     ui_render_flags_set(render_flags, RENDER_TIMER);
     ui_render_flags_set(render_flags, RENDER_PLAY_TIME);
 
-    // 보드 렌더링 (멀티플레이용 - 상대방 커서 포함)
+    // 내 턴인지 확인
+    bool is_my_turn = (current_player == game->me.color);
+
+    // 보드 렌더링 (멀티플레이용 - 상대방 커서 포함, 내 턴이 아니면 내 커서 숨김)
     board_ui_selective_render_multiplayer(ui_mgr->board_win, &game->board,
                                           &game->my_cursor, &game->opponent_cursor,
-                                          render_flags, game->first_render);
+                                          render_flags, game->first_render, is_my_turn);
 
     // 게임 정보 렌더링 (하단, 선택적)
     game_info_ui_selective_render(ui_mgr->bottom_win, &game->board, &game->turn_mgr,
@@ -812,6 +900,13 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHan
                     protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
                     msg.payload.command.command_type = CMD_GIVEUP;
                     mp_send_with_error_check(game, &msg, "sending giveup");
+
+                    // 관전자에게 기권 결과 전송
+                    char giveup_msg[128];
+                    snprintf(giveup_msg, sizeof(giveup_msg), "%s gave up. %s wins!",
+                             game->me.name, game->opponent.name);
+                    uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+                    mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, game->opponent.name, giveup_msg);
                 }
                 break;
 
@@ -1065,13 +1160,14 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHan
     {
     case INPUT_MOVE_UP:
         board_ui_move_cursor_with_flags(&game->my_cursor, -1, 0, &ui_mgr->render_flags);
-        // 커서 위치 전송
+        // 커서 위치 전송 (상대방 + 관전자)
         {
             Message msg;
             protocol_init_message(&msg, MSG_CURSOR_UPDATE, game->network.sequence_number++);
             msg.payload.cursor.row = game->my_cursor.cursor_row;
             msg.payload.cursor.col = game->my_cursor.cursor_col;
             network_send_message(&game->network, &msg);
+            mp_broadcast_cursor_to_spectators(game, game->my_cursor.cursor_row, game->my_cursor.cursor_col);
         }
         break;
     case INPUT_MOVE_DOWN:
@@ -1082,6 +1178,7 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHan
             msg.payload.cursor.row = game->my_cursor.cursor_row;
             msg.payload.cursor.col = game->my_cursor.cursor_col;
             network_send_message(&game->network, &msg);
+            mp_broadcast_cursor_to_spectators(game, game->my_cursor.cursor_row, game->my_cursor.cursor_col);
         }
         break;
     case INPUT_MOVE_LEFT:
@@ -1092,6 +1189,7 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHan
             msg.payload.cursor.row = game->my_cursor.cursor_row;
             msg.payload.cursor.col = game->my_cursor.cursor_col;
             network_send_message(&game->network, &msg);
+            mp_broadcast_cursor_to_spectators(game, game->my_cursor.cursor_row, game->my_cursor.cursor_col);
         }
         break;
     case INPUT_MOVE_RIGHT:
@@ -1102,6 +1200,7 @@ static bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHan
             msg.payload.cursor.row = game->my_cursor.cursor_row;
             msg.payload.cursor.col = game->my_cursor.cursor_col;
             network_send_message(&game->network, &msg);
+            mp_broadcast_cursor_to_spectators(game, game->my_cursor.cursor_row, game->my_cursor.cursor_col);
         }
         break;
     case INPUT_PLACE_STONE:
@@ -1528,6 +1627,32 @@ static void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message
 static void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg)
 {
     network_broadcast_to_spectators(&game->network, chat_msg);
+}
+
+static void mp_broadcast_cursor_to_spectators(MultiplayerGame *game, int row, int col)
+{
+    Message msg;
+    protocol_init_message(&msg, MSG_CURSOR_UPDATE, game->network.sequence_number++);
+    msg.payload.cursor.row = row;
+    msg.payload.cursor.col = col;
+    network_broadcast_to_spectators(&game->network, &msg);
+}
+
+static void mp_broadcast_game_result_to_spectators(MultiplayerGame *game, uint8_t result_type, uint8_t reason, const char *winner_name, const char *message)
+{
+    Message msg;
+    protocol_init_message(&msg, MSG_GAME_RESULT, game->network.sequence_number++);
+    msg.payload.game_result.result_type = result_type;
+    msg.payload.game_result.reason = reason;
+    if (winner_name)
+        strncpy(msg.payload.game_result.winner_name, winner_name, MAX_PLAYER_NAME - 1);
+    else
+        msg.payload.game_result.winner_name[0] = '\0';
+    if (message)
+        strncpy(msg.payload.game_result.message, message, sizeof(msg.payload.game_result.message) - 1);
+    else
+        msg.payload.game_result.message[0] = '\0';
+    network_broadcast_to_spectators(&game->network, &msg);
 }
 
 // 에러 체크를 포함한 네트워크 메시지 전송

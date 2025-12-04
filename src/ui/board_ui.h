@@ -52,11 +52,13 @@ void board_ui_selective_render(WINDOW *win, const Board *board,
                                bool first_render);
 
 // 멀티플레이용 선택적 렌더링 (상대방 커서 포함)
+// is_my_turn이 false면 내 커서를 숨김
 void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
                                            const BoardCursor *my_cursor,
                                            const BoardCursor *opponent_cursor,
                                            UIRenderFlags *flags,
-                                           bool first_render);
+                                           bool first_render,
+                                           bool is_my_turn);
 
 // 커서 이동 시 dirty 셀 마킹
 void board_ui_move_cursor_with_flags(BoardCursor *cursor, int dr, int dc,
