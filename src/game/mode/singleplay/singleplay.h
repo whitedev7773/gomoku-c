@@ -1,8 +1,8 @@
 #ifndef SINGLEPLAY_H
 #define SINGLEPLAY_H
 
-#include "../ai/ai_engine.h"
-#include "../core/board.h"
+#include "../../ai/ai_engine.h"
+#include "../../core/board.h"
 
 /**
  * 싱글플레이 게임 실행

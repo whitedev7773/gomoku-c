@@ -1,0 +1,6 @@
+# Gomoku-C Configuration File
+# This file is auto-generated. Edit with care.
+
+# Selected theme (0-5)
+# 0: White, 1: Hacker, 2: Gold, 3: Skyblue, 4: Pink, 5: Rainbow
+theme=1

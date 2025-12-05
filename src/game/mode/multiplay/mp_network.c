@@ -1,0 +1,347 @@
+// ============================================================================
+// mp_network.c - 네트워크 메시지 처리 및 브로드캐스트
+// ============================================================================
+
+#include "mp_network.h"
+#include <string.h>
+
+// ============================================================================
+// 에러 체크 포함 네트워크 전송
+// ============================================================================
+
+bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const char *error_context)
+{
+    int result = network_send_message(&game->network, msg);
+
+    if (result < 0)
+    {
+        if (!network_is_connected(&game->network) ||
+            game->network.state == NET_DISCONNECTED ||
+            game->network.state == NET_ERROR)
+        {
+            if (!game->game_over)
+            {
+                char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
+                snprintf(modal_msg, sizeof(modal_msg),
+                         "Connection lost while %s. Game will end.",
+                         error_context ? error_context : "sending data");
+                modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
+
+                char log_msg[128];
+                snprintf(log_msg, sizeof(log_msg), "Connection lost!");
+                log_add_msg(&game->log_ui, log_msg);
+                chat_add_msg(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
+
+                game->game_over = true;
+            }
+        }
+        return false;
+    }
+
+    return true;
+}
+
+// ============================================================================
+// 네트워크 메시지 처리
+// ============================================================================
+
+bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
+{
+    Message msg;
+    int result = network_receive_message(&game->network, &msg);
+
+    if (result < 0)
+    {
+        if (!network_is_connected(&game->network) ||
+            game->network.state == NET_DISCONNECTED ||
+            game->network.state == NET_ERROR)
+        {
+            if (!game->game_over)
+            {
+                char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
+                snprintf(modal_msg, sizeof(modal_msg),
+                         "Connection lost with %s. Game will end.",
+                         game->opponent.name);
+                modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
+                log_add_msg(&game->log_ui, "Connection lost!");
+                chat_add_msg(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
+                game->game_over = true;
+            }
+        }
+        return false;
+    }
+
+    if (result == 0)
+    {
+        return false;
+    }
+
+    switch (msg.header.type)
+    {
+    case MSG_MOVE:
+    {
+        int prev_last_row = game->board.last_row;
+        int prev_last_col = game->board.last_col;
+
+        if (board_place_stone(&game->board, msg.payload.move.row, msg.payload.move.col,
+                              msg.payload.move.stone))
+        {
+            char move_msg_str[128];
+            snprintf(move_msg_str, sizeof(move_msg_str), "%s placed at %c%02d",
+                     game->opponent.name,
+                     board_col_to_char(msg.payload.move.col),
+                     msg.payload.move.row + 1);
+            log_add_msg(&game->log_ui, move_msg_str);
+
+            logger_log_move(&game->logger, msg.payload.move.stone,
+                            msg.payload.move.row, msg.payload.move.col,
+                            board_get_move_count(&game->board));
+
+            if (prev_last_row >= 0 && prev_last_col >= 0)
+            {
+                ui_render_flags_add_dirty_cell(&ui_mgr->render_flags, prev_last_row, prev_last_col);
+            }
+            ui_render_flags_add_dirty_cell(&ui_mgr->render_flags, msg.payload.move.row, msg.payload.move.col);
+
+            turn_manager_next_turn(&game->turn_mgr);
+            ui_render_flags_set(&ui_mgr->render_flags, RENDER_BOARD_FULL);
+
+            mp_broadcast_move_to_spectators(game, &msg);
+        }
+    }
+    break;
+
+    case MSG_CURSOR_UPDATE:
+        board_update_opponent_cursor(&game->opponent_cursor,
+                                     msg.payload.cursor.row,
+                                     msg.payload.cursor.col,
+                                     &ui_mgr->render_flags);
+        if (game->network.role == NETWORK_SERVER)
+        {
+            mp_broadcast_cursor_to_spectators(game, msg.payload.cursor.row, msg.payload.cursor.col);
+        }
+        break;
+
+    case MSG_CHAT:
+        chat_add_msg(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
+        mp_broadcast_chat_to_spectators(game, &msg);
+        break;
+
+    case MSG_COMMAND:
+    {
+        CommandType cmd_type = msg.payload.command.command_type;
+        char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
+
+        switch (cmd_type)
+        {
+        case CMD_QUIT:
+            snprintf(modal_msg, sizeof(modal_msg), "%s has quit the game.", game->opponent.name);
+            modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
+            game->game_over = true;
+            {
+                uint8_t quit_result = (game->me.color == BLACK) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+                mp_broadcast_game_result_to_spectators(game, quit_result, REASON_QUIT, game->me.name, modal_msg);
+            }
+            break;
+
+        case CMD_GIVEUP:
+            game->game_over = true;
+            game->result = (game->opponent.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+            snprintf(modal_msg, sizeof(modal_msg), "%s has given up!", game->opponent.name);
+            modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, modal_msg);
+            chat_add_msg(&game->chat_ui, modal_msg, CHAT_MSG_SYSTEM);
+            {
+                uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+                const char *winner = (game->result == GAME_BLACK_WIN)
+                                         ? ((game->me.color == BLACK) ? game->me.name : game->opponent.name)
+                                         : ((game->me.color == WHITE) ? game->me.name : game->opponent.name);
+                mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, winner, modal_msg);
+            }
+            break;
+
+        case CMD_UNDO:
+            snprintf(modal_msg, sizeof(modal_msg), "%s wants to undo the last move", game->opponent.name);
+            modal_ui_show(&game->modal_ui, MODAL_UNDO_RESPONSE, modal_msg);
+            break;
+
+        case CMD_SWAP:
+            snprintf(modal_msg, sizeof(modal_msg), "%s wants to swap colors", game->opponent.name);
+            modal_ui_show(&game->modal_ui, MODAL_SWAP_RESPONSE, modal_msg);
+            break;
+
+        default:
+            break;
+        }
+    }
+    break;
+
+    case MSG_COMMAND_RESPONSE:
+    {
+        uint8_t cmd_type = msg.payload.command_response.command_type;
+        bool accepted = msg.payload.command_response.accepted;
+
+        if (modal_ui_is_active(&game->modal_ui) &&
+            (game->modal_ui.type == MODAL_UNDO_REQUEST || game->modal_ui.type == MODAL_SWAP_REQUEST))
+        {
+            modal_ui_close(&game->modal_ui);
+            game->first_render = true;
+        }
+
+        if (cmd_type == CMD_UNDO)
+        {
+            if (accepted)
+            {
+                board_undo_last_move(&game->board);
+                board_undo_last_move(&game->board);
+                chat_add_msg(&game->chat_ui, "Undo accepted by opponent", CHAT_MSG_SYSTEM);
+                game->first_render = true;
+                ui_render_flags_set(&ui_mgr->render_flags, RENDER_BOARD_FULL);
+                ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
+            }
+            else
+            {
+                chat_add_msg(&game->chat_ui, "Undo rejected by opponent", CHAT_MSG_SYSTEM);
+            }
+        }
+        else if (cmd_type == CMD_SWAP)
+        {
+            if (accepted)
+            {
+                Stone temp = game->me.color;
+                game->me.color = game->opponent.color;
+                game->opponent.color = temp;
+                game->swap_used = true;
+                chat_add_msg(&game->chat_ui, "Swap accepted by opponent", CHAT_MSG_SYSTEM);
+                game->first_render = true;
+                ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
+            }
+            else
+            {
+                chat_add_msg(&game->chat_ui, "Swap rejected by opponent", CHAT_MSG_SYSTEM);
+            }
+        }
+    }
+    break;
+
+    default:
+        break;
+    }
+
+    return true;
+}
+
+// ============================================================================
+// 관전자 브로드캐스트 함수들
+// ============================================================================
+
+void mp_broadcast_cursor_to_spectators(MultiplayerGame *game, int row, int col)
+{
+    Message msg;
+    protocol_init_message(&msg, MSG_CURSOR_UPDATE, game->network.sequence_number++);
+    msg.payload.cursor.row = row;
+    msg.payload.cursor.col = col;
+    network_broadcast_to_spectators(&game->network, &msg);
+}
+
+void mp_broadcast_game_result_to_spectators(MultiplayerGame *game, uint8_t result_type, uint8_t reason, const char *winner_name, const char *message)
+{
+    Message msg;
+    protocol_init_message(&msg, MSG_GAME_RESULT, game->network.sequence_number++);
+    msg.payload.game_result.result_type = result_type;
+    msg.payload.game_result.reason = reason;
+    if (winner_name)
+        strncpy(msg.payload.game_result.winner_name, winner_name, MAX_PLAYER_NAME - 1);
+    else
+        msg.payload.game_result.winner_name[0] = '\0';
+    if (message)
+        strncpy(msg.payload.game_result.message, message, sizeof(msg.payload.game_result.message) - 1);
+    else
+        msg.payload.game_result.message[0] = '\0';
+    network_broadcast_to_spectators(&game->network, &msg);
+}
+
+void mp_broadcast_move_to_spectators(MultiplayerGame *game, const Message *move_msg)
+{
+    network_broadcast_to_spectators(&game->network, move_msg);
+}
+
+void mp_broadcast_chat_to_spectators(MultiplayerGame *game, const Message *chat_msg)
+{
+    network_broadcast_to_spectators(&game->network, chat_msg);
+}
+
+// ============================================================================
+// 관전자 연결 관리 (호스트 전용)
+// ============================================================================
+
+void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator_index)
+{
+    Message msg;
+    protocol_init_message(&msg, MSG_GAME_STATE, game->network.sequence_number++);
+
+    strncpy(msg.payload.game_state.player1_name, game->me.name, MAX_PLAYER_NAME);
+    strncpy(msg.payload.game_state.player2_name, game->opponent.name, MAX_PLAYER_NAME);
+    msg.payload.game_state.current_turn = turn_manager_get_current_player(&game->turn_mgr);
+    msg.payload.game_state.move_count = board_get_move_count(&game->board);
+
+    for (int row = 0; row < BOARD_SIZE; row++)
+    {
+        for (int col = 0; col < BOARD_SIZE; col++)
+        {
+            msg.payload.game_state.board_state[row * BOARD_SIZE + col] = game->board.cells[row][col];
+        }
+    }
+
+    network_send_to_spectator(&game->network, spectator_index, &msg);
+}
+
+void mp_handle_spectator_connections(MultiplayerGame *game)
+{
+    if (network_server_accept_spectator(&game->network))
+    {
+        int new_spectator_index = game->network.spectator_count - 1;
+
+        uint8_t temp_buffer[1024];
+        int spectator_fd = game->network.spectator_fds[new_spectator_index];
+
+        ssize_t received = recv(spectator_fd, temp_buffer, sizeof(temp_buffer), MSG_DONTWAIT);
+        if (received > 0)
+        {
+            Message connect_msg;
+            int result = protocol_deserialize(&connect_msg, temp_buffer, received);
+
+            if (result > 0 && connect_msg.header.type == MSG_SPECTATOR_CONNECT)
+            {
+                strncpy(game->network.spectator_names[new_spectator_index],
+                        connect_msg.payload.spectator_connect.spectator_name,
+                        MAX_PLAYER_NAME);
+
+                Message ack_msg;
+                protocol_init_message(&ack_msg, MSG_SPECTATOR_CONNECT_ACK, game->network.sequence_number++);
+                ack_msg.payload.spectator_connect_ack.accepted = 1;
+                ack_msg.payload.spectator_connect_ack.error_code = ERR_NONE;
+                ack_msg.payload.spectator_connect_ack.spectator_count = game->network.spectator_count;
+                ack_msg.payload.spectator_connect_ack.max_spectators = MAX_SPECTATORS;
+                network_send_to_spectator(&game->network, new_spectator_index, &ack_msg);
+
+                mp_send_game_state_to_spectator(game, new_spectator_index);
+
+                Message join_msg;
+                protocol_init_message(&join_msg, MSG_SPECTATOR_JOIN, game->network.sequence_number++);
+                strncpy(join_msg.payload.spectator_join_leave.spectator_name,
+                        game->network.spectator_names[new_spectator_index],
+                        MAX_PLAYER_NAME);
+                join_msg.payload.spectator_join_leave.spectator_count = game->network.spectator_count;
+
+                network_send_message(&game->network, &join_msg);
+                for (int i = 0; i < MAX_SPECTATORS; i++)
+                {
+                    if (i != new_spectator_index && game->network.spectator_fds[i] >= 0)
+                    {
+                        network_send_to_spectator(&game->network, i, &join_msg);
+                    }
+                }
+            }
+        }
+    }
+}

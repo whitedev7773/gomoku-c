@@ -1,7 +1,11 @@
 #include "multiplayer.h"
-#include "mp_common.h"
-#include "../../utils/terminal_check.h"
-#include "../../ui/game/border/ingame_border.h"
+#include "mp_types.h"
+#include "mp_game.h"
+#include "mp_input.h"
+#include "mp_network.h"
+#include "mp_turn.h"
+#include "../../../utils/terminal_check.h"
+#include "../../../ui/game/border/ingame_border.h"
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
