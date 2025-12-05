@@ -13,6 +13,8 @@ typedef struct
     time_t turn_start_time;
     int total_turns;
     bool timeout_enabled;
+    bool paused;          // 일시정지 상태
+    int paused_remaining; // 일시정지 시점의 남은 시간
 } TurnManager;
 
 void turn_manager_init(TurnManager *manager, Stone first_player);
@@ -30,5 +32,10 @@ void turn_manager_reset_timer(TurnManager *manager);
 Stone turn_manager_get_opposite_player(Stone player);
 
 void turn_manager_set_timeout_enabled(TurnManager *manager, bool enabled);
+
+// 타이머 일시정지/재개
+void turn_manager_pause(TurnManager *manager);
+void turn_manager_resume(TurnManager *manager);
+bool turn_manager_is_paused(const TurnManager *manager);
 
 #endif // TURN_MANAGER_H

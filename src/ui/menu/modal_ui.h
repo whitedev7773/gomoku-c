@@ -11,13 +11,14 @@
 typedef enum
 {
     MODAL_NONE = 0,
-    MODAL_GIVEUP,        // 기권 확인
-    MODAL_UNDO_REQUEST,  // 무르기 요청
-    MODAL_UNDO_RESPONSE, // 무르기 응답
-    MODAL_GAME_RESULT,   // 게임 결과
-    MODAL_SWAP_REQUEST,  // Swap 요청
-    MODAL_SWAP_RESPONSE, // Swap 응답
-    MODAL_ERROR          // 에러 메시지
+    MODAL_GIVEUP,          // 기권 확인
+    MODAL_UNDO_REQUEST,    // 무르기 요청
+    MODAL_UNDO_RESPONSE,   // 무르기 응답
+    MODAL_GAME_RESULT,     // 게임 결과
+    MODAL_SWAP_REQUEST,    // Swap 요청
+    MODAL_SWAP_RESPONSE,   // Swap 응답
+    MODAL_ERROR,           // 에러 메시지
+    MODAL_TERMINAL_WARNING // 터미널 크기 경고 (일시정지)
 } ModalType;
 
 // 모달 버튼

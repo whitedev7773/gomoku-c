@@ -55,6 +55,7 @@ static void modal_ui_setup_buttons(ModalUI *modal)
 
     case MODAL_GAME_RESULT:
     case MODAL_ERROR:
+    case MODAL_TERMINAL_WARNING:
         modal->buttons[0] = BUTTON_OK;
         modal->button_count = 1;
         modal->selected_button = 0;

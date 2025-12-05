@@ -1,6 +1,7 @@
 #include "mp_common.h"
 #include "../../ui/core/theme.h"
 #include "../../ui/game/border/ingame_border.h"
+#include "../../utils/terminal_check.h"
 #include <string.h>
 #include <sys/socket.h>
 #include <ncurses.h>
@@ -400,6 +401,7 @@ bool mp_init_game_ui(UIManager *ui_mgr, MultiplayerGame *game, GameRule rule)
     wtimeout(ui_mgr->board_win, 50);
 
     game->first_render = true;
+    game->terminal_warning_shown = false;
 
     return true;
 }

@@ -11,6 +11,7 @@
 #include "../../ui/menu/modal_ui.h"
 #include "../../ui/core/theme.h"
 #include "../../ui/game/border/ingame_border.h"
+#include "../../utils/terminal_check.h"
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -95,12 +96,88 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
     bool first_render = true;
     UIRenderFlags *render_flags = &ui_mgr.render_flags;
 
+    // 터미널 크기 경고 상태
+    bool terminal_warning_shown = false;
+    TerminalSize prev_term_size = get_terminal_size(); // 이전 터미널 크기
+
     // 보드 윈도우에서 키 입력 받기
     keypad(ui_mgr.board_win, TRUE);
     wtimeout(ui_mgr.board_win, 100); // 100ms timeout (AI 턴 처리 및 타이머 업데이트용)
 
     while (game_running)
     {
+        // ============================================
+        // 터미널 크기 체크 (싱글플레이: 일시정지)
+        // ============================================
+        TerminalSizeStatus term_status = check_terminal_size_ingame();
+        TerminalSize cur_size = get_terminal_size();
+
+        // 터미널 크기가 변했고 작은 상태일 때만 화면 clear (잔상 제거)
+        bool size_changed = (cur_size.width != prev_term_size.width || cur_size.height != prev_term_size.height);
+        if (size_changed)
+        {
+            prev_term_size = cur_size;
+            if (term_status == TERMINAL_SIZE_TOO_SMALL)
+            {
+                clear();
+                refresh();
+            }
+        }
+
+        if (term_status == TERMINAL_SIZE_TOO_SMALL && !terminal_warning_shown)
+        {
+            // 터미널이 작아짐 - 경고 모달 표시 및 일시정지
+            char warn_msg[MODAL_MAX_MESSAGE_LENGTH];
+            snprintf(warn_msg, sizeof(warn_msg),
+                     "Terminal too small! (%dx%d)\nRequired: %dx%d\nResize to continue.",
+                     cur_size.width, cur_size.height,
+                     MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT);
+            modal_ui_show(&modal_ui, MODAL_TERMINAL_WARNING, warn_msg);
+            terminal_warning_shown = true;
+
+            // 타이머 일시정지
+            turn_manager_pause(&turn_mgr);
+
+            // 화면 지우기
+            clear();
+            refresh();
+        }
+        else if (term_status == TERMINAL_SIZE_RESTORED && terminal_warning_shown)
+        {
+            // 터미널 크기 복원됨 - 모달 닫기 및 재개
+            modal_ui_close(&modal_ui);
+            terminal_warning_shown = false;
+
+            // 타이머 재개
+            turn_manager_resume(&turn_mgr);
+
+            // 전체 화면 다시 그리기
+            clear();
+            refresh();
+            ingame_border_draw();
+            refresh();
+            first_render = true;
+        }
+
+        // 터미널 경고 모달이 표시 중이면 모달만 렌더링
+        if (terminal_warning_shown)
+        {
+            // 터미널 크기 변경 시 모달 메시지 업데이트
+            char warn_msg[MODAL_MAX_MESSAGE_LENGTH];
+            snprintf(warn_msg, sizeof(warn_msg),
+                     "Terminal too small! (%dx%d)\nRequired: %dx%d\nResize to continue.",
+                     cur_size.width, cur_size.height,
+                     MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT);
+            strncpy(modal_ui.message, warn_msg, MODAL_MAX_MESSAGE_LENGTH - 1);
+
+            // 모달 렌더링
+            modal_ui_render(stdscr, &modal_ui);
+
+            // 터미널 크기가 복원될 때까지 대기
+            usleep(100000); // 100ms
+            continue;
+        }
+
         // 현재 플레이어에 따라 금수 마크 업데이트 (Renju Rule)
         Stone current_player = turn_manager_get_current_player(&turn_mgr);
         if (current_player == BLACK)
@@ -118,7 +195,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
 
         // 보드 렌더링
         board_render(ui_mgr.board_win, &board, &cursor,
-                                  render_flags, first_render);
+                     render_flags, first_render);
 
         // 게임 정보 렌더링 (하단)
         game_info_ui_selective_render(ui_mgr.bottom_win, &board, &turn_mgr,

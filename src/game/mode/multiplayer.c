@@ -1,5 +1,7 @@
 #include "multiplayer.h"
 #include "mp_common.h"
+#include "../../utils/terminal_check.h"
+#include "../../ui/game/border/ingame_border.h"
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
@@ -109,6 +111,32 @@ int multiplayer_run_host(int port, GameRule rule)
 
     while (game_running)
     {
+        // ============================================
+        // 터미널 크기 체크 (멀티플레이: 경고만, 게임 계속 진행)
+        // ============================================
+        TerminalSizeStatus term_status = check_terminal_size_ingame();
+
+        if (term_status == TERMINAL_SIZE_TOO_SMALL && !game.terminal_warning_shown)
+        {
+            // 터미널이 작아짐 - 로그에 경고만 표시 (게임은 계속 진행)
+            log_add_msg(&game.log_ui, "[WARNING] Terminal too small!");
+            log_add_msg(&game.log_ui, "Please resize to continue.");
+            game.terminal_warning_shown = true;
+        }
+        else if (term_status == TERMINAL_SIZE_RESTORED && game.terminal_warning_shown)
+        {
+            // 터미널 크기 복원됨
+            log_add_msg(&game.log_ui, "Terminal size restored.");
+            game.terminal_warning_shown = false;
+
+            // 전체 화면 다시 그리기
+            clear();
+            refresh();
+            ingame_border_draw();
+            refresh();
+            game.first_render = true;
+        }
+
         mp_handle_spectator_connections(&game);
         mp_handle_network_messages(&ui_mgr, &game);
         mp_render_game(&ui_mgr, &game);
@@ -252,6 +280,32 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule)
 
     while (game_running)
     {
+        // ============================================
+        // 터미널 크기 체크 (멀티플레이: 경고만, 게임 계속 진행)
+        // ============================================
+        TerminalSizeStatus term_status = check_terminal_size_ingame();
+
+        if (term_status == TERMINAL_SIZE_TOO_SMALL && !game.terminal_warning_shown)
+        {
+            // 터미널이 작아짐 - 로그에 경고만 표시 (게임은 계속 진행)
+            log_add_msg(&game.log_ui, "[WARNING] Terminal too small!");
+            log_add_msg(&game.log_ui, "Please resize to continue.");
+            game.terminal_warning_shown = true;
+        }
+        else if (term_status == TERMINAL_SIZE_RESTORED && game.terminal_warning_shown)
+        {
+            // 터미널 크기 복원됨
+            log_add_msg(&game.log_ui, "Terminal size restored.");
+            game.terminal_warning_shown = false;
+
+            // 전체 화면 다시 그리기
+            clear();
+            refresh();
+            ingame_border_draw();
+            refresh();
+            game.first_render = true;
+        }
+
         mp_handle_network_messages(&ui_mgr, &game);
         mp_render_game(&ui_mgr, &game);
 

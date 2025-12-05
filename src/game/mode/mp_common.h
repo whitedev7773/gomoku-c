@@ -56,6 +56,9 @@ typedef struct
     GameResult result;
     bool swap_used;
     bool first_render;
+
+    // 터미널 크기 경고 상태
+    bool terminal_warning_shown;
 } MultiplayerGame;
 
 /**
