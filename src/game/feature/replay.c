@@ -1,6 +1,6 @@
 #include "replay.h"
 #include "../../ui/core/ui_manager.h"
-#include "../../ui/game/board_ui.h"
+#include "../../ui/game/board/board_ui.h"
 #include "../../ui/game/game_info_ui.h"
 #include "../../ui/menu/replay_list_ui.h"
 #include "../../ui/core/theme.h"
@@ -163,7 +163,7 @@ bool replay_prev_move(ReplayState *replay, Board *board)
 static void replay_render(UIManager *ui_mgr, const Board *board, const ReplayState *replay)
 {
     // 보드 렌더링
-    board_ui_render(ui_mgr->board_win, board, NULL);
+    board_render_full(ui_mgr->board_win, board, NULL);
 
     // 정보 렌더링
     werase(ui_mgr->info_win);

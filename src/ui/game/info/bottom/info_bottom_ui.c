@@ -1,10 +1,10 @@
-#include "game_info_ui.h"
-#include "board_ui.h"
-#include "../../game/core/turn_manager.h"
+#include "info_bottom_ui.h"
+#include "../../board/board_ui.h"
+#include "../../../../game/core/turn_manager.h"
 #include <string.h>
 #include <stdio.h>
 
-void game_info_ui_init(GameInfoUI *ui)
+void info_btm_init(InfoBottomUI *ui)
 {
     if (!ui)
         return;
@@ -16,7 +16,7 @@ void game_info_ui_init(GameInfoUI *ui)
     ui->prev_remaining_seconds = -1;
 }
 
-int game_info_ui_get_elapsed_seconds(const GameInfoUI *ui)
+int info_btm_elapsed_sec(const InfoBottomUI *ui)
 {
     if (!ui)
         return 0;
@@ -24,7 +24,7 @@ int game_info_ui_get_elapsed_seconds(const GameInfoUI *ui)
     return (int)difftime(now, ui->game_start_time);
 }
 
-void game_info_ui_draw_last_move(WINDOW *win, const Board *board)
+void info_btm_draw_last_mv(WINDOW *win, const Board *board)
 {
     // if (!win || !board)
     //     return;
@@ -57,7 +57,7 @@ void game_info_ui_draw_last_move(WINDOW *win, const Board *board)
     // }
 }
 
-void game_info_ui_draw_current_turn(WINDOW *win, Stone current_player)
+void info_btm_draw_turn(WINDOW *win, Stone current_player)
 {
     if (!win)
         return;
@@ -86,7 +86,7 @@ void game_info_ui_draw_current_turn(WINDOW *win, Stone current_player)
     refresh();
 }
 
-void game_info_ui_draw_timer(WINDOW *win, int remaining_seconds)
+void info_btm_draw_timer(WINDOW *win, int remaining_seconds)
 {
     if (!win)
         return;
@@ -108,19 +108,19 @@ void game_info_ui_draw_timer(WINDOW *win, int remaining_seconds)
     }
 }
 
-void game_info_ui_draw_play_time(WINDOW *win, const GameInfoUI *ui)
+void info_btm_draw_playtime(WINDOW *win, const InfoBottomUI *ui)
 {
     if (!win || !ui)
         return;
 
-    int elapsed = game_info_ui_get_elapsed_seconds(ui);
+    int elapsed = info_btm_elapsed_sec(ui);
     int minutes = elapsed / 60;
     int seconds = elapsed % 60;
 
     mvwprintw(win, 0, 79, " PLAY TIME:  %02d:%02d ", minutes, seconds);
 }
 
-void game_info_ui_draw_buttons(WINDOW *win)
+void info_btm_draw_btns(WINDOW *win)
 {
     if (!win)
         return;
@@ -135,7 +135,7 @@ void game_info_ui_draw_buttons(WINDOW *win)
 }
 
 // 초기 렌더링 (테두리는 ingame_border.c가 담당)
-void game_info_ui_init_bottom(WINDOW *win)
+void info_btm_init_win(WINDOW *win)
 {
     if (!win)
         return;
@@ -147,9 +147,9 @@ void game_info_ui_init_bottom(WINDOW *win)
 }
 
 // 최적화된 업데이트 (변경된 부분만)
-void game_info_ui_update_bottom(WINDOW *win, const Board *board,
-                                const TurnManager *turn_mgr,
-                                GameInfoUI *ui)
+void info_btm_update(WINDOW *win, const Board *board,
+                           const TurnManager *turn_mgr,
+                           InfoBottomUI *ui)
 {
     if (!win || !board || !turn_mgr || !ui)
         return;
@@ -160,7 +160,7 @@ void game_info_ui_update_bottom(WINDOW *win, const Board *board,
     Position last_move = board_get_last_move(board);
     if (ui->prev_last_row != last_move.row || ui->prev_last_col != last_move.col)
     {
-        game_info_ui_draw_last_move(win, board);
+        info_btm_draw_last_mv(win, board);
         ui->prev_last_row = last_move.row;
         ui->prev_last_col = last_move.col;
         need_refresh = true;
@@ -170,7 +170,7 @@ void game_info_ui_update_bottom(WINDOW *win, const Board *board,
     Stone current_player = turn_manager_get_current_player(turn_mgr);
     if (ui->prev_current_player != current_player)
     {
-        game_info_ui_draw_current_turn(win, current_player);
+        info_btm_draw_turn(win, current_player);
         ui->prev_current_player = current_player;
         need_refresh = true;
     }
@@ -179,16 +179,16 @@ void game_info_ui_update_bottom(WINDOW *win, const Board *board,
     int remaining = turn_manager_get_remaining_time(turn_mgr);
     if (ui->prev_remaining_seconds != remaining)
     {
-        game_info_ui_draw_timer(win, remaining);
+        info_btm_draw_timer(win, remaining);
         ui->prev_remaining_seconds = remaining;
         need_refresh = true;
     }
 
     // 4. 경과 시간 (초 단위로만 체크)
-    int elapsed = game_info_ui_get_elapsed_seconds(ui);
+    int elapsed = info_btm_elapsed_sec(ui);
     if (ui->prev_elapsed_seconds != elapsed)
     {
-        game_info_ui_draw_play_time(win, ui);
+        info_btm_draw_playtime(win, ui);
         ui->prev_elapsed_seconds = elapsed;
         need_refresh = true;
     }
@@ -203,11 +203,11 @@ void game_info_ui_update_bottom(WINDOW *win, const Board *board,
 // 선택적 렌더링 함수 (Dirty Flag 기반)
 // ============================================
 
-void game_info_ui_selective_render(WINDOW *win, const Board *board,
-                                   const TurnManager *turn_mgr,
-                                   GameInfoUI *ui,
-                                   UIRenderFlags *flags,
-                                   bool first_render)
+void info_btm_render(WINDOW *win, const Board *board,
+                                     const TurnManager *turn_mgr,
+                                     InfoBottomUI *ui,
+                                     UIRenderFlags *flags,
+                                     bool first_render)
 {
     if (!win || !board || !turn_mgr || !ui || !flags)
         return;
@@ -220,13 +220,13 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
         wclear(win);
 
         // 버튼 그리기 (고정)
-        game_info_ui_draw_buttons(win);
+        info_btm_draw_btns(win);
 
         // 모든 정보 그리기
-        game_info_ui_draw_last_move(win, board);
-        game_info_ui_draw_current_turn(win, turn_manager_get_current_player(turn_mgr));
-        game_info_ui_draw_timer(win, turn_manager_get_remaining_time(turn_mgr));
-        game_info_ui_draw_play_time(win, ui);
+        info_btm_draw_last_mv(win, board);
+        info_btm_draw_turn(win, turn_manager_get_current_player(turn_mgr));
+        info_btm_draw_timer(win, turn_manager_get_remaining_time(turn_mgr));
+        info_btm_draw_playtime(win, ui);
 
         // 상태 갱신
         Position last_move = board_get_last_move(board);
@@ -234,7 +234,7 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
         ui->prev_last_col = last_move.col;
         ui->prev_current_player = turn_manager_get_current_player(turn_mgr);
         ui->prev_remaining_seconds = turn_manager_get_remaining_time(turn_mgr);
-        ui->prev_elapsed_seconds = game_info_ui_get_elapsed_seconds(ui);
+        ui->prev_elapsed_seconds = info_btm_elapsed_sec(ui);
 
         ui_render_flags_clear(flags, RENDER_BOTTOM_BORDER);
         need_refresh = true;
@@ -249,7 +249,7 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
             Position last_move = board_get_last_move(board);
             if (ui->prev_last_row != last_move.row || ui->prev_last_col != last_move.col)
             {
-                game_info_ui_draw_last_move(win, board);
+                info_btm_draw_last_mv(win, board);
                 ui->prev_last_row = last_move.row;
                 ui->prev_last_col = last_move.col;
                 need_refresh = true;
@@ -263,7 +263,7 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
             Stone current_player = turn_manager_get_current_player(turn_mgr);
             if (ui->prev_current_player != current_player)
             {
-                game_info_ui_draw_current_turn(win, current_player);
+                info_btm_draw_turn(win, current_player);
                 ui->prev_current_player = current_player;
                 need_refresh = true;
             }
@@ -276,7 +276,7 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
             int remaining = turn_manager_get_remaining_time(turn_mgr);
             if (ui->prev_remaining_seconds != remaining)
             {
-                game_info_ui_draw_timer(win, remaining);
+                info_btm_draw_timer(win, remaining);
                 ui->prev_remaining_seconds = remaining;
                 need_refresh = true;
             }
@@ -286,10 +286,10 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
         // Play time (초 단위로만)
         if (ui_render_flags_is_set(flags, RENDER_PLAY_TIME))
         {
-            int elapsed = game_info_ui_get_elapsed_seconds(ui);
+            int elapsed = info_btm_elapsed_sec(ui);
             if (ui->prev_elapsed_seconds != elapsed)
             {
-                game_info_ui_draw_play_time(win, ui);
+                info_btm_draw_playtime(win, ui);
                 ui->prev_elapsed_seconds = elapsed;
                 need_refresh = true;
             }
@@ -301,62 +301,4 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
     {
         wrefresh(win);
     }
-}
-
-// ============================================
-// 상단 Info 영역 텍스트 표시 함수 (stdscr에 직접 그림)
-// ============================================
-
-// 상대방 이름 표시 - 위치 (49, 1)
-void game_info_draw_opponent_name(const char *name)
-{
-    // 영역 클리어 (10칸)
-    move(1, 49);
-    for (int i = 0; i < 10; i++)
-        addch(' ');
-    // 이름 표시
-    mvaddstr(1, 50, name);
-    refresh();
-}
-
-// 뷰어 수 표시 - 위치 (60, 1) - 형식: "{n} of Viewers"
-void game_info_draw_viewers(int count)
-{
-    // 영역 클리어 (14칸)
-    move(1, 60);
-    for (int i = 0; i < 14; i++)
-        addch(' ');
-    // 뷰어 수 표시
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%d of Viewers", count);
-    mvaddstr(1, 61, buf);
-    refresh();
-}
-
-// PING 표시 - 위치 (75, 1) - 형식: "PING {nn}ms"
-void game_info_draw_ping(int ping_ms)
-{
-    // 영역 클리어 (12칸)
-    move(1, 75);
-    for (int i = 0; i < 12; i++)
-        addch(' ');
-    // PING 표시
-    char buf[32];
-    snprintf(buf, sizeof(buf), "PING %dms", ping_ms);
-    mvaddstr(1, 76, buf);
-    refresh();
-}
-
-// PORT 표시 - 위치 (88, 1) - 형식: "PORT {nnnn}"
-void game_info_draw_port(int port)
-{
-    // 영역 클리어 (11칸)
-    move(1, 88);
-    for (int i = 0; i < 11; i++)
-        addch(' ');
-    // PORT 표시
-    char buf[32];
-    snprintf(buf, sizeof(buf), "PORT %d", port);
-    mvaddstr(1, 89, buf);
-    refresh();
 }

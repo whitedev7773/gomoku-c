@@ -1,60 +1,33 @@
 #ifndef GAME_INFO_UI_H
 #define GAME_INFO_UI_H
 
-#include "../../game/core/board.h"
-#include "../../game/core/turn_manager.h"
-#include "../core/ui_manager.h"
-#include <ncurses.h>
-#include <time.h>
-
-typedef struct
-{
-    time_t game_start_time;
-    // 최적화를 위한 이전 상태 추적
-    int prev_last_row;
-    int prev_last_col;
-    Stone prev_current_player;
-    int prev_elapsed_seconds;
-    int prev_remaining_seconds; // 타이머 이전 값
-} GameInfoUI;
-
-void game_info_ui_init(GameInfoUI *ui);
-
-// 초기 렌더링 (테두리 포함)
-void game_info_ui_init_bottom(WINDOW *win);
-
-// 최적화된 업데이트 (변경된 부분만)
-void game_info_ui_update_bottom(WINDOW *win, const Board *board,
-                                const TurnManager *turn_mgr,
-                                GameInfoUI *ui);
-
-void game_info_ui_draw_last_move(WINDOW *win, const Board *board);
-
-void game_info_ui_draw_current_turn(WINDOW *win, Stone current_player);
-
-void game_info_ui_draw_timer(WINDOW *win, int remaining_seconds);
-
-void game_info_ui_draw_play_time(WINDOW *win, const GameInfoUI *ui);
-
-void game_info_ui_draw_buttons(WINDOW *win);
-
-int game_info_ui_get_elapsed_seconds(const GameInfoUI *ui);
-
 // ============================================
-// 선택적 렌더링 함수 (Dirty Flag 기반)
+// 호환성 래퍼 헤더
+// 새 코드에서는 info/top/info_top_ui.h와 info/bottom/info_bottom_ui.h를 직접 사용하세요
 // ============================================
 
-// 선택적 렌더링 (dirty flag 기반)
-void game_info_ui_selective_render(WINDOW *win, const Board *board,
-                                   const TurnManager *turn_mgr,
-                                   GameInfoUI *ui,
-                                   UIRenderFlags *flags,
-                                   bool first_render);
+#include "info/top/info_top_ui.h"
+#include "info/bottom/info_bottom_ui.h"
 
-// 상단 Info 영역 텍스트 표시 함수 (stdscr에 직접 그림)
-void game_info_draw_opponent_name(const char *name); // 상대방 이름 표시
-void game_info_draw_viewers(int count);              // 뷰어 수 표시
-void game_info_draw_ping(int ping_ms);               // PING 표시
-void game_info_draw_port(int port);                  // PORT 표시
+// 타입 별칭 (호환성 유지)
+typedef InfoBottomUI GameInfoUI;
+
+// 함수 별칭 매크로 (호환성 유지)
+#define game_info_ui_init info_btm_init
+#define game_info_ui_init_bottom info_btm_init_win
+#define game_info_ui_update_bottom info_btm_update
+#define game_info_ui_draw_last_move info_btm_draw_last_mv
+#define game_info_ui_draw_current_turn info_btm_draw_turn
+#define game_info_ui_draw_timer info_btm_draw_timer
+#define game_info_ui_draw_play_time info_btm_draw_playtime
+#define game_info_ui_draw_buttons info_btm_draw_btns
+#define game_info_ui_get_elapsed_seconds info_btm_elapsed_sec
+#define game_info_ui_selective_render info_btm_render
+
+// 상단 Info 함수 별칭 (호환성 유지)
+#define game_info_draw_opponent_name info_top_opponent
+#define game_info_draw_viewers info_top_viewers
+#define game_info_draw_ping info_top_ping
+#define game_info_draw_port info_top_port
 
 #endif // GAME_INFO_UI_H

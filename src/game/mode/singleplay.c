@@ -4,13 +4,13 @@
 #include "../core/turn_manager.h"
 #include "../feature/game_logger.h"
 #include "../../ui/core/ui_manager.h"
-#include "../../ui/game/board_ui.h"
+#include "../../ui/game/board/board_ui.h"
 #include "../../ui/core/input_handler.h"
 #include "../../ui/game/game_info_ui.h"
-#include "../../ui/game/log_ui.h"
+#include "../../ui/game/log/log_ui.h"
 #include "../../ui/menu/modal_ui.h"
 #include "../../ui/core/theme.h"
-#include "../../ui/game/ingame_border.h"
+#include "../../ui/game/border/ingame_border.h"
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -51,7 +51,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
     board_init_with_rule(&board, rule);
 
     BoardCursor cursor;
-    board_ui_init_cursor(&cursor);
+    board_init_cursor(&cursor);
 
     TurnManager turn_mgr;
     turn_manager_init(&turn_mgr, BLACK); // 유저가 선공 (BLACK)
@@ -63,7 +63,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
     game_info_ui_init(&info_ui);
 
     LogUI log_ui;
-    log_ui_init(&log_ui);
+    log_init(&log_ui);
 
     ModalUI modal_ui;
     modal_ui_init(&modal_ui);
@@ -72,8 +72,8 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
     // 로거 초기화 및 에러 체크
     if (!logger_init(&logger))
     {
-        log_ui_add_message(&log_ui, "Warning: Failed to create log file");
-        log_ui_add_message(&log_ui, "Game will continue without logging");
+        log_add_msg(&log_ui, "Warning: Failed to create log file");
+        log_add_msg(&log_ui, "Game will continue without logging");
     }
 
     // 게임패드 입력 핸들러 초기화
@@ -84,7 +84,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
     char start_msg[128];
     snprintf(start_msg, sizeof(start_msg), "Game started! You: BLACK, AI: WHITE (%s)",
              difficulty == AI_EASY ? "Easy" : "Hard");
-    log_ui_add_message(&log_ui, start_msg);
+    log_add_msg(&log_ui, start_msg);
 
     // 메인 게임 루프
     bool game_running = true;
@@ -117,7 +117,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
         ui_render_flags_set(render_flags, RENDER_PLAY_TIME);
 
         // 보드 렌더링
-        board_ui_selective_render(ui_mgr.board_win, &board, &cursor,
+        board_render(ui_mgr.board_win, &board, &cursor,
                                   render_flags, first_render);
 
         // 게임 정보 렌더링 (하단)
@@ -130,7 +130,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
             mvwprintw(ui_mgr.chat_win, 0, 0, "=== System Log ===");
             wrefresh(ui_mgr.chat_win);
         }
-        log_ui_selective_render(ui_mgr.chat_win, &log_ui, render_flags, first_render, 2, 1);
+        log_render_sel(ui_mgr.chat_win, &log_ui, render_flags, first_render, 2, 1);
 
         // 우측 info 창 (현재 턴 표시) - 턴 변경 시에만
         if (first_render || ui_render_flags_is_set(render_flags, RENDER_INFO))
@@ -165,7 +165,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                 {
                     snprintf(result_msg, sizeof(result_msg), "Game ended in a DRAW!");
                 }
-                log_ui_add_message(&log_ui, result_msg);
+                log_add_msg(&log_ui, result_msg);
 
                 // 모달 표시
                 modal_ui_show(&modal_ui, MODAL_GAME_RESULT, result_msg);
@@ -179,7 +179,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
         if (!game_over && current_player == BLACK && turn_manager_is_timeout(&turn_mgr))
         {
             game_over = true;
-            log_ui_add_message(&log_ui, "Time's up! You LOSE!");
+            log_add_msg(&log_ui, "Time's up! You LOSE!");
             modal_ui_show(&modal_ui, MODAL_GAME_RESULT, "Time's up! You LOSE!");
             logger_close(&logger);
             continue;
@@ -201,8 +201,8 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                     // 로그 기록
                     char move_msg[128];
                     snprintf(move_msg, sizeof(move_msg), "AI placed at %c%02d",
-                             board_ui_col_to_char(ai_move.col), ai_move.row + 1);
-                    log_ui_add_message(&log_ui, move_msg);
+                             board_col_to_char(ai_move.col), ai_move.row + 1);
+                    log_add_msg(&log_ui, move_msg);
 
                     logger_log_move(&logger, WHITE, ai_move.row, ai_move.col,
                                     board_get_move_count(&board));
@@ -238,16 +238,16 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                 switch (event.action)
                 {
                 case INPUT_MOVE_UP:
-                    board_ui_move_cursor_with_flags(&cursor, -1, 0, render_flags);
+                    board_move_cursor_f(&cursor, -1, 0, render_flags);
                     break;
                 case INPUT_MOVE_DOWN:
-                    board_ui_move_cursor_with_flags(&cursor, 1, 0, render_flags);
+                    board_move_cursor_f(&cursor, 1, 0, render_flags);
                     break;
                 case INPUT_MOVE_LEFT:
-                    board_ui_move_cursor_with_flags(&cursor, 0, -1, render_flags);
+                    board_move_cursor_f(&cursor, 0, -1, render_flags);
                     break;
                 case INPUT_MOVE_RIGHT:
-                    board_ui_move_cursor_with_flags(&cursor, 0, 1, render_flags);
+                    board_move_cursor_f(&cursor, 0, 1, render_flags);
                     break;
                 case INPUT_PLACE_STONE:
                     if (board_is_empty(&board, cursor.cursor_row, cursor.cursor_col))
@@ -255,7 +255,7 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                         // Renju Rule: 흑돌은 금수 위치에 놓을 수 없음
                         if (board_is_forbidden(&board, cursor.cursor_row, cursor.cursor_col))
                         {
-                            log_ui_add_message(&log_ui, "Forbidden move! (Renju Rule)");
+                            log_add_msg(&log_ui, "Forbidden move! (Renju Rule)");
                         }
                         else
                         {
@@ -267,8 +267,8 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                             {
                                 char move_msg[128];
                                 snprintf(move_msg, sizeof(move_msg), "You placed at %c%02d",
-                                         board_ui_col_to_char(cursor.cursor_col), cursor.cursor_row + 1);
-                                log_ui_add_message(&log_ui, move_msg);
+                                         board_col_to_char(cursor.cursor_col), cursor.cursor_row + 1);
+                                log_add_msg(&log_ui, move_msg);
 
                                 logger_log_move(&logger, BLACK, cursor.cursor_row, cursor.cursor_col,
                                                 board_get_move_count(&board));
@@ -290,14 +290,14 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
                     }
                     else
                     {
-                        log_ui_add_message(&log_ui, "Position already occupied!");
+                        log_add_msg(&log_ui, "Position already occupied!");
                     }
                     break;
                 case INPUT_QUIT:
                     game_running = false;
                     break;
                 case INPUT_RESIGN:
-                    log_ui_add_message(&log_ui, "You resigned. AI WINS!");
+                    log_add_msg(&log_ui, "You resigned. AI WINS!");
                     modal_ui_show(&modal_ui, MODAL_GAME_RESULT, "You resigned. AI WINS!");
                     game_over = true;
                     break;

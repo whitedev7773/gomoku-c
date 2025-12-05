@@ -10,7 +10,7 @@ static const char *COMMANDS[] = {
     "/swap",
     NULL};
 
-void chat_ui_init(ChatUI *chat)
+void chat_init(ChatUI *chat)
 {
     memset(chat, 0, sizeof(ChatUI));
     chat->input_mode = false;
@@ -19,7 +19,7 @@ void chat_ui_init(ChatUI *chat)
     chat->prev_message_count = 0;
 }
 
-void chat_ui_add_message(ChatUI *chat, const char *message, ChatMessageType type)
+void chat_add_msg(ChatUI *chat, const char *message, ChatMessageType type)
 {
     if (chat->message_count >= MAX_CHAT_MESSAGES)
     {
@@ -41,7 +41,7 @@ void chat_ui_add_message(ChatUI *chat, const char *message, ChatMessageType type
     chat->messages_dirty = true; // 메시지 추가됨
 }
 
-void chat_ui_render(WINDOW *win, const ChatUI *chat)
+void chat_render(WINDOW *win, const ChatUI *chat)
 {
     int max_y, max_x;
     getmaxyx(win, max_y, max_x);
@@ -94,7 +94,7 @@ void chat_ui_render(WINDOW *win, const ChatUI *chat)
     }
 }
 
-void chat_ui_render_input(WINDOW *win, const ChatUI *chat, int y, int x)
+void chat_render_input(WINDOW *win, const ChatUI *chat, int y, int x)
 {
     if (!chat->input_mode)
     {
@@ -124,7 +124,7 @@ void chat_ui_render_input(WINDOW *win, const ChatUI *chat, int y, int x)
     wmove(win, y, x + 2 + chat->input_cursor_pos);
 }
 
-void chat_ui_enter_input_mode(ChatUI *chat)
+void chat_enter_input(ChatUI *chat)
 {
     chat->input_mode = true;
     memset(chat->input_buffer, 0, sizeof(chat->input_buffer));
@@ -133,7 +133,7 @@ void chat_ui_enter_input_mode(ChatUI *chat)
     chat->input_dirty = true;
 }
 
-void chat_ui_exit_input_mode(ChatUI *chat)
+void chat_exit_input(ChatUI *chat)
 {
     chat->input_mode = false;
     memset(chat->input_buffer, 0, sizeof(chat->input_buffer));
@@ -142,12 +142,12 @@ void chat_ui_exit_input_mode(ChatUI *chat)
     chat->input_dirty = true;
 }
 
-bool chat_ui_is_input_mode(const ChatUI *chat)
+bool chat_is_input_mode(const ChatUI *chat)
 {
     return chat->input_mode;
 }
 
-void chat_ui_update_autocomplete(ChatUI *chat)
+void chat_update_autocomplete(ChatUI *chat)
 {
     memset(chat->autocomplete_hint, 0, sizeof(chat->autocomplete_hint));
 
@@ -173,7 +173,7 @@ void chat_ui_update_autocomplete(ChatUI *chat)
     }
 }
 
-void chat_ui_handle_input(ChatUI *chat, int ch)
+void chat_handle_input(ChatUI *chat, int ch)
 {
     if (!chat->input_mode)
     {
@@ -184,13 +184,13 @@ void chat_ui_handle_input(ChatUI *chat, int ch)
 
     if (ch == '\n' || ch == KEY_ENTER)
     {
-        // Enter: 메시지 전송 (chat_ui_is_message_ready에서 처리)
+        // Enter: 메시지 전송 (chat_is_ready에서 처리)
         return;
     }
     else if (ch == 27)
     {
         // ESC: 입력 취소
-        chat_ui_exit_input_mode(chat);
+        chat_exit_input(chat);
     }
     else if (ch == KEY_BACKSPACE || ch == 127 || ch == 8)
     {
@@ -202,7 +202,7 @@ void chat_ui_handle_input(ChatUI *chat, int ch)
                     chat->input_buffer + chat->input_cursor_pos,
                     len - chat->input_cursor_pos + 1);
             chat->input_cursor_pos--;
-            chat_ui_update_autocomplete(chat);
+            chat_update_autocomplete(chat);
             chat->input_dirty = true;
         }
     }
@@ -244,22 +244,22 @@ void chat_ui_handle_input(ChatUI *chat, int ch)
                 len - chat->input_cursor_pos + 1);
         chat->input_buffer[chat->input_cursor_pos] = ch;
         chat->input_cursor_pos++;
-        chat_ui_update_autocomplete(chat);
+        chat_update_autocomplete(chat);
         chat->input_dirty = true;
     }
 }
 
-bool chat_ui_is_message_ready(const ChatUI *chat)
+bool chat_is_ready(const ChatUI *chat)
 {
     return chat->input_mode && strlen(chat->input_buffer) > 0;
 }
 
-const char *chat_ui_get_message(ChatUI *chat)
+const char *chat_get_msg(ChatUI *chat)
 {
     return chat->input_buffer;
 }
 
-void chat_ui_clear_input(ChatUI *chat)
+void chat_clear_input(ChatUI *chat)
 {
     memset(chat->input_buffer, 0, sizeof(chat->input_buffer));
     chat->input_cursor_pos = 0;
@@ -271,7 +271,7 @@ void chat_ui_clear_input(ChatUI *chat)
 // 선택적 렌더링 함수 (Dirty Flag 기반)
 // ============================================
 
-void chat_ui_selective_render(WINDOW *win, ChatUI *chat,
+void chat_selective_render(WINDOW *win, ChatUI *chat,
                               UIRenderFlags *flags, bool first_render)
 {
     if (!win || !chat)
@@ -280,7 +280,7 @@ void chat_ui_selective_render(WINDOW *win, ChatUI *chat,
     // 첫 렌더링이거나 메시지가 변경됨
     if (first_render || ui_render_flags_is_set(flags, RENDER_CHAT) || chat->messages_dirty)
     {
-        chat_ui_render(win, chat);
+        chat_render(win, chat);
         wrefresh(win);
         chat->messages_dirty = false;
         chat->prev_message_count = chat->message_count;
@@ -288,7 +288,7 @@ void chat_ui_selective_render(WINDOW *win, ChatUI *chat,
     }
 }
 
-void chat_ui_selective_render_input(WINDOW *win, ChatUI *chat,
+void chat_selective_render_input(WINDOW *win, ChatUI *chat,
                                     UIRenderFlags *flags, bool first_render,
                                     int y, int x)
 {
@@ -304,19 +304,19 @@ void chat_ui_selective_render_input(WINDOW *win, ChatUI *chat,
             wmove(win, i, 0);
             wclrtoeol(win);
         }
-        chat_ui_render_input(win, chat, y, x);
+        chat_render_input(win, chat, y, x);
         wrefresh(win);
         chat->input_dirty = false;
         ui_render_flags_clear(flags, RENDER_CHAT_INPUT);
     }
 }
 
-bool chat_ui_is_dirty(const ChatUI *chat)
+bool chat_is_dirty(const ChatUI *chat)
 {
     return chat->messages_dirty || chat->input_dirty;
 }
 
-void chat_ui_clear_dirty(ChatUI *chat)
+void chat_clear_dirty(ChatUI *chat)
 {
     chat->messages_dirty = false;
     chat->input_dirty = false;

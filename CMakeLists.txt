@@ -86,6 +86,6 @@ endif()
 
 file(GLOB TEST_INGAME_BORDER_FILES "src/test/test_ingame_border.c")
 if(TEST_INGAME_BORDER_FILES)
-    add_executable(test_ingame_border ${TEST_INGAME_BORDER_FILES} src/ui/game/ingame_border.c src/ui/core/theme.c src/utils/config.c)
+    add_executable(test_ingame_border ${TEST_INGAME_BORDER_FILES} src/ui/game/border/ingame_border.c src/ui/core/theme.c src/utils/config.c)
     target_link_libraries(test_ingame_border ${CURSES_LIBRARIES})
 endif()

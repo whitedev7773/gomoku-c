@@ -1,11 +1,11 @@
 #include "board_ui.h"
-#include "../core/theme.h"
+#include "../../core/theme.h"
 #include <string.h>
 
 // Column labels (A-T, excluding I)
 static const char COL_LABELS[] = "ABCDEFGHJKLMNOPQRST";
 
-void board_ui_init_cursor(BoardCursor *cursor)
+void board_init_cursor(BoardCursor *cursor)
 {
     if (!cursor)
         return;
@@ -15,14 +15,14 @@ void board_ui_init_cursor(BoardCursor *cursor)
     cursor->prev_cursor_col = 9;
 }
 
-char board_ui_col_to_char(int col)
+char board_col_to_char(int col)
 {
     if (col < 0 || col >= BOARD_SIZE)
         return '?';
     return COL_LABELS[col];
 }
 
-int board_ui_char_to_col(char c)
+int board_char_to_col(char c)
 {
     for (int i = 0; i < BOARD_SIZE; i++)
     {
@@ -32,7 +32,7 @@ int board_ui_char_to_col(char c)
     return -1;
 }
 
-void board_ui_draw_border(WINDOW *win)
+void board_draw_border(WINDOW *win)
 {
     // ingame_border.c가 stdscr에 테두리를 그리므로
     // 여기서는 좌표 레이블과 보드 프레임만 그림
@@ -78,7 +78,7 @@ void board_ui_draw_border(WINDOW *win)
     }
 }
 
-void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cursor)
+void board_draw(WINDOW *win, const Board *board, const BoardCursor *cursor)
 {
     for (int row = 0; row < BOARD_SIZE; row++)
     {
@@ -157,23 +157,23 @@ void board_ui_draw_board(WINDOW *win, const Board *board, const BoardCursor *cur
     }
 }
 
-void board_ui_render(WINDOW *win, const Board *board, const BoardCursor *cursor)
+void board_render_full(WINDOW *win, const Board *board, const BoardCursor *cursor)
 {
     if (!win)
         return;
 
     wclear(win);
-    board_ui_draw_border(win);
+    board_draw_border(win);
 
     if (board)
     {
-        board_ui_draw_board(win, board, cursor);
+        board_draw(win, board, cursor);
     }
 
     wrefresh(win);
 }
 
-void board_ui_move_cursor(BoardCursor *cursor, int dr, int dc)
+void board_move_cursor(BoardCursor *cursor, int dr, int dc)
 {
     if (!cursor)
         return;
@@ -197,18 +197,18 @@ void board_ui_move_cursor(BoardCursor *cursor, int dr, int dc)
 }
 
 // 초기 렌더링 (테두리 포함 전체 - 한 번만 호출)
-void board_ui_init(WINDOW *win)
+void board_init_win(WINDOW *win)
 {
     if (!win)
         return;
 
     wclear(win);
-    board_ui_draw_border(win);
+    board_draw_border(win);
     wrefresh(win);
 }
 
 // 특정 셀만 다시 그리기 (최적화)
-void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cursor, int row, int col)
+void board_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cursor, int row, int col)
 {
     if (!win || !board || row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE)
         return;
@@ -296,7 +296,7 @@ void board_ui_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *cu
 }
 
 // 최적화된 업데이트 (변경된 부분만)
-void board_ui_update(WINDOW *win, const Board *board, const BoardCursor *cursor)
+void board_update(WINDOW *win, const Board *board, const BoardCursor *cursor)
 {
     if (!win || !board)
         return;
@@ -305,19 +305,19 @@ void board_ui_update(WINDOW *win, const Board *board, const BoardCursor *cursor)
     if (cursor && (cursor->prev_cursor_row != cursor->cursor_row ||
                    cursor->prev_cursor_col != cursor->cursor_col))
     {
-        board_ui_redraw_cell(win, board, NULL, cursor->prev_cursor_row, cursor->prev_cursor_col);
+        board_redraw_cell(win, board, NULL, cursor->prev_cursor_row, cursor->prev_cursor_col);
     }
 
     // 2. 현재 커서 위치 그리기
     if (cursor)
     {
-        board_ui_redraw_cell(win, board, cursor, cursor->cursor_row, cursor->cursor_col);
+        board_redraw_cell(win, board, cursor, cursor->cursor_row, cursor->cursor_col);
     }
 
     // 3. 마지막 수 위치 업데이트 (항상 강조 표시)
     if (board->last_row >= 0 && board->last_col >= 0)
     {
-        board_ui_redraw_cell(win, board, cursor, board->last_row, board->last_col);
+        board_redraw_cell(win, board, cursor, board->last_row, board->last_col);
     }
 
     wrefresh(win);
@@ -327,7 +327,7 @@ void board_ui_update(WINDOW *win, const Board *board, const BoardCursor *cursor)
 // 선택적 렌더링 함수 (Dirty Flag 기반)
 // ============================================
 
-void board_ui_selective_render(WINDOW *win, const Board *board,
+void board_render(WINDOW *win, const Board *board,
                                const BoardCursor *cursor,
                                UIRenderFlags *flags,
                                bool first_render)
@@ -341,8 +341,8 @@ void board_ui_selective_render(WINDOW *win, const Board *board,
     if (first_render || ui_render_flags_is_set(flags, RENDER_BOARD_FULL))
     {
         wclear(win);
-        board_ui_draw_border(win);
-        board_ui_draw_board(win, board, cursor);
+        board_draw_border(win);
+        board_draw(win, board, cursor);
         need_refresh = true;
         ui_render_flags_clear(flags, RENDER_BOARD_FULL);
     }
@@ -355,13 +355,13 @@ void board_ui_selective_render(WINDOW *win, const Board *board,
             if (cursor && (cursor->prev_cursor_row != cursor->cursor_row ||
                            cursor->prev_cursor_col != cursor->cursor_col))
             {
-                board_ui_redraw_cell(win, board, NULL, cursor->prev_cursor_row, cursor->prev_cursor_col);
+                board_redraw_cell(win, board, NULL, cursor->prev_cursor_row, cursor->prev_cursor_col);
             }
 
             // 현재 커서 위치 그리기
             if (cursor)
             {
-                board_ui_redraw_cell(win, board, cursor, cursor->cursor_row, cursor->cursor_col);
+                board_redraw_cell(win, board, cursor, cursor->cursor_row, cursor->cursor_col);
             }
             need_refresh = true;
             ui_render_flags_clear(flags, RENDER_BOARD_CURSOR);
@@ -374,7 +374,7 @@ void board_ui_selective_render(WINDOW *win, const Board *board,
             {
                 int row = flags->dirty_cells[i][0];
                 int col = flags->dirty_cells[i][1];
-                board_ui_redraw_cell(win, board, cursor, row, col);
+                board_redraw_cell(win, board, cursor, row, col);
             }
             ui_render_flags_clear_dirty_cells(flags);
             ui_render_flags_clear(flags, RENDER_BOARD_CELL);
@@ -385,7 +385,7 @@ void board_ui_selective_render(WINDOW *win, const Board *board,
     // 마지막 수 항상 강조 (새로운 돌이 놓였을 때)
     if (board->last_row >= 0 && board->last_col >= 0)
     {
-        board_ui_redraw_cell(win, board, cursor, board->last_row, board->last_col);
+        board_redraw_cell(win, board, cursor, board->last_row, board->last_col);
         need_refresh = true;
     }
 
@@ -395,7 +395,7 @@ void board_ui_selective_render(WINDOW *win, const Board *board,
     }
 }
 
-void board_ui_move_cursor_with_flags(BoardCursor *cursor, int dr, int dc,
+void board_move_cursor_f(BoardCursor *cursor, int dr, int dc,
                                      UIRenderFlags *flags)
 {
     if (!cursor || !flags)
@@ -427,7 +427,7 @@ void board_ui_move_cursor_with_flags(BoardCursor *cursor, int dr, int dc,
 }
 
 // 상대방 커서 위치 업데이트
-void board_ui_update_opponent_cursor(BoardCursor *opponent_cursor, int row, int col,
+void board_update_opponent_cursor(BoardCursor *opponent_cursor, int row, int col,
                                      UIRenderFlags *flags)
 {
     if (!opponent_cursor || !flags)
@@ -450,7 +450,7 @@ void board_ui_update_opponent_cursor(BoardCursor *opponent_cursor, int row, int 
 }
 
 // 특정 셀 그리기 (멀티플레이용 - 내 커서와 상대방 커서 모두 고려)
-static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
+static void board_redraw_cell_multiplayer(WINDOW *win, const Board *board,
                                              const BoardCursor *my_cursor,
                                              const BoardCursor *opponent_cursor,
                                              int row, int col)
@@ -579,7 +579,7 @@ static void board_ui_redraw_cell_multiplayer(WINDOW *win, const Board *board,
 }
 
 // 보드 전체 그리기 (멀티플레이용)
-static void board_ui_draw_board_multiplayer(WINDOW *win, const Board *board,
+static void board_draw_multiplayer(WINDOW *win, const Board *board,
                                             const BoardCursor *my_cursor,
                                             const BoardCursor *opponent_cursor)
 {
@@ -685,7 +685,7 @@ static void board_ui_draw_board_multiplayer(WINDOW *win, const Board *board,
 }
 
 // 멀티플레이용 선택적 렌더링 (상대방 커서 포함)
-void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
+void board_render_mp(WINDOW *win, const Board *board,
                                            const BoardCursor *my_cursor,
                                            const BoardCursor *opponent_cursor,
                                            UIRenderFlags *flags,
@@ -706,8 +706,8 @@ void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
     if (first_render || ui_render_flags_is_set(flags, RENDER_BOARD_FULL))
     {
         wclear(win);
-        board_ui_draw_border(win);
-        board_ui_draw_board_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor);
+        board_draw_border(win);
+        board_draw_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor);
         need_refresh = true;
         ui_render_flags_clear(flags, RENDER_BOARD_FULL);
     }
@@ -720,7 +720,7 @@ void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
             if (effective_my_cursor && (my_cursor->prev_cursor_row != my_cursor->cursor_row ||
                                         my_cursor->prev_cursor_col != my_cursor->cursor_col))
             {
-                board_ui_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
+                board_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
                                                  my_cursor->prev_cursor_row, my_cursor->prev_cursor_col);
             }
 
@@ -728,21 +728,21 @@ void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
             if (effective_opponent_cursor && (opponent_cursor->prev_cursor_row != opponent_cursor->cursor_row ||
                                               opponent_cursor->prev_cursor_col != opponent_cursor->cursor_col))
             {
-                board_ui_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
+                board_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
                                                  opponent_cursor->prev_cursor_row, opponent_cursor->prev_cursor_col);
             }
 
             // 내 커서 현재 위치 그리기 (내 턴일 때만)
             if (effective_my_cursor)
             {
-                board_ui_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
+                board_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
                                                  my_cursor->cursor_row, my_cursor->cursor_col);
             }
 
             // 상대방 커서 현재 위치 그리기 (상대 턴일 때만)
             if (effective_opponent_cursor)
             {
-                board_ui_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
+                board_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
                                                  opponent_cursor->cursor_row, opponent_cursor->cursor_col);
             }
 
@@ -757,7 +757,7 @@ void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
             {
                 int row = flags->dirty_cells[i][0];
                 int col = flags->dirty_cells[i][1];
-                board_ui_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor, row, col);
+                board_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor, row, col);
             }
             ui_render_flags_clear_dirty_cells(flags);
             ui_render_flags_clear(flags, RENDER_BOARD_CELL);
@@ -768,7 +768,7 @@ void board_ui_selective_render_multiplayer(WINDOW *win, const Board *board,
     // 마지막 수 항상 강조 (새로운 돌이 놓였을 때)
     if (board->last_row >= 0 && board->last_col >= 0)
     {
-        board_ui_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
+        board_redraw_cell_multiplayer(win, board, effective_my_cursor, effective_opponent_cursor,
                                          board->last_row, board->last_col);
         need_refresh = true;
     }

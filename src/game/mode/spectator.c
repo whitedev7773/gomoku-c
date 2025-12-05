@@ -1,11 +1,11 @@
 #include "spectator.h"
 #include "../../ui/core/ui_manager.h"
-#include "../../ui/game/board_ui.h"
+#include "../../ui/game/board/board_ui.h"
 #include "../../ui/game/game_info_ui.h"
-#include "../../ui/game/chat_ui.h"
+#include "../../ui/game/chat/chat_ui.h"
 #include "../../ui/menu/modal_ui.h"
 #include "../../ui/core/input_handler.h"
-#include "../../ui/game/ingame_border.h"
+#include "../../ui/game/border/ingame_border.h"
 #include "../core/game_logic.h"
 #include "../core/turn_manager.h"
 #include "../../network/protocol.h"
@@ -46,7 +46,7 @@ static void spectator_init(SpectatorGame *game, const char *spectator_name)
 
     board_init(&game->board);
     turn_manager_init(&game->turn_mgr, BLACK); // 기본값으로 BLACK, 나중에 서버 상태로 갱신
-    chat_ui_init(&game->chat_ui);
+    chat_init(&game->chat_ui);
     modal_ui_init(&game->modal_ui);
     network_init_spectator(&game->network);
 
@@ -96,11 +96,11 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
             // 연결 거부
             if (msg.payload.spectator_connect_ack.error_code == ERR_NO_GAME)
             {
-                chat_ui_add_message(&game->chat_ui, "No game in progress", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "No game in progress", CHAT_MSG_SYSTEM);
             }
             else if (msg.payload.spectator_connect_ack.error_code == ERR_SPECTATOR_FULL)
             {
-                chat_ui_add_message(&game->chat_ui, "Spectator slots full", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "Spectator slots full", CHAT_MSG_SYSTEM);
             }
             return false;
         }
@@ -123,7 +123,7 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
         game->turn_mgr.current_player = msg.payload.game_state.current_turn;
         game->game_active = true;
 
-        chat_ui_add_message(&game->chat_ui, "Game loaded", CHAT_MSG_SYSTEM);
+        chat_add_msg(&game->chat_ui, "Game loaded", CHAT_MSG_SYSTEM);
         break;
 
     case MSG_MOVE:
@@ -142,7 +142,7 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
 
     case MSG_CHAT:
         // 채팅 메시지 수신
-        chat_ui_add_message(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
+        chat_add_msg(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
         game->need_render = true;
         break;
 
@@ -153,7 +153,7 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
             char sys_msg[128];
             snprintf(sys_msg, sizeof(sys_msg), "%s joined",
                      msg.payload.spectator_join_leave.spectator_name);
-            chat_ui_add_message(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
         }
         game->need_render = true;
         break;
@@ -165,14 +165,14 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
             char sys_msg[128];
             snprintf(sys_msg, sizeof(sys_msg), "%s left",
                      msg.payload.spectator_join_leave.spectator_name);
-            chat_ui_add_message(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
         }
         game->need_render = true;
         break;
 
     case MSG_DISCONNECT:
         // 게임 종료
-        chat_ui_add_message(&game->chat_ui, "Game ended", CHAT_MSG_SYSTEM);
+        chat_add_msg(&game->chat_ui, "Game ended", CHAT_MSG_SYSTEM);
         game->game_active = false;
         game->need_render = true;
         break;
@@ -197,7 +197,7 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
             game->game_ended = true;
             game->game_active = false;
             modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, msg.payload.game_result.message);
-            chat_ui_add_message(&game->chat_ui, msg.payload.game_result.message, CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, msg.payload.game_result.message, CHAT_MSG_SYSTEM);
         }
         game->need_render = true;
         break;
@@ -219,7 +219,7 @@ static void spectator_render_game(UIManager *ui_mgr, const SpectatorGame *game)
     game_info_draw_port(game->network.remote_port);
 
     // 보드 렌더링 (현재 턴 플레이어의 커서 표시)
-    board_ui_render(ui_mgr->board_win, &game->board, &game->current_player_cursor);
+    board_render_full(ui_mgr->board_win, &game->board, &game->current_player_cursor);
 
     // 게임 정보 렌더링
     int max_y, max_x;
@@ -267,7 +267,7 @@ static void spectator_render_game(UIManager *ui_mgr, const SpectatorGame *game)
     wrefresh(ui_mgr->info_win);
 
     // 채팅 UI 렌더링
-    chat_ui_render(ui_mgr->chat_win, &game->chat_ui);
+    chat_render(ui_mgr->chat_win, &game->chat_ui);
     wrefresh(ui_mgr->chat_win);
 
     // 모달이 활성화되어 있으면 가장 위에 렌더링
@@ -295,12 +295,12 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
     input_handler_init(&input_handler);
 
     // 서버에 연결
-    chat_ui_add_message(&game.chat_ui, "Connecting to server...", CHAT_MSG_SYSTEM);
+    chat_add_msg(&game.chat_ui, "Connecting to server...", CHAT_MSG_SYSTEM);
     spectator_render_game(&ui_mgr, &game);
 
     if (!network_spectator_connect(&game.network, server_ip, port))
     {
-        chat_ui_add_message(&game.chat_ui, "Failed to connect", CHAT_MSG_SYSTEM);
+        chat_add_msg(&game.chat_ui, "Failed to connect", CHAT_MSG_SYSTEM);
         spectator_render_game(&ui_mgr, &game);
         usleep(2000000); // 2초 대기
         input_handler_cleanup(&input_handler);
@@ -315,7 +315,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
     strncpy(connect_msg.payload.spectator_connect.spectator_name, spectator_name, MAX_PLAYER_NAME - 1);
     network_send_message(&game.network, &connect_msg);
 
-    chat_ui_add_message(&game.chat_ui, "Waiting for response...", CHAT_MSG_SYSTEM);
+    chat_add_msg(&game.chat_ui, "Waiting for response...", CHAT_MSG_SYSTEM);
     spectator_render_game(&ui_mgr, &game);
 
     // 승인 대기
@@ -332,18 +332,18 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
             {
                 connected = true;
                 game.spectator_count = ack_msg.payload.spectator_connect_ack.spectator_count;
-                chat_ui_add_message(&game.chat_ui, "Connected!", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game.chat_ui, "Connected!", CHAT_MSG_SYSTEM);
                 spectator_render_game(&ui_mgr, &game);
             }
             else
             {
                 if (ack_msg.payload.spectator_connect_ack.error_code == ERR_NO_GAME)
                 {
-                    chat_ui_add_message(&game.chat_ui, "No game in progress", CHAT_MSG_SYSTEM);
+                    chat_add_msg(&game.chat_ui, "No game in progress", CHAT_MSG_SYSTEM);
                 }
                 else if (ack_msg.payload.spectator_connect_ack.error_code == ERR_SPECTATOR_FULL)
                 {
-                    chat_ui_add_message(&game.chat_ui, "Spectator slots full", CHAT_MSG_SYSTEM);
+                    chat_add_msg(&game.chat_ui, "Spectator slots full", CHAT_MSG_SYSTEM);
                 }
                 spectator_render_game(&ui_mgr, &game);
                 usleep(2000000);
@@ -356,7 +356,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
 
     if (!connected)
     {
-        chat_ui_add_message(&game.chat_ui, "Connection timeout", CHAT_MSG_SYSTEM);
+        chat_add_msg(&game.chat_ui, "Connection timeout", CHAT_MSG_SYSTEM);
         spectator_render_game(&ui_mgr, &game);
         usleep(2000000);
         input_handler_cleanup(&input_handler);
@@ -390,7 +390,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
             game.game_active = true;
             state_received = true;
 
-            chat_ui_add_message(&game.chat_ui, "Game loaded", CHAT_MSG_SYSTEM);
+            chat_add_msg(&game.chat_ui, "Game loaded", CHAT_MSG_SYSTEM);
             spectator_render_game(&ui_mgr, &game);
             break;
         }
@@ -400,7 +400,7 @@ int spectator_run(const char *server_ip, int port, const char *spectator_name)
 
     if (!state_received)
     {
-        chat_ui_add_message(&game.chat_ui, "Failed to load game state", CHAT_MSG_SYSTEM);
+        chat_add_msg(&game.chat_ui, "Failed to load game state", CHAT_MSG_SYSTEM);
         spectator_render_game(&ui_mgr, &game);
         usleep(2000000);
         input_handler_cleanup(&input_handler);

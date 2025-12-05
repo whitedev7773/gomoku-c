@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "../ui/core/ui_manager.h"
-#include "../ui/game/board_ui.h"
+#include "../ui/game/board/board_ui.h"
 #include "../ui/core/input_handler.h"
 #include "../ui/game/game_info_ui.h"
-#include "../ui/game/log_ui.h"
+#include "../ui/game/log/log_ui.h"
 #include "../game/core/board.h"
 #include "../game/core/game_logic.h"
 #include "../game/core/turn_manager.h"
@@ -26,14 +26,14 @@ int main()
     }
 
     board_init(&board);
-    board_ui_init_cursor(&cursor);
+    board_init_cursor(&cursor);
     turn_manager_init(&turn_mgr, BLACK);
     game_info_ui_init(&game_info);
-    log_ui_init(&log_ui);
+    log_init(&log_ui);
 
-    log_ui_add_message(&log_ui, "Game started!");
-    log_ui_add_message(&log_ui, "Use arrow keys to move, SPACE to place stone");
-    log_ui_add_message(&log_ui, "Press Q to quit");
+    log_add_msg(&log_ui, "Game started!");
+    log_add_msg(&log_ui, "Use arrow keys to move, SPACE to place stone");
+    log_add_msg(&log_ui, "Press Q to quit");
 
     bool running = true;
     bool game_over = false;
@@ -41,9 +41,9 @@ int main()
     while (running)
     {
         // Render UI
-        board_ui_render(manager.board_win, &board, &cursor);
+        board_render_full(manager.board_win, &board, &cursor);
         game_info_ui_update_bottom(manager.bottom_win, &board, &turn_mgr, &game_info);
-        log_ui_render(manager.bottom_win, &log_ui, 1, 42);
+        log_render(manager.bottom_win, &log_ui, 1, 42);
 
         // Draw info window placeholder
         wclear(manager.info_win);
@@ -78,16 +78,16 @@ int main()
         switch (event.action)
         {
         case INPUT_MOVE_UP:
-            board_ui_move_cursor(&cursor, -1, 0);
+            board_move_cursor(&cursor, -1, 0);
             break;
         case INPUT_MOVE_DOWN:
-            board_ui_move_cursor(&cursor, 1, 0);
+            board_move_cursor(&cursor, 1, 0);
             break;
         case INPUT_MOVE_LEFT:
-            board_ui_move_cursor(&cursor, 0, -1);
+            board_move_cursor(&cursor, 0, -1);
             break;
         case INPUT_MOVE_RIGHT:
-            board_ui_move_cursor(&cursor, 0, 1);
+            board_move_cursor(&cursor, 0, 1);
             break;
         case INPUT_PLACE_STONE:
             if (board_place_stone(&board, cursor.cursor_row, cursor.cursor_col,
@@ -96,9 +96,9 @@ int main()
                 char msg[64];
                 snprintf(msg, sizeof(msg), "%s placed stone at %c%d",
                          turn_manager_get_current_player(&turn_mgr) == BLACK ? "BLACK" : "WHITE",
-                         board_ui_col_to_char(cursor.cursor_col),
+                         board_col_to_char(cursor.cursor_col),
                          cursor.cursor_row + 1);
-                log_ui_add_message(&log_ui, msg);
+                log_add_msg(&log_ui, msg);
 
                 // Check win
                 GameResult result = game_check_winner(&board);
@@ -107,15 +107,15 @@ int main()
                     game_over = true;
                     if (result == GAME_BLACK_WIN)
                     {
-                        log_ui_add_message(&log_ui, "BLACK WINS!");
+                        log_add_msg(&log_ui, "BLACK WINS!");
                     }
                     else if (result == GAME_WHITE_WIN)
                     {
-                        log_ui_add_message(&log_ui, "WHITE WINS!");
+                        log_add_msg(&log_ui, "WHITE WINS!");
                     }
                     else
                     {
-                        log_ui_add_message(&log_ui, "DRAW!");
+                        log_add_msg(&log_ui, "DRAW!");
                     }
                 }
                 else

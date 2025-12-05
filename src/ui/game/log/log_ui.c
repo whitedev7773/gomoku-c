@@ -1,7 +1,7 @@
 #include "log_ui.h"
 #include <string.h>
 
-void log_ui_init(LogUI *ui)
+void log_init(LogUI *ui)
 {
     if (!ui)
         return;
@@ -13,7 +13,7 @@ void log_ui_init(LogUI *ui)
     ui->prev_message_count = 0;
 }
 
-void log_ui_add_message(LogUI *ui, const char *message)
+void log_add_msg(LogUI *ui, const char *message)
 {
     if (!ui || !message)
         return;
@@ -34,7 +34,7 @@ void log_ui_add_message(LogUI *ui, const char *message)
     ui->dirty = true; // 메시지 추가됨
 }
 
-void log_ui_render(WINDOW *win, const LogUI *ui, int start_y, int start_x)
+void log_render(WINDOW *win, const LogUI *ui, int start_y, int start_x)
 {
     if (!win || !ui)
         return;
@@ -53,7 +53,7 @@ void log_ui_render(WINDOW *win, const LogUI *ui, int start_y, int start_x)
 // 선택적 렌더링 함수 (Dirty Flag 기반)
 // ============================================
 
-void log_ui_selective_render(WINDOW *win, LogUI *ui,
+void log_render_sel(WINDOW *win, LogUI *ui,
                              UIRenderFlags *flags, bool first_render,
                              int start_y, int start_x)
 {
@@ -70,7 +70,7 @@ void log_ui_selective_render(WINDOW *win, LogUI *ui,
             wclrtoeol(win);
         }
 
-        log_ui_render(win, ui, start_y, start_x);
+        log_render(win, ui, start_y, start_x);
         wrefresh(win);
         ui->dirty = false;
         ui->prev_message_count = ui->message_count;
@@ -78,12 +78,12 @@ void log_ui_selective_render(WINDOW *win, LogUI *ui,
     }
 }
 
-bool log_ui_is_dirty(const LogUI *ui)
+bool log_is_dirty(const LogUI *ui)
 {
     return ui->dirty;
 }
 
-void log_ui_clear_dirty(LogUI *ui)
+void log_clear_dirty(LogUI *ui)
 {
     ui->dirty = false;
 }

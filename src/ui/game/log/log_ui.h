@@ -4,7 +4,7 @@
 #include <ncurses.h>
 #include <time.h>
 #include <stdbool.h>
-#include "../core/ui_manager.h"
+#include "../../core/ui_manager.h"
 
 #define MAX_LOG_MESSAGES 3
 #define MAX_LOG_MESSAGE_LENGTH 64
@@ -24,21 +24,21 @@ typedef struct
     int prev_message_count;
 } LogUI;
 
-void log_ui_init(LogUI *ui);
+void log_init(LogUI *ui);
 
-void log_ui_add_message(LogUI *ui, const char *message);
+void log_add_msg(LogUI *ui, const char *message);
 
-void log_ui_render(WINDOW *win, const LogUI *ui, int start_y, int start_x);
+void log_render(WINDOW *win, const LogUI *ui, int start_y, int start_x);
 
 // ============================================
 // 선택적 렌더링 함수 (Dirty Flag 기반)
 // ============================================
 
-void log_ui_selective_render(WINDOW *win, LogUI *ui,
+void log_render_sel(WINDOW *win, LogUI *ui,
                              UIRenderFlags *flags, bool first_render,
                              int start_y, int start_x);
 
-bool log_ui_is_dirty(const LogUI *ui);
-void log_ui_clear_dirty(LogUI *ui);
+bool log_is_dirty(const LogUI *ui);
+void log_clear_dirty(LogUI *ui);
 
 #endif // LOG_UI_H

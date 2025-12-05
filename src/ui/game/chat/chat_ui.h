@@ -4,7 +4,7 @@
 #include <ncurses.h>
 #include <stdbool.h>
 #include <time.h>
-#include "../core/ui_manager.h"
+#include "../../core/ui_manager.h"
 
 #define MAX_CHAT_MESSAGES 10
 #define MAX_CHAT_MESSAGE_LENGTH 15
@@ -46,42 +46,42 @@ typedef struct
 } ChatUI;
 
 // 초기화
-void chat_ui_init(ChatUI *chat);
+void chat_init(ChatUI *chat);
 
 // 메시지 추가
-void chat_ui_add_message(ChatUI *chat, const char *message, ChatMessageType type);
+void chat_add_msg(ChatUI *chat, const char *message, ChatMessageType type);
 
 // 렌더링
-void chat_ui_render(WINDOW *win, const ChatUI *chat);
-void chat_ui_render_input(WINDOW *win, const ChatUI *chat, int y, int x);
+void chat_render(WINDOW *win, const ChatUI *chat);
+void chat_render_input(WINDOW *win, const ChatUI *chat, int y, int x);
 
 // 입력 모드
-void chat_ui_enter_input_mode(ChatUI *chat);
-void chat_ui_exit_input_mode(ChatUI *chat);
-bool chat_ui_is_input_mode(const ChatUI *chat);
+void chat_enter_input(ChatUI *chat);
+void chat_exit_input(ChatUI *chat);
+bool chat_is_input_mode(const ChatUI *chat);
 
 // 입력 처리
-void chat_ui_handle_input(ChatUI *chat, int ch);
-bool chat_ui_is_message_ready(const ChatUI *chat);
-const char *chat_ui_get_message(ChatUI *chat);
-void chat_ui_clear_input(ChatUI *chat);
+void chat_handle_input(ChatUI *chat, int ch);
+bool chat_is_ready(const ChatUI *chat);
+const char *chat_get_msg(ChatUI *chat);
+void chat_clear_input(ChatUI *chat);
 
 // 자동완성
-void chat_ui_update_autocomplete(ChatUI *chat);
+void chat_update_autocomplete(ChatUI *chat);
 
 // ============================================
 // 선택적 렌더링 함수 (Dirty Flag 기반)
 // ============================================
 
 // 선택적 렌더링 (dirty flag 기반)
-void chat_ui_selective_render(WINDOW *win, ChatUI *chat,
+void chat_selective_render(WINDOW *win, ChatUI *chat,
                               UIRenderFlags *flags, bool first_render);
-void chat_ui_selective_render_input(WINDOW *win, ChatUI *chat,
+void chat_selective_render_input(WINDOW *win, ChatUI *chat,
                                     UIRenderFlags *flags, bool first_render,
                                     int y, int x);
 
 // dirty flag 체크
-bool chat_ui_is_dirty(const ChatUI *chat);
-void chat_ui_clear_dirty(ChatUI *chat);
+bool chat_is_dirty(const ChatUI *chat);
+void chat_clear_dirty(ChatUI *chat);
 
 #endif // CHAT_UI_H

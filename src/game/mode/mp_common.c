@@ -1,6 +1,6 @@
 #include "mp_common.h"
 #include "../../ui/core/theme.h"
-#include "../../ui/game/ingame_border.h"
+#include "../../ui/game/border/ingame_border.h"
 #include <string.h>
 #include <sys/socket.h>
 #include <ncurses.h>
@@ -69,7 +69,7 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
             board_undo_last_move(&game->board);
 
             modal_ui_close(&game->modal_ui);
-            chat_ui_add_message(&game->chat_ui, "Undo accepted", CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, "Undo accepted", CHAT_MSG_SYSTEM);
             game->first_render = true;
             ret = MP_MODAL_CLOSED;
         }
@@ -89,7 +89,7 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
             game->swap_used = true;
 
             modal_ui_close(&game->modal_ui);
-            chat_ui_add_message(&game->chat_ui, "Swap accepted", CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, "Swap accepted", CHAT_MSG_SYSTEM);
             game->first_render = true;
             ret = MP_MODAL_CLOSED;
         }
@@ -105,7 +105,7 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
             msg.payload.command_response.accepted = 0;
             strncpy(msg.payload.command_response.message, "Undo declined", sizeof(msg.payload.command_response.message) - 1);
             network_send_message(&game->network, &msg);
-            chat_ui_add_message(&game->chat_ui, "Undo declined", CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, "Undo declined", CHAT_MSG_SYSTEM);
         }
         else if (game->modal_ui.type == MODAL_SWAP_RESPONSE)
         {
@@ -115,7 +115,7 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
             msg.payload.command_response.accepted = 0;
             strncpy(msg.payload.command_response.message, "Swap declined", sizeof(msg.payload.command_response.message) - 1);
             network_send_message(&game->network, &msg);
-            chat_ui_add_message(&game->chat_ui, "Swap declined", CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, "Swap declined", CHAT_MSG_SYSTEM);
         }
         modal_ui_close(&game->modal_ui);
         ret = MP_MODAL_CLOSED;
@@ -147,7 +147,7 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
 {
     if (ch == '\n' || ch == KEY_ENTER)
     {
-        const char *msg_text = chat_ui_get_message(&game->chat_ui);
+        const char *msg_text = chat_get_msg(&game->chat_ui);
         if (strlen(msg_text) > 0)
         {
             // 명령어 체크
@@ -168,11 +168,11 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                     case CMD_UNDO:
                         if (!is_my_turn)
                         {
-                            chat_ui_add_message(&game->chat_ui, "Undo only on your turn", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "Undo only on your turn", CHAT_MSG_SYSTEM);
                         }
                         else if (board_get_move_count(&game->board) == 0)
                         {
-                            chat_ui_add_message(&game->chat_ui, "No moves to undo", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "No moves to undo", CHAT_MSG_SYSTEM);
                         }
                         else
                         {
@@ -183,22 +183,22 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
 
                             snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
                             modal_ui_show(&game->modal_ui, MODAL_UNDO_REQUEST, modal_msg);
-                            chat_ui_add_message(&game->chat_ui, "Undo request sent", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "Undo request sent", CHAT_MSG_SYSTEM);
                         }
                         break;
 
                     case CMD_SWAP:
                         if (game->me.color != WHITE)
                         {
-                            chat_ui_add_message(&game->chat_ui, "Only WHITE can use swap", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "Only WHITE can use swap", CHAT_MSG_SYSTEM);
                         }
                         else if (game->swap_used)
                         {
-                            chat_ui_add_message(&game->chat_ui, "Swap already used", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "Swap already used", CHAT_MSG_SYSTEM);
                         }
                         else if (board_get_move_count(&game->board) < 3)
                         {
-                            chat_ui_add_message(&game->chat_ui, "Swap available after 3 moves", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "Swap available after 3 moves", CHAT_MSG_SYSTEM);
                         }
                         else
                         {
@@ -209,7 +209,7 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
 
                             snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
                             modal_ui_show(&game->modal_ui, MODAL_SWAP_REQUEST, modal_msg);
-                            chat_ui_add_message(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
+                            chat_add_msg(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
                         }
                         break;
 
@@ -225,12 +225,12 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                     break;
 
                     case CMD_HELP:
-                        chat_ui_add_message(&game->chat_ui, "=== Commands ===", CHAT_MSG_SYSTEM);
-                        chat_ui_add_message(&game->chat_ui, "/help  - Show help", CHAT_MSG_SYSTEM);
-                        chat_ui_add_message(&game->chat_ui, "/quit  - Leave game", CHAT_MSG_SYSTEM);
-                        chat_ui_add_message(&game->chat_ui, "/undo  - Request undo", CHAT_MSG_SYSTEM);
-                        chat_ui_add_message(&game->chat_ui, "/giveup - Forfeit", CHAT_MSG_SYSTEM);
-                        chat_ui_add_message(&game->chat_ui, "/swap  - Swap colors", CHAT_MSG_SYSTEM);
+                        chat_add_msg(&game->chat_ui, "=== Commands ===", CHAT_MSG_SYSTEM);
+                        chat_add_msg(&game->chat_ui, "/help  - Show help", CHAT_MSG_SYSTEM);
+                        chat_add_msg(&game->chat_ui, "/quit  - Leave game", CHAT_MSG_SYSTEM);
+                        chat_add_msg(&game->chat_ui, "/undo  - Request undo", CHAT_MSG_SYSTEM);
+                        chat_add_msg(&game->chat_ui, "/giveup - Forfeit", CHAT_MSG_SYSTEM);
+                        chat_add_msg(&game->chat_ui, "/swap  - Swap colors", CHAT_MSG_SYSTEM);
                         break;
 
                     default:
@@ -239,7 +239,7 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                 }
                 else
                 {
-                    chat_ui_add_message(&game->chat_ui, cmd.error_message, CHAT_MSG_SYSTEM);
+                    chat_add_msg(&game->chat_ui, cmd.error_message, CHAT_MSG_SYSTEM);
                 }
             }
             else
@@ -251,15 +251,15 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                 network_send_message(&game->network, &msg);
 
                 mp_broadcast_chat_to_spectators(game, &msg);
-                chat_ui_add_message(&game->chat_ui, msg_text, CHAT_MSG_USER);
+                chat_add_msg(&game->chat_ui, msg_text, CHAT_MSG_USER);
             }
         }
-        chat_ui_exit_input_mode(&game->chat_ui);
+        chat_exit_input(&game->chat_ui);
         return true;
     }
     else
     {
-        chat_ui_handle_input(&game->chat_ui, ch);
+        chat_handle_input(&game->chat_ui, ch);
         return false;
     }
 }
@@ -270,7 +270,7 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
 
 void mp_move_cursor_and_send(MultiplayerGame *game, UIRenderFlags *render_flags, int row_delta, int col_delta)
 {
-    board_ui_move_cursor_with_flags(&game->my_cursor, row_delta, col_delta, render_flags);
+    board_move_cursor_f(&game->my_cursor, row_delta, col_delta, render_flags);
 
     Message msg;
     protocol_init_message(&msg, MSG_CURSOR_UPDATE, game->network.sequence_number++);
@@ -345,8 +345,8 @@ bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const c
 
                 char log_msg[128];
                 snprintf(log_msg, sizeof(log_msg), "Connection lost!");
-                log_ui_add_message(&game->log_ui, log_msg);
-                chat_ui_add_message(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
+                log_add_msg(&game->log_ui, log_msg);
+                chat_add_msg(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
 
                 game->game_over = true;
             }
@@ -363,15 +363,10 @@ bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const c
 
 bool mp_init_game_ui(UIManager *ui_mgr, MultiplayerGame *game, GameRule rule)
 {
-    // ncurses 초기화
-    initscr();
-    cbreak();
-    noecho();
-    curs_set(0);
-    wresize(stdscr, 30, 100);
+    // UTF-8 로케일 설정 (ncurses 초기화 전에 반드시 호출)
+    setlocale(LC_ALL, "");
 
-    theme_init(theme_get_current());
-
+    // ui_manager_init이 ncurses 초기화를 담당
     if (!ui_manager_init(ui_mgr))
     {
         endwin();
@@ -383,12 +378,12 @@ bool mp_init_game_ui(UIManager *ui_mgr, MultiplayerGame *game, GameRule rule)
 
     // 게임 컴포넌트 초기화
     board_init_with_rule(&game->board, rule);
-    board_ui_init_cursor(&game->my_cursor);
-    board_ui_init_cursor(&game->opponent_cursor);
+    board_init_cursor(&game->my_cursor);
+    board_init_cursor(&game->opponent_cursor);
     turn_manager_init(&game->turn_mgr, BLACK);
     game_info_ui_init(&game->info_ui);
-    log_ui_init(&game->log_ui);
-    chat_ui_init(&game->chat_ui);
+    log_init(&game->log_ui);
+    chat_init(&game->chat_ui);
     modal_ui_init(&game->modal_ui);
 
     // 로거 초기화
@@ -398,7 +393,7 @@ bool mp_init_game_ui(UIManager *ui_mgr, MultiplayerGame *game, GameRule rule)
         snprintf(error_msg, sizeof(error_msg),
                  "Failed to create game log file. The game will continue without logging.");
         modal_ui_show(&game->modal_ui, MODAL_ERROR, error_msg);
-        log_ui_add_message(&game->log_ui, "Warning: Game logging disabled");
+        log_add_msg(&game->log_ui, "Warning: Game logging disabled");
     }
 
     keypad(ui_mgr->board_win, TRUE);
@@ -440,8 +435,8 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
                          "Connection lost with %s. Game will end.",
                          game->opponent.name);
                 modal_ui_show(&game->modal_ui, MODAL_ERROR, modal_msg);
-                log_ui_add_message(&game->log_ui, "Connection lost!");
-                chat_ui_add_message(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
+                log_add_msg(&game->log_ui, "Connection lost!");
+                chat_add_msg(&game->chat_ui, "Connection lost", CHAT_MSG_SYSTEM);
                 game->game_over = true;
             }
         }
@@ -466,9 +461,9 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             char move_msg_str[128];
             snprintf(move_msg_str, sizeof(move_msg_str), "%s placed at %c%02d",
                      game->opponent.name,
-                     board_ui_col_to_char(msg.payload.move.col),
+                     board_col_to_char(msg.payload.move.col),
                      msg.payload.move.row + 1);
-            log_ui_add_message(&game->log_ui, move_msg_str);
+            log_add_msg(&game->log_ui, move_msg_str);
 
             logger_log_move(&game->logger, msg.payload.move.stone,
                             msg.payload.move.row, msg.payload.move.col,
@@ -489,10 +484,10 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
     break;
 
     case MSG_CURSOR_UPDATE:
-        board_ui_update_opponent_cursor(&game->opponent_cursor,
-                                        msg.payload.cursor.row,
-                                        msg.payload.cursor.col,
-                                        &ui_mgr->render_flags);
+        board_update_opponent_cursor(&game->opponent_cursor,
+                                     msg.payload.cursor.row,
+                                     msg.payload.cursor.col,
+                                     &ui_mgr->render_flags);
         if (game->network.role == NETWORK_SERVER)
         {
             mp_broadcast_cursor_to_spectators(game, msg.payload.cursor.row, msg.payload.cursor.col);
@@ -500,7 +495,7 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
         break;
 
     case MSG_CHAT:
-        chat_ui_add_message(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
+        chat_add_msg(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
         mp_broadcast_chat_to_spectators(game, &msg);
         break;
 
@@ -526,7 +521,7 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             game->result = (game->opponent.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
             snprintf(modal_msg, sizeof(modal_msg), "%s has given up!", game->opponent.name);
             modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, modal_msg);
-            chat_ui_add_message(&game->chat_ui, modal_msg, CHAT_MSG_SYSTEM);
+            chat_add_msg(&game->chat_ui, modal_msg, CHAT_MSG_SYSTEM);
             {
                 uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
                 const char *winner = (game->result == GAME_BLACK_WIN)
@@ -570,14 +565,14 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             {
                 board_undo_last_move(&game->board);
                 board_undo_last_move(&game->board);
-                chat_ui_add_message(&game->chat_ui, "Undo accepted by opponent", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "Undo accepted by opponent", CHAT_MSG_SYSTEM);
                 game->first_render = true;
                 ui_render_flags_set(&ui_mgr->render_flags, RENDER_BOARD_FULL);
                 ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
             }
             else
             {
-                chat_ui_add_message(&game->chat_ui, "Undo rejected by opponent", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "Undo rejected by opponent", CHAT_MSG_SYSTEM);
             }
         }
         else if (cmd_type == CMD_SWAP)
@@ -588,13 +583,13 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
                 game->me.color = game->opponent.color;
                 game->opponent.color = temp;
                 game->swap_used = true;
-                chat_ui_add_message(&game->chat_ui, "Swap accepted by opponent", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "Swap accepted by opponent", CHAT_MSG_SYSTEM);
                 game->first_render = true;
                 ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
             }
             else
             {
-                chat_ui_add_message(&game->chat_ui, "Swap rejected by opponent", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "Swap rejected by opponent", CHAT_MSG_SYSTEM);
             }
         }
     }
@@ -636,17 +631,17 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
 
     bool is_my_turn = (current_player == game->me.color);
 
-    board_ui_selective_render_multiplayer(ui_mgr->board_win, &game->board,
-                                          &game->my_cursor, &game->opponent_cursor,
-                                          render_flags, game->first_render, is_my_turn);
+    board_render_mp(ui_mgr->board_win, &game->board,
+                    &game->my_cursor, &game->opponent_cursor,
+                    render_flags, game->first_render, is_my_turn);
 
     game_info_ui_selective_render(ui_mgr->bottom_win, &game->board, &game->turn_mgr,
                                   &game->info_ui, render_flags, game->first_render);
 
-    chat_ui_selective_render(ui_mgr->chat_win, &game->chat_ui, render_flags, game->first_render);
+    chat_selective_render(ui_mgr->chat_win, &game->chat_ui, render_flags, game->first_render);
 
-    chat_ui_selective_render_input(ui_mgr->chat_input_win, &game->chat_ui,
-                                   render_flags, game->first_render, 1, 1);
+    chat_selective_render_input(ui_mgr->chat_input_win, &game->chat_ui,
+                                render_flags, game->first_render, 1, 1);
 
     game->first_render = false;
 
@@ -674,7 +669,7 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
     }
 
     // 채팅 모드
-    if (chat_ui_is_input_mode(&game->chat_ui))
+    if (chat_is_input_mode(&game->chat_ui))
     {
         InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
         int ch = event.key_code;
@@ -694,7 +689,7 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
 
     if (event.key_code == '\n' || event.key_code == 't' || event.key_code == 'T')
     {
-        chat_ui_enter_input_mode(&game->chat_ui);
+        chat_enter_input(&game->chat_ui);
         return false;
     }
 
@@ -717,7 +712,7 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
         {
             if (game->me.color == BLACK && board_is_forbidden(&game->board, game->my_cursor.cursor_row, game->my_cursor.cursor_col))
             {
-                chat_ui_add_message(&game->chat_ui, "Forbidden move! (Renju Rule)", CHAT_MSG_SYSTEM);
+                chat_add_msg(&game->chat_ui, "Forbidden move! (Renju Rule)", CHAT_MSG_SYSTEM);
             }
             else
             {
@@ -729,9 +724,9 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
                 {
                     char move_msg[128];
                     snprintf(move_msg, sizeof(move_msg), "You placed at %c%02d",
-                             board_ui_col_to_char(game->my_cursor.cursor_col),
+                             board_col_to_char(game->my_cursor.cursor_col),
                              game->my_cursor.cursor_row + 1);
-                    log_ui_add_message(&game->log_ui, move_msg);
+                    log_add_msg(&game->log_ui, move_msg);
 
                     logger_log_move(&game->logger, game->me.color,
                                     game->my_cursor.cursor_row, game->my_cursor.cursor_col,
@@ -766,7 +761,7 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
         }
         else
         {
-            log_ui_add_message(&game->log_ui, "Position already occupied!");
+            log_add_msg(&game->log_ui, "Position already occupied!");
         }
         break;
     case INPUT_QUIT:
@@ -796,7 +791,7 @@ void mp_handle_opponent_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHand
     }
 
     // 채팅 모드
-    if (chat_ui_is_input_mode(&game->chat_ui))
+    if (chat_is_input_mode(&game->chat_ui))
     {
         InputEvent event = input_handler_get_event(input_handler, ui_mgr->board_win);
         int ch = event.key_code;
@@ -811,7 +806,7 @@ void mp_handle_opponent_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHand
 
     if (event.key_code == '\n' || event.key_code == 't' || event.key_code == 'T')
     {
-        chat_ui_enter_input_mode(&game->chat_ui);
+        chat_enter_input(&game->chat_ui);
     }
 }
 
@@ -872,8 +867,8 @@ void mp_check_game_end(MultiplayerGame *game, bool is_host)
             }
         }
 
-        log_ui_add_message(&game->log_ui, result_msg);
-        log_ui_add_message(&game->log_ui, "Press 'q' to quit");
+        log_add_msg(&game->log_ui, result_msg);
+        log_add_msg(&game->log_ui, "Press 'q' to quit");
         modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, result_msg);
         logger_close(&game->logger);
         return;
@@ -909,8 +904,8 @@ void mp_check_game_end(MultiplayerGame *game, bool is_host)
         }
 
         modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, timeout_msg);
-        chat_ui_add_message(&game->chat_ui, timeout_msg, CHAT_MSG_SYSTEM);
-        log_ui_add_message(&game->log_ui, timeout_msg);
+        chat_add_msg(&game->chat_ui, timeout_msg, CHAT_MSG_SYSTEM);
+        log_add_msg(&game->log_ui, timeout_msg);
         logger_close(&game->logger);
     }
 }
