@@ -36,6 +36,5 @@ void turn_manager_set_timeout_enabled(TurnManager *manager, bool enabled);
 // 타이머 일시정지/재개
 void turn_manager_pause(TurnManager *manager);
 void turn_manager_resume(TurnManager *manager);
-bool turn_manager_is_paused(const TurnManager *manager);
 
 #endif // TURN_MANAGER_H

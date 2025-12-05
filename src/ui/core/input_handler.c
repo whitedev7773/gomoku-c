@@ -37,17 +37,6 @@ InputAction input_map_key_to_action(int key)
     }
 }
 
-bool input_is_arrow_key(int key)
-{
-    return (key == KEY_UP || key == KEY_DOWN ||
-            key == KEY_LEFT || key == KEY_RIGHT);
-}
-
-bool input_is_action_key(int key)
-{
-    return (key == ' ' || key == '\n' || key == KEY_ENTER);
-}
-
 InputEvent input_get_event(WINDOW *win)
 {
     InputEvent event = {INPUT_NONE, 0, '\0', false};

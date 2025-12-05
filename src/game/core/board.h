@@ -70,10 +70,6 @@ Position board_get_last_move(const Board *board);
 
 int board_get_move_count(const Board *board);
 
-void board_set_rule(Board *board, GameRule rule);
-
-GameRule board_get_rule(const Board *board);
-
 void board_update_forbidden_marks(Board *board, Stone current_player);
 
 bool board_is_forbidden(const Board *board, int row, int col);

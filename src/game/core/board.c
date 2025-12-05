@@ -106,20 +106,6 @@ int board_get_move_count(const Board *board)
     return board->move_count;
 }
 
-void board_set_rule(Board *board, GameRule rule)
-{
-    if (!board)
-        return;
-    board->rule = rule;
-}
-
-GameRule board_get_rule(const Board *board)
-{
-    if (!board)
-        return RULE_STANDARD;
-    return board->rule;
-}
-
 void board_update_forbidden_marks(Board *board, Stone current_player)
 {
     if (!board || board->rule != RULE_RENJU || current_player != BLACK)

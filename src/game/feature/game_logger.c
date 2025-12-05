@@ -2,7 +2,8 @@
 #include <string.h>
 #include <time.h>
 
-void logger_generate_filename(char *filename, size_t size) {
+void logger_generate_filename(char *filename, size_t size)
+{
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
 
@@ -11,8 +12,10 @@ void logger_generate_filename(char *filename, size_t size) {
              t->tm_hour, t->tm_min);
 }
 
-bool logger_init(GameLogger *logger) {
-    if (!logger) return false;
+bool logger_init(GameLogger *logger)
+{
+    if (!logger)
+        return false;
 
     memset(logger, 0, sizeof(GameLogger));
     logger->entry_count = 0;
@@ -21,7 +24,8 @@ bool logger_init(GameLogger *logger) {
     logger_generate_filename(logger->filename, LOG_FILENAME_SIZE);
 
     logger->file = fopen(logger->filename, "w");
-    if (!logger->file) {
+    if (!logger->file)
+    {
         return false;
     }
 
@@ -34,10 +38,13 @@ bool logger_init(GameLogger *logger) {
     return true;
 }
 
-void logger_close(GameLogger *logger) {
-    if (!logger) return;
+void logger_close(GameLogger *logger)
+{
+    if (!logger)
+        return;
 
-    if (logger->file) {
+    if (logger->file)
+    {
         time_t now = time(NULL);
         struct tm *t = localtime(&now);
         fprintf(logger->file, "\n=== GAME END ===\n");
@@ -49,10 +56,13 @@ void logger_close(GameLogger *logger) {
     }
 }
 
-bool logger_log_move(GameLogger *logger, Stone player, int row, int col, int move_number) {
-    if (!logger || !logger->file) return false;
+bool logger_log_move(GameLogger *logger, Stone player, int row, int col, int move_number)
+{
+    if (!logger || !logger->file)
+        return false;
 
-    if (logger->entry_count >= MAX_LOG_ENTRIES) {
+    if (logger->entry_count >= MAX_LOG_ENTRIES)
+    {
         return false;
     }
 
@@ -75,8 +85,10 @@ bool logger_log_move(GameLogger *logger, Stone player, int row, int col, int mov
     return true;
 }
 
-bool logger_log_event(GameLogger *logger, const char *event_description) {
-    if (!logger || !logger->file || !event_description) {
+bool logger_log_event(GameLogger *logger, const char *event_description)
+{
+    if (!logger || !logger->file || !event_description)
+    {
         return false;
     }
 
@@ -90,39 +102,46 @@ bool logger_log_event(GameLogger *logger, const char *event_description) {
     return true;
 }
 
-bool logger_save_to_file(GameLogger *logger) {
-    if (!logger || !logger->file) return false;
+bool logger_save_to_file(GameLogger *logger)
+{
+    if (!logger || !logger->file)
+        return false;
 
     fflush(logger->file);
     return true;
 }
 
-bool logger_load_from_file(GameLogger *logger, const char *filename) {
-    if (!logger || !filename) return false;
+bool logger_load_from_file(GameLogger *logger, const char *filename)
+{
+    if (!logger || !filename)
+        return false;
 
     memset(logger, 0, sizeof(GameLogger));
     strncpy(logger->filename, filename, LOG_FILENAME_SIZE - 1);
 
     FILE *file = fopen(filename, "r");
-    if (!file) return false;
+    if (!file)
+        return false;
 
     char line[256];
     int entry_count = 0;
 
-    while (fgets(line, sizeof(line), file) && entry_count < MAX_LOG_ENTRIES) {
+    while (fgets(line, sizeof(line), file) && entry_count < MAX_LOG_ENTRIES)
+    {
         // 로그 라인 파싱: "Move XXX: BLACK/WHITE placed at A00"
         int move_num;
         char player_str[16];
         char col_char;
         int row;
 
-        if (sscanf(line, "Move %d: %s placed at %c%d", &move_num, player_str, &col_char, &row) == 4) {
+        if (sscanf(line, "Move %d: %s placed at %c%d", &move_num, player_str, &col_char, &row) == 4)
+        {
             LogEntry *entry = &logger->entries[entry_count];
             entry->move_number = move_num;
             entry->player = (strcmp(player_str, "BLACK") == 0) ? BLACK : WHITE;
             entry->col = col_char - 'A';
             entry->row = row;
-            entry->timestamp = 0;  // 타임스탬프는 재생 시 무시
+            entry->timestamp = 0; // 타임스탬프는 재생 시 무시
 
             entry_count++;
         }
@@ -132,14 +151,4 @@ bool logger_load_from_file(GameLogger *logger, const char *filename) {
     fclose(file);
 
     return entry_count > 0;
-}
-
-void logger_print_entry(const LogEntry *entry) {
-    if (!entry) return;
-
-    const char *player_str = (entry->player == BLACK) ? "BLACK" : "WHITE";
-    char col_char = 'A' + entry->col;
-
-    printf("Move %3d: %s at %c%02d\n",
-           entry->move_number, player_str, col_char, entry->row);
 }

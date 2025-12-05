@@ -29,15 +29,11 @@ void board_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *curso
 
 void board_draw_border(WINDOW *win);
 
-void board_draw_coords(WINDOW *win);
-
 void board_draw(WINDOW *win, const Board *board, const BoardCursor *cursor);
 
 void board_move_cursor(BoardCursor *cursor, int dr, int dc);
 
 char board_col_to_char(int col);
-
-int board_char_to_col(char c);
 
 // ============================================
 // 선택적 렌더링 함수 (Dirty Flag 기반)
@@ -47,25 +43,25 @@ int board_char_to_col(char c);
 // first_render가 true면 테두리 포함 전체 렌더링
 // 이후에는 변경된 부분만 렌더링
 void board_render(WINDOW *win, const Board *board,
-                               const BoardCursor *cursor,
-                               UIRenderFlags *flags,
-                               bool first_render);
+                  const BoardCursor *cursor,
+                  UIRenderFlags *flags,
+                  bool first_render);
 
 // 멀티플레이용 선택적 렌더링 (상대방 커서 포함)
 // is_my_turn이 false면 내 커서를 숨김
 void board_render_mp(WINDOW *win, const Board *board,
-                                           const BoardCursor *my_cursor,
-                                           const BoardCursor *opponent_cursor,
-                                           UIRenderFlags *flags,
-                                           bool first_render,
-                                           bool is_my_turn);
+                     const BoardCursor *my_cursor,
+                     const BoardCursor *opponent_cursor,
+                     UIRenderFlags *flags,
+                     bool first_render,
+                     bool is_my_turn);
 
 // 커서 이동 시 dirty 셀 마킹
 void board_move_cursor_f(BoardCursor *cursor, int dr, int dc,
-                                     UIRenderFlags *flags);
+                         UIRenderFlags *flags);
 
 // 상대방 커서 위치 업데이트 (dirty flag 설정)
 void board_update_opponent_cursor(BoardCursor *opponent_cursor, int row, int col,
-                                     UIRenderFlags *flags);
+                                  UIRenderFlags *flags);
 
 #endif // BOARD_UI_H

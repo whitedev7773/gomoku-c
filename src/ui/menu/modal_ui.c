@@ -278,68 +278,6 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
     delwin(modal_win);
 }
 
-// 모달 입력 처리
-ModalResult modal_ui_handle_input(ModalUI *modal, int ch)
-{
-    if (!modal || !modal->active)
-    {
-        return MODAL_RESULT_NONE;
-    }
-
-    // 버튼이 없으면 입력 무시 (대기 중)
-    if (modal->button_count == 0)
-    {
-        return MODAL_RESULT_NONE;
-    }
-
-    switch (ch)
-    {
-    case KEY_LEFT:
-    case 'h':
-        if (modal->button_count > 1)
-        {
-            modal->selected_button = (modal->selected_button - 1 + modal->button_count) % modal->button_count;
-        }
-        return MODAL_RESULT_NONE;
-
-    case KEY_RIGHT:
-    case 'l':
-        if (modal->button_count > 1)
-        {
-            modal->selected_button = (modal->selected_button + 1) % modal->button_count;
-        }
-        return MODAL_RESULT_NONE;
-
-    case '\n':
-    case KEY_ENTER:
-    case ' ':
-        // 선택된 버튼에 따라 결과 반환
-        switch (modal->buttons[modal->selected_button])
-        {
-        case BUTTON_OK:
-            return MODAL_RESULT_OK;
-        case BUTTON_CANCEL:
-            return MODAL_RESULT_CANCEL;
-        case BUTTON_ACCEPT:
-            return MODAL_RESULT_ACCEPT;
-        case BUTTON_DECLINE:
-            return MODAL_RESULT_DECLINE;
-        case BUTTON_YES:
-            return MODAL_RESULT_YES;
-        case BUTTON_NO:
-            return MODAL_RESULT_NO;
-        default:
-            return MODAL_RESULT_NONE;
-        }
-
-    case 27: // ESC
-        return MODAL_RESULT_CANCEL;
-
-    default:
-        return MODAL_RESULT_NONE;
-    }
-}
-
 // 모달 입력 처리 (게임패드 지원)
 ModalResult modal_ui_handle_action(ModalUI *modal, InputAction action)
 {

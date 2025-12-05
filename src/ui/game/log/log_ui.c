@@ -54,8 +54,8 @@ void log_render(WINDOW *win, const LogUI *ui, int start_y, int start_x)
 // ============================================
 
 void log_render_sel(WINDOW *win, LogUI *ui,
-                             UIRenderFlags *flags, bool first_render,
-                             int start_y, int start_x)
+                    UIRenderFlags *flags, bool first_render,
+                    int start_y, int start_x)
 {
     if (!win || !ui)
         return;
@@ -76,14 +76,4 @@ void log_render_sel(WINDOW *win, LogUI *ui,
         ui->prev_message_count = ui->message_count;
         ui_render_flags_clear(flags, RENDER_LOG);
     }
-}
-
-bool log_is_dirty(const LogUI *ui)
-{
-    return ui->dirty;
-}
-
-void log_clear_dirty(LogUI *ui)
-{
-    ui->dirty = false;
 }

@@ -70,9 +70,6 @@ bool modal_ui_is_active(const ModalUI *modal);
 // 모달 렌더링
 void modal_ui_render(WINDOW *parent_win, const ModalUI *modal);
 
-// 모달 입력 처리 (키보드)
-ModalResult modal_ui_handle_input(ModalUI *modal, int ch);
-
 // 모달 입력 처리 (게임패드 지원)
 ModalResult modal_ui_handle_action(ModalUI *modal, InputAction action);
 

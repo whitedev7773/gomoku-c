@@ -279,12 +279,10 @@ static int minimax(Board *board, int depth, bool is_maximizing, Stone ai_stone,
 
                 int eval = minimax(board, depth - 1, false, ai_stone, alpha, beta, NULL);
 
-                // 수 되돌리기
-                Board temp_board;
-                memcpy(&temp_board, board, sizeof(Board));
-                temp_board.cells[row][col] = EMPTY;
-                temp_board.move_count--;
-                memcpy(board, &temp_board, sizeof(Board));
+                // 수 되돌리기 (직접 셀 조작으로 최적화)
+                board->cells[row][col] = EMPTY;
+                board->move_count--;
+                board->history.count--;
 
                 if (eval > max_eval)
                 {
@@ -351,12 +349,10 @@ static int minimax(Board *board, int depth, bool is_maximizing, Stone ai_stone,
 
                 int eval = minimax(board, depth - 1, true, ai_stone, alpha, beta, NULL);
 
-                // 수 되돌리기
-                Board temp_board;
-                memcpy(&temp_board, board, sizeof(Board));
-                temp_board.cells[row][col] = EMPTY;
-                temp_board.move_count--;
-                memcpy(board, &temp_board, sizeof(Board));
+                // 수 되돌리기 (직접 셀 조작으로 최적화)
+                board->cells[row][col] = EMPTY;
+                board->move_count--;
+                board->history.count--;
 
                 min_eval = (min_eval < eval) ? min_eval : eval;
                 beta = (beta < eval) ? beta : eval;

@@ -35,10 +35,7 @@ void log_render(WINDOW *win, const LogUI *ui, int start_y, int start_x);
 // ============================================
 
 void log_render_sel(WINDOW *win, LogUI *ui,
-                             UIRenderFlags *flags, bool first_render,
-                             int start_y, int start_x);
-
-bool log_is_dirty(const LogUI *ui);
-void log_clear_dirty(LogUI *ui);
+                    UIRenderFlags *flags, bool first_render,
+                    int start_y, int start_x);
 
 #endif // LOG_UI_H

@@ -33,9 +33,4 @@ bool command_is_command(const char *message);
  */
 CommandResult command_parse(const char *message);
 
-/**
- * 명령어 타입을 문자열로 변환
- */
-const char *command_type_to_string(CommandType type);
-
 #endif // COMMAND_H

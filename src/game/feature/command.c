@@ -55,22 +55,3 @@ CommandResult command_parse(const char *message)
 
     return result;
 }
-
-const char *command_type_to_string(CommandType type)
-{
-    switch (type)
-    {
-    case CMD_QUIT:
-        return "/quit";
-    case CMD_UNDO:
-        return "/undo";
-    case CMD_GIVEUP:
-        return "/giveup";
-    case CMD_SWAP:
-        return "/swap";
-    case CMD_HELP:
-        return "/help";
-    default:
-        return "unknown";
-    }
-}

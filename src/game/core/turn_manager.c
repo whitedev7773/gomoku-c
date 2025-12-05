@@ -105,10 +105,3 @@ void turn_manager_resume(TurnManager *manager)
     manager->turn_start_time = now - (TURN_TIMEOUT_SECONDS - manager->paused_remaining);
     manager->paused = false;
 }
-
-bool turn_manager_is_paused(const TurnManager *manager)
-{
-    if (!manager)
-        return false;
-    return manager->paused;
-}

@@ -75,13 +75,9 @@ void chat_update_autocomplete(ChatUI *chat);
 
 // 선택적 렌더링 (dirty flag 기반)
 void chat_selective_render(WINDOW *win, ChatUI *chat,
-                              UIRenderFlags *flags, bool first_render);
+                           UIRenderFlags *flags, bool first_render);
 void chat_selective_render_input(WINDOW *win, ChatUI *chat,
-                                    UIRenderFlags *flags, bool first_render,
-                                    int y, int x);
-
-// dirty flag 체크
-bool chat_is_dirty(const ChatUI *chat);
-void chat_clear_dirty(ChatUI *chat);
+                                 UIRenderFlags *flags, bool first_render,
+                                 int y, int x);
 
 #endif // CHAT_UI_H

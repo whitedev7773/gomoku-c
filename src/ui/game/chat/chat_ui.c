@@ -272,7 +272,7 @@ void chat_clear_input(ChatUI *chat)
 // ============================================
 
 void chat_selective_render(WINDOW *win, ChatUI *chat,
-                              UIRenderFlags *flags, bool first_render)
+                           UIRenderFlags *flags, bool first_render)
 {
     if (!win || !chat)
         return;
@@ -289,8 +289,8 @@ void chat_selective_render(WINDOW *win, ChatUI *chat,
 }
 
 void chat_selective_render_input(WINDOW *win, ChatUI *chat,
-                                    UIRenderFlags *flags, bool first_render,
-                                    int y, int x)
+                                 UIRenderFlags *flags, bool first_render,
+                                 int y, int x)
 {
     if (!win || !chat)
         return;
@@ -309,15 +309,4 @@ void chat_selective_render_input(WINDOW *win, ChatUI *chat,
         chat->input_dirty = false;
         ui_render_flags_clear(flags, RENDER_CHAT_INPUT);
     }
-}
-
-bool chat_is_dirty(const ChatUI *chat)
-{
-    return chat->messages_dirty || chat->input_dirty;
-}
-
-void chat_clear_dirty(ChatUI *chat)
-{
-    chat->messages_dirty = false;
-    chat->input_dirty = false;
 }

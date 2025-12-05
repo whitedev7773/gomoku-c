@@ -40,6 +40,4 @@ void logger_generate_filename(char *filename, size_t size);
 
 bool logger_load_from_file(GameLogger *logger, const char *filename);
 
-void logger_print_entry(const LogEntry *entry);
-
 #endif // GAME_LOGGER_H
