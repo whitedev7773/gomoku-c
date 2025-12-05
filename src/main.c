@@ -51,154 +51,130 @@ int main(int argc, char *argv[])
     {
     case MODE_MENU:
     {
-        setlocale(LC_ALL, "");
-        initscr();
-        cbreak();
-        noecho();
-        curs_set(0);
+        bool app_running = true; // 앱 전체 루프
 
-        // Limit stdscr to 100x30
-        wresize(stdscr, 30, 100);
-
-        // 저장된 테마 불러오기 및 초기화
-        ThemeType saved_theme = theme_load_from_config();
-        theme_init(saved_theme);
-
-        // Always use fixed 100x30 size
-        WINDOW *menu_win = newwin(30, 100, 0, 0);
-        keypad(menu_win, TRUE);
-
-        // 게임패드 입력 핸들러 초기화
-        InputHandler input_handler;
-        input_handler_init(&input_handler);
-
-        MenuUI menu;
-        menu_ui_init(&menu);
-
-        bool running = true;
-        MenuOption selected_option = MENU_SINGLEPLAY;
-
-        while (running)
+        while (app_running)
         {
-            menu_ui_render(menu_win, &menu);
+            setlocale(LC_ALL, "");
+            initscr();
+            cbreak();
+            noecho();
+            curs_set(0);
 
-            InputEvent event = input_handler_get_event(&input_handler, menu_win);
+            // Limit stdscr to 100x30
+            wresize(stdscr, 30, 100);
 
-            switch (event.action)
+            // 저장된 테마 불러오기 및 초기화
+            ThemeType saved_theme = theme_load_from_config();
+            theme_init(saved_theme);
+
+            // Always use fixed 100x30 size
+            WINDOW *menu_win = newwin(30, 100, 0, 0);
+            keypad(menu_win, TRUE);
+
+            // 게임패드 입력 핸들러 초기화
+            InputHandler input_handler;
+            input_handler_init(&input_handler);
+
+            MenuUI menu;
+            menu_ui_init(&menu);
+
+            bool running = true;
+            MenuOption selected_option = MENU_SINGLEPLAY;
+            bool first_render = true; // 첫 렌더링 여부
+
+            while (running)
             {
-            case INPUT_MOVE_UP:
-                menu_ui_move_selection(&menu, -1);
-                break;
-            case INPUT_MOVE_DOWN:
-                menu_ui_move_selection(&menu, 1);
-                break;
-            case INPUT_MOVE_LEFT:
-                menu_ui_change_page(&menu, -1);
-                break;
-            case INPUT_MOVE_RIGHT:
-                menu_ui_change_page(&menu, 1);
-                break;
-            case INPUT_PLACE_STONE:
-                selected_option = menu_ui_get_selected(&menu);
-
-                // 테마 선택은 메뉴 루프 내에서 처리
-                if (selected_option == MENU_THEME)
+                if (first_render)
                 {
-                    input_handler_cleanup(&input_handler);
-                    delwin(menu_win);
-                    endwin();
-
-                    // 테마 선택 화면 실행
-                    theme_selector_run();
-
-                    // 메뉴로 돌아오기
-                    initscr();
-                    cbreak();
-                    noecho();
-                    curs_set(0);
-                    wresize(stdscr, 30, 100);
-                    theme_init(theme_get_current());
-
-                    menu_win = newwin(30, 100, 0, 0);
-                    keypad(menu_win, TRUE);
-
-                    // 게임패드 다시 초기화
-                    input_handler_init(&input_handler);
-
-                    // 루프 계속
-                    continue;
+                    menu_ui_render(menu_win, &menu);
+                    first_render = false;
                 }
                 else
                 {
-                    running = false;
+                    menu_ui_render_options_only(menu_win, &menu);
                 }
-                break;
-            case INPUT_QUIT:
-                selected_option = MENU_EXIT;
-                running = false;
-                break;
-            default:
-                break;
+
+                InputEvent event = input_handler_get_event(&input_handler, menu_win);
+
+                switch (event.action)
+                {
+                case INPUT_MOVE_UP:
+                    menu_ui_move_selection(&menu, -1);
+                    break;
+                case INPUT_MOVE_DOWN:
+                    menu_ui_move_selection(&menu, 1);
+                    break;
+                case INPUT_MOVE_LEFT:
+                    menu_ui_change_page(&menu, -1);
+                    break;
+                case INPUT_MOVE_RIGHT:
+                    menu_ui_change_page(&menu, 1);
+                    break;
+                case INPUT_PLACE_STONE:
+                    selected_option = menu_ui_get_selected(&menu);
+
+                    // 테마 선택은 메뉴 루프 내에서 처리
+                    if (selected_option == MENU_THEME)
+                    {
+                        input_handler_cleanup(&input_handler);
+                        delwin(menu_win);
+                        endwin();
+
+                        // 테마 선택 화면 실행
+                        theme_selector_run();
+
+                        // 메뉴로 돌아오기
+                        initscr();
+                        cbreak();
+                        noecho();
+                        curs_set(0);
+                        wresize(stdscr, 30, 100);
+                        theme_init(theme_get_current());
+
+                        menu_win = newwin(30, 100, 0, 0);
+                        keypad(menu_win, TRUE);
+
+                        // 게임패드 다시 초기화
+                        input_handler_init(&input_handler);
+
+                        // 전체 재렌더링 필요
+                        first_render = true;
+
+                        // 루프 계속
+                        continue;
+                    }
+                    else
+                    {
+                        running = false;
+                    }
+                    break;
+                case INPUT_QUIT:
+                    // 메인 메뉴에서는 ESC/Q로 종료하지 않음
+                    break;
+                default:
+                    break;
+                }
             }
-        }
 
-        input_handler_cleanup(&input_handler);
-        delwin(menu_win);
-        endwin();
+            input_handler_cleanup(&input_handler);
+            delwin(menu_win);
+            endwin();
 
-        system("clear");
-        if (selected_option == MENU_SINGLEPLAY)
-        {
-            // 난이도 선택
-            printf("=== GOMOKU - SINGLEPLAY ===\n");
-            printf("Select difficulty:\n");
-            printf("  1. Easy\n");
-            printf("  2. Hard\n");
-            printf("Enter your choice (1-2): ");
-
-            char difficulty_choice;
-            scanf(" %c", &difficulty_choice);
-
-            // 규칙 선택
-            printf("\nSelect game rule:\n");
-            printf("  1. Standard (No forbidden moves)\n");
-            printf("  2. Renju (Forbidden moves for BLACK)\n");
-            printf("Enter your choice (1-2): ");
-
-            char rule_choice;
-            scanf(" %c", &rule_choice);
-
-            GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
-
-            if (difficulty_choice == '1')
+            system("clear");
+            if (selected_option == MENU_SINGLEPLAY)
             {
-                singleplay_run(AI_EASY, rule);
-            }
-            else if (difficulty_choice == '2')
-            {
-                singleplay_run(AI_HARD, rule);
-            }
-            else
-            {
-                printf("Invalid choice. Returning to menu.\n");
-            }
-        }
-        else if (selected_option == MENU_MULTIPLAY)
-        {
-            // 호스트/클라이언트 선택
-            printf("=== GOMOKU - MULTIPLAY ===\n");
-            printf("Select mode:\n");
-            printf("  1. Host (create game)\n");
-            printf("  2. Join (connect to game)\n");
-            printf("Enter your choice (1-2): ");
+                // 난이도 선택
+                printf("=== GOMOKU - SINGLEPLAY ===\n");
+                printf("Select difficulty:\n");
+                printf("  1. Easy\n");
+                printf("  2. Hard\n");
+                printf("Enter your choice (1-2): ");
 
-            char mode_choice;
-            scanf(" %c", &mode_choice);
-            getchar(); // 버퍼 비우기
+                char difficulty_choice;
+                scanf(" %c", &difficulty_choice);
 
-            if (mode_choice == '1')
-            {
-                // 호스트: 규칙 선택
+                // 규칙 선택
                 printf("\nSelect game rule:\n");
                 printf("  1. Standard (No forbidden moves)\n");
                 printf("  2. Renju (Forbidden moves for BLACK)\n");
@@ -206,16 +182,78 @@ int main(int argc, char *argv[])
 
                 char rule_choice;
                 scanf(" %c", &rule_choice);
-                getchar(); // 버퍼 비우기
 
                 GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
-                multiplayer_run_host(DEFAULT_PORT, rule);
+
+                if (difficulty_choice == '1')
+                {
+                    singleplay_run(AI_EASY, rule);
+                }
+                else if (difficulty_choice == '2')
+                {
+                    singleplay_run(AI_HARD, rule);
+                }
+                else
+                {
+                    printf("Invalid choice. Returning to menu.\n");
+                }
             }
-            else if (mode_choice == '2')
+            else if (selected_option == MENU_MULTIPLAY)
             {
-                // 클라이언트: 규칙은 호스트로부터 받음
+                // 호스트/클라이언트 선택
+                printf("=== GOMOKU - MULTIPLAY ===\n");
+                printf("Select mode:\n");
+                printf("  1. Host (create game)\n");
+                printf("  2. Join (connect to game)\n");
+                printf("Enter your choice (1-2): ");
+
+                char mode_choice;
+                scanf(" %c", &mode_choice);
+                getchar(); // 버퍼 비우기
+
+                if (mode_choice == '1')
+                {
+                    // 호스트: 규칙 선택
+                    printf("\nSelect game rule:\n");
+                    printf("  1. Standard (No forbidden moves)\n");
+                    printf("  2. Renju (Forbidden moves for BLACK)\n");
+                    printf("Enter your choice (1-2): ");
+
+                    char rule_choice;
+                    scanf(" %c", &rule_choice);
+                    getchar(); // 버퍼 비우기
+
+                    GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
+                    multiplayer_run_host(DEFAULT_PORT, rule);
+                }
+                else if (mode_choice == '2')
+                {
+                    // 클라이언트: 규칙은 호스트로부터 받음
+                    char server_ip[64];
+                    int port;
+                    printf("Enter server IP address: ");
+                    scanf("%s", server_ip);
+                    printf("Enter port (default 7773): ");
+                    if (scanf("%d", &port) != 1)
+                    {
+                        port = DEFAULT_PORT;
+                    }
+                    getchar(); // 버퍼 비우기
+
+                    multiplayer_run_client(server_ip, port, RULE_STANDARD); // 규칙은 호스트로부터 받을 예정
+                }
+                else
+                {
+                    printf("Invalid choice. Returning to menu.\n");
+                }
+            }
+            else if (selected_option == MENU_SPECTATOR)
+            {
+                printf("=== GOMOKU - SPECTATOR ===\n");
                 char server_ip[64];
                 int port;
+                char spectator_name[MAX_PLAYER_NAME + 1];
+
                 printf("Enter server IP address: ");
                 scanf("%s", server_ip);
                 printf("Enter port (default 7773): ");
@@ -225,48 +263,29 @@ int main(int argc, char *argv[])
                 }
                 getchar(); // 버퍼 비우기
 
-                multiplayer_run_client(server_ip, port, RULE_STANDARD); // 규칙은 호스트로부터 받을 예정
-            }
-            else
-            {
-                printf("Invalid choice. Returning to menu.\n");
-            }
-        }
-        else if (selected_option == MENU_SPECTATOR)
-        {
-            printf("=== GOMOKU - SPECTATOR ===\n");
-            char server_ip[64];
-            int port;
-            char spectator_name[MAX_PLAYER_NAME + 1];
+                printf("Enter your name (max 8 chars): ");
+                fgets(spectator_name, sizeof(spectator_name), stdin);
+                spectator_name[strcspn(spectator_name, "\n")] = '\0';
+                if (strlen(spectator_name) == 0)
+                {
+                    strcpy(spectator_name, "Viewer");
+                }
 
-            printf("Enter server IP address: ");
-            scanf("%s", server_ip);
-            printf("Enter port (default 7773): ");
-            if (scanf("%d", &port) != 1)
-            {
-                port = DEFAULT_PORT;
+                spectator_run(server_ip, port, spectator_name);
             }
-            getchar(); // 버퍼 비우기
-
-            printf("Enter your name (max 8 chars): ");
-            fgets(spectator_name, sizeof(spectator_name), stdin);
-            spectator_name[strcspn(spectator_name, "\n")] = '\0';
-            if (strlen(spectator_name) == 0)
+            else if (selected_option == MENU_REPLAY)
             {
-                strcpy(spectator_name, "Viewer");
+                replay_run_with_selection();
+                // 리플레이 종료 후 메인 메뉴로 돌아감
+                continue; // app_running 루프 계속
             }
-
-            spectator_run(server_ip, port, spectator_name);
-        }
-        else if (selected_option == MENU_REPLAY)
-        {
-            replay_run_with_selection();
-        }
-        else if (selected_option == MENU_EXIT)
-        {
-            // 프로그램 종료
-            printf("Exiting...\n");
-        }
+            else if (selected_option == MENU_EXIT)
+            {
+                // 프로그램 종료
+                app_running = false;
+                printf("Exiting...\n");
+            }
+        } // end of app_running while loop
         break;
     }
 

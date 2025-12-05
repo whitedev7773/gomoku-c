@@ -105,7 +105,7 @@ void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector)
 
     // 안내 메시지
     wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-    mvwprintw(win, max_y - 3, (max_x - 40) / 2, "↑↓: Select Theme    ↵: Apply    ESC: Back");
+    mvwprintw(win, max_y - 3, (max_x - 38) / 2, "↑↓: Select Theme    ↵: Apply    Q: Back");
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);

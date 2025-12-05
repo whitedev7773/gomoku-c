@@ -5,7 +5,8 @@
 
 #define ITEMS_PER_PAGE 3
 
-typedef enum {
+typedef enum
+{
     MENU_SINGLEPLAY = 0,
     MENU_MULTIPLAY = 1,
     MENU_SPECTATOR = 2,
@@ -14,16 +15,20 @@ typedef enum {
     MENU_EXIT = 5
 } MenuOption;
 
-typedef struct {
+typedef struct
+{
     MenuOption selected;
     int option_count;
-    int current_page;       // 현재 페이지 (0부터 시작)
-    int total_pages;        // 총 페이지 수
+    int current_page; // 현재 페이지 (0부터 시작)
+    int total_pages;  // 총 페이지 수
 } MenuUI;
 
 void menu_ui_init(MenuUI *menu);
 
 void menu_ui_render(WINDOW *win, const MenuUI *menu);
+
+// 옵션 영역만 재렌더링 (최적화)
+void menu_ui_render_options_only(WINDOW *win, const MenuUI *menu);
 
 void menu_ui_draw_logo(WINDOW *win);
 

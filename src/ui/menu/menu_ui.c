@@ -178,6 +178,16 @@ void menu_ui_render(WINDOW *win, const MenuUI *menu)
     wrefresh(win);
 }
 
+// 옵션 영역만 재렌더링 (로고, footer 유지)
+void menu_ui_render_options_only(WINDOW *win, const MenuUI *menu)
+{
+    if (!win || !menu)
+        return;
+
+    menu_ui_draw_options(win, menu);
+    wrefresh(win);
+}
+
 void menu_ui_move_selection(MenuUI *menu, int direction)
 {
     if (!menu)

@@ -5,9 +5,10 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define TURN_TIMEOUT_SECONDS 20
+#define TURN_TIMEOUT_SECONDS 30
 
-typedef struct {
+typedef struct
+{
     Stone current_player;
     time_t turn_start_time;
     int total_turns;

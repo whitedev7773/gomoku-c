@@ -212,6 +212,12 @@ static bool spectator_handle_network_messages(SpectatorGame *game)
 // UI 렌더링
 static void spectator_render_game(UIManager *ui_mgr, const SpectatorGame *game)
 {
+    // 상단 Info 영역 렌더링
+    game_info_draw_opponent_name(game->player1_name); // 관전 모드에서는 P1 이름 표시
+    game_info_draw_viewers(game->spectator_count);
+    game_info_draw_ping(0); // TODO: PING 측정 구현 필요
+    game_info_draw_port(game->network.remote_port);
+
     // 보드 렌더링 (현재 턴 플레이어의 커서 표시)
     board_ui_render(ui_mgr->board_win, &game->board, &game->current_player_cursor);
 

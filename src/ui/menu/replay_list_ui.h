@@ -19,8 +19,11 @@ bool replay_list_ui_init(ReplayListUI *ui);
 // 렌더링
 void replay_list_ui_render(WINDOW *win, const ReplayListUI *ui);
 
-// 선택 이동
-void replay_list_ui_move_selection(ReplayListUI *ui, int delta);
+// 선택 변경만 렌더링 (최적화)
+void replay_list_ui_render_selection_only(WINDOW *win, const ReplayListUI *ui, int prev_selected);
+
+// 선택 이동 (스크롤 발생 시 true 반환)
+bool replay_list_ui_move_selection(ReplayListUI *ui, int delta);
 
 // 선택된 파일 가져오기
 const char *replay_list_ui_get_selected_file(const ReplayListUI *ui);

@@ -377,45 +377,87 @@ int replay_run_with_selection(void)
 
     bool running = true;
     const char *selected_file = NULL;
+    bool first_render = true;
+    int prev_selected = list_ui.selected_index;
 
     while (running)
     {
-        replay_list_ui_render(list_win, &list_ui);
+        // 파일 선택 루프
+        bool selecting = true;
+        selected_file = NULL;
 
-        InputEvent event = input_handler_get_event(&input_handler, list_win);
-        switch (event.action)
+        while (selecting)
         {
-        case INPUT_MOVE_UP:
-            replay_list_ui_move_selection(&list_ui, -1);
-            break;
+            if (first_render)
+            {
+                replay_list_ui_render(list_win, &list_ui);
+                first_render = false;
+            }
+            else
+            {
+                replay_list_ui_render_selection_only(list_win, &list_ui, prev_selected);
+            }
+            prev_selected = list_ui.selected_index;
 
-        case INPUT_MOVE_DOWN:
-            replay_list_ui_move_selection(&list_ui, 1);
-            break;
+            InputEvent event = input_handler_get_event(&input_handler, list_win);
+            switch (event.action)
+            {
+            case INPUT_MOVE_UP:
+                if (replay_list_ui_move_selection(&list_ui, -1))
+                {
+                    first_render = true; // 스크롤 발생 시 전체 재렌더링
+                }
+                break;
 
-        case INPUT_PLACE_STONE:
-            selected_file = replay_list_ui_get_selected_file(&list_ui);
-            running = false;
-            break;
+            case INPUT_MOVE_DOWN:
+                if (replay_list_ui_move_selection(&list_ui, 1))
+                {
+                    first_render = true; // 스크롤 발생 시 전체 재렌더링
+                }
+                break;
 
-        case INPUT_QUIT:
-            running = false;
-            break;
+            case INPUT_PLACE_STONE:
+                selected_file = replay_list_ui_get_selected_file(&list_ui);
+                selecting = false;
+                break;
 
-        default:
-            break;
+            case INPUT_QUIT:
+                selecting = false;
+                running = false;
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        // 파일이 선택되었으면 리플레이 실행
+        if (selected_file && running)
+        {
+            // ncurses 종료
+            delwin(list_win);
+            endwin();
+
+            // 리플레이 실행
+            replay_run(selected_file);
+
+            // 다시 ncurses 초기화 (파일 선택 화면으로 돌아감)
+            initscr();
+            cbreak();
+            noecho();
+            curs_set(0);
+            theme_init(theme_get_current());
+
+            list_win = newwin(30, 100, 0, 0);
+            keypad(list_win, TRUE);
+
+            first_render = true; // 전체 재렌더링 필요
         }
     }
 
     input_handler_cleanup(&input_handler);
     delwin(list_win);
     endwin();
-
-    // 파일이 선택되었으면 리플레이 실행
-    if (selected_file)
-    {
-        return replay_run(selected_file);
-    }
 
     return 0;
 }

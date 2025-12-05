@@ -42,7 +42,7 @@ int main()
     {
         // Render UI
         board_ui_render(manager.board_win, &board, &cursor);
-        game_info_ui_render_bottom(manager.bottom_win, &board, &turn_mgr, &game_info);
+        game_info_ui_update_bottom(manager.bottom_win, &board, &turn_mgr, &game_info);
         log_ui_render(manager.bottom_win, &log_ui, 1, 42);
 
         // Draw info window placeholder

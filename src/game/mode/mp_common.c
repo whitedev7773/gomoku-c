@@ -623,6 +623,16 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
 
     ui_render_flags_set(render_flags, RENDER_TIMER);
     ui_render_flags_set(render_flags, RENDER_PLAY_TIME);
+    ui_render_flags_set(render_flags, RENDER_CURRENT_TURN);
+
+    // 상단 Info 영역 렌더링
+    if (game->first_render || ui_render_flags_is_set(render_flags, RENDER_INFO))
+    {
+        game_info_draw_opponent_name(game->opponent.name);
+        game_info_draw_viewers(game->network.spectator_count);
+        game_info_draw_ping(network_get_ping_ms((NetworkManager *)&game->network));
+        game_info_draw_port(game->network.port > 0 ? game->network.port : game->network.remote_port);
+    }
 
     bool is_my_turn = (current_player == game->me.color);
 
@@ -637,14 +647,6 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
 
     chat_ui_selective_render_input(ui_mgr->chat_input_win, &game->chat_ui,
                                    render_flags, game->first_render, 1, 1);
-
-    if (game->first_render || ui_render_flags_is_set(render_flags, RENDER_INFO))
-    {
-        const char *turn_name = is_my_turn ? "Your Turn" : "Opponent's Turn";
-        mvwprintw(ui_mgr->info_win, 0, 0, "%-20s", turn_name);
-        wrefresh(ui_mgr->info_win);
-        ui_render_flags_clear(render_flags, RENDER_INFO);
-    }
 
     game->first_render = false;
 

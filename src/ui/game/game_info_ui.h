@@ -23,11 +23,6 @@ void game_info_ui_init(GameInfoUI *ui);
 // 초기 렌더링 (테두리 포함)
 void game_info_ui_init_bottom(WINDOW *win);
 
-// 전체 렌더링 (호환성)
-void game_info_ui_render_bottom(WINDOW *win, const Board *board,
-                                const TurnManager *turn_mgr,
-                                const GameInfoUI *ui);
-
 // 최적화된 업데이트 (변경된 부분만)
 void game_info_ui_update_bottom(WINDOW *win, const Board *board,
                                 const TurnManager *turn_mgr,
@@ -55,5 +50,11 @@ void game_info_ui_selective_render(WINDOW *win, const Board *board,
                                    GameInfoUI *ui,
                                    UIRenderFlags *flags,
                                    bool first_render);
+
+// 상단 Info 영역 텍스트 표시 함수 (stdscr에 직접 그림)
+void game_info_draw_opponent_name(const char *name); // 상대방 이름 표시
+void game_info_draw_viewers(int count);              // 뷰어 수 표시
+void game_info_draw_ping(int ping_ms);               // PING 표시
+void game_info_draw_port(int port);                  // PORT 표시
 
 #endif // GAME_INFO_UI_H
