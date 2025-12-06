@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <locale.h>
 #include <string.h>
+#include <signal.h>
 #include "utils/terminal_check.h"
 #include "utils/arg_parser.h"
 #include "ui/menu/menu_ui.h"
@@ -20,6 +21,14 @@
 #include "network/core/network.h"
 #include <ncurses.h>
 
+// 터미널 리사이징 감지를 위한 시그널 핸들러
+static volatile sig_atomic_t terminal_resized = 0;
+
+void handle_sigwinch(int sig)
+{
+    terminal_resized = 1;
+}
+
 int main(int argc, char *argv[])
 {
     // Parse command line arguments
@@ -35,16 +44,29 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // 터미널 리사이징 감지를 위한 시그널 핸들러 설정
+    signal(SIGWINCH, handle_sigwinch);
+
     // Check terminal size
     TerminalSize current_size = get_terminal_size();
 
     while (!check_terminal_size())
     {
-        system("clear");
+        if (terminal_resized)
+        {
+            // 화면 지우기 (system("clear") 대신 ANSI escape codes 사용)
+            printf("\033[2J\033[H");
+            terminal_resized = 0;
+        }
+
         display_terminal_size_error(current_size);
-        printf("Press Ctrl+C to exit or resize terminal and press Enter to continue...\n");
-        getchar();
+        printf("Press Ctrl+C to exit or resize terminal and wait for update...\n");
+
+        // 터미널 크기 갱신
         current_size = get_terminal_size();
+
+        // 시그널이 올 때까지 대기 (실시간 반응)
+        pause();
     }
 
     // system("clear");
