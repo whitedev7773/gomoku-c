@@ -8,6 +8,7 @@
 #include "../../../ui/core/input_handler.h"
 #include "../../../ui/game/game_info_ui.h"
 #include "../../../ui/game/log/log_ui.h"
+#include "../../../ui/game/info/top/info_top_ui.h"
 #include "../../../ui/menu/modal_ui.h"
 #include "../../../ui/core/theme.h"
 #include "../../../ui/game/border/ingame_border.h"
@@ -212,9 +213,10 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
         // 우측 상단 info 창 (현재 턴 표시) - 턴 변경 시에만
         if (first_render || ui_render_flags_is_set(render_flags, RENDER_INFO))
         {
-            mvwprintw(ui_mgr.turn_or_name_win, 0, 1, "TURN: %s",
-                      current_player == BLACK ? "ME" : "AI");
-            wrefresh(ui_mgr.turn_or_name_win);
+            char turn_str[16];
+            snprintf(turn_str, sizeof(turn_str), "TURN: %s",
+                     current_player == BLACK ? "ME" : "AI");
+            info_top_opponent(turn_str);
             ui_render_flags_clear(render_flags, RENDER_INFO);
         }
 

@@ -214,11 +214,8 @@ int main(int argc, char *argv[])
                         if (rule_result >= 0)
                         {
                             GameRule rule = (rule_result == 0) ? RULE_STANDARD : RULE_RENJU;
-                            // 연결 대기 화면 표시
-                            if (multiplay_host_wait_for_client(DEFAULT_PORT, host_name, rule) == 0)
-                            {
-                                multiplayer_run_host(DEFAULT_PORT, rule, host_name);
-                            }
+                            // 바로 호스트 실행 (연결 대기는 multiplayer_run_host 내부에서 처리)
+                            multiplayer_run_host(DEFAULT_PORT, rule, host_name);
                             // 취소 시 메인 메뉴로 돌아감
                         }
                     }
@@ -233,11 +230,8 @@ int main(int argc, char *argv[])
 
                     if (multiplay_input_connection(server_ip, &port, player_name) == 0)
                     {
-                        // 연결 대기 화면 표시 (10초 타임아웃)
-                        if (multiplay_wait_connection(server_ip, port, player_name) == 0)
-                        {
-                            multiplayer_run_client(server_ip, port, RULE_STANDARD, player_name);
-                        }
+                        // 바로 클라이언트 실행 (연결은 multiplayer_run_client 내부에서 처리)
+                        multiplayer_run_client(server_ip, port, RULE_STANDARD, player_name);
                         // 연결 실패 또는 취소 시 메인 메뉴로 돌아감
                     }
                     // 취소 시 메인 메뉴로 돌아감

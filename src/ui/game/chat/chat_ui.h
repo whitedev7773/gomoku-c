@@ -7,8 +7,8 @@
 #include "../../core/ui_manager.h"
 
 #define MAX_CHAT_MESSAGES 10
-#define MAX_CHAT_MESSAGE_LENGTH 15
-#define MAX_CHAT_INPUT_LENGTH 15
+#define MAX_CHAT_MESSAGE_LENGTH 34
+#define MAX_CHAT_INPUT_LENGTH 34
 
 // 채팅 메시지 타입
 typedef enum
@@ -24,6 +24,7 @@ typedef struct
     char message[MAX_CHAT_MESSAGE_LENGTH + 1];
     ChatMessageType type;
     time_t timestamp;
+    int game_time_seconds; // 게임 시간 (초) - MM:SS 표시용
 } UIChatMessage;
 
 // 채팅 UI 상태
@@ -50,6 +51,7 @@ void chat_init(ChatUI *chat);
 
 // 메시지 추가
 void chat_add_msg(ChatUI *chat, const char *message, ChatMessageType type);
+void chat_add_msg_with_time(ChatUI *chat, const char *message, ChatMessageType type, int game_time_seconds);
 
 // 렌더링
 void chat_render(WINDOW *win, const ChatUI *chat);

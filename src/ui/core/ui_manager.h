@@ -87,10 +87,7 @@ typedef struct
 typedef struct
 {
     WINDOW *board_win;
-    WINDOW *turn_or_name_win;
-    WINDOW *viewer_count_win;
-    WINDOW *ping_display_win;
-    WINDOW *port_display_win;
+    WINDOW *info_win; // 우측 상단 정보 영역 (4개 칸 통합)
     WINDOW *chat_win;
     WINDOW *chat_input_win;
     WINDOW *bottom_win;
