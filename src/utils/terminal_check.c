@@ -27,14 +27,14 @@ void display_terminal_size_error(TerminalSize current)
 {
     printf("\n");
     printf("╔════════════════════════════════════════════════════════════╗\n");
-    printf("║           TERMINAL SIZE REQUIREMENT ERROR                 ║\n");
+    printf("║              TERMINAL SIZE REQUIREMENT ERROR               ║\n");
     printf("╠════════════════════════════════════════════════════════════╣\n");
     printf("║                                                            ║\n");
-    printf("║  Current Size:  %3d x %3d                                ║\n", current.width, current.height);
-    printf("║  Required Size: %3d x %3d                                ║\n", MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT);
+    printf("║  Current Size:  %3d x %3d                                  ║\n", current.width, current.height);
+    printf("║  Required Size: %3d x %3d                                  ║\n", MIN_TERMINAL_WIDTH, MIN_TERMINAL_HEIGHT);
     printf("║                                                            ║\n");
-    printf("║  Please resize your terminal window to meet the           ║\n");
-    printf("║  minimum requirements and try again.                      ║\n");
+    printf("║  Please resize your terminal window to meet the            ║\n");
+    printf("║  minimum requirements and try again.                       ║\n");
     printf("║                                                            ║\n");
     printf("╚════════════════════════════════════════════════════════════╝\n");
     printf("\n");
