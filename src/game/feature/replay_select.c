@@ -1,6 +1,7 @@
 #include "replay_select.h"
 #include "replay_viewer.h"
 #include "../../ui/menu/replay_list_ui.h"
+#include "../../ui/menu/modal_ui.h"
 #include "../../ui/core/theme.h"
 #include "../../ui/core/input_handler.h"
 #include "../../ui/core/ui_manager.h"
@@ -217,7 +218,7 @@ int replay_run_with_selection(void)
             endwin();
 
             // 리플레이 실행
-            replay_run(selected_file);
+            int result = replay_run(selected_file);
 
             // 다시 ncurses 초기화 (파일 선택 화면으로 돌아감)
             initscr();
@@ -228,6 +229,28 @@ int replay_run_with_selection(void)
 
             list_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
             keypad(list_win, TRUE);
+
+            // 파일 열기 실패 시 모달창 표시
+            if (result != 0)
+            {
+                ModalUI modal;
+                modal_ui_init(&modal);
+                modal_ui_show(&modal, MODAL_ERROR, "Failed to open replay file.");
+                wrefresh(list_win);
+
+                // 모달 렌더링 및 입력 대기
+                while (modal_ui_is_active(&modal))
+                {
+                    modal_ui_render(list_win, &modal);
+
+                    InputEvent event = input_handler_get_event(&input_handler, list_win);
+                    ModalResult modal_result = modal_ui_handle_action(&modal, event.action);
+                    if (modal_result == MODAL_RESULT_OK)
+                    {
+                        modal_ui_close(&modal);
+                    }
+                }
+            }
 
             first_render = true; // 전체 재렌더링 필요
         }

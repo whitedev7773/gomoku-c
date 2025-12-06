@@ -200,7 +200,7 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
     // 보드 렌더링
     board_render_full(ui_mgr->board_win, board, NULL);
 
-    // 정보 렌더링
+    // 정보 렌더링 (우측 상단 - 간략한 정보)
     werase(ui_mgr->info_win);
     box(ui_mgr->info_win, 0, 0);
     mvwprintw(ui_mgr->info_win, 0, 2, " Replay ");
@@ -252,16 +252,6 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
         speed_str = "NORMAL";
     mvwprintw(ui_mgr->info_win, 11, 2, "Speed: %s", speed_str);
 
-    // 조작 안내
-    int max_y;
-    getmaxyx(ui_mgr->info_win, max_y, max_y);
-    mvwprintw(ui_mgr->info_win, max_y - 7, 2, "Controls:");
-    mvwprintw(ui_mgr->info_win, max_y - 6, 2, "  SPACE - Play/Pause");
-    mvwprintw(ui_mgr->info_win, max_y - 5, 2, "  -> - Next move");
-    mvwprintw(ui_mgr->info_win, max_y - 4, 2, "  <- - Prev move");
-    mvwprintw(ui_mgr->info_win, max_y - 3, 2, "  1/2/3 - Speed");
-    mvwprintw(ui_mgr->info_win, max_y - 2, 2, "  q - Quit");
-
     wrefresh(ui_mgr->info_win);
     wrefresh(ui_mgr->board_win);
 
@@ -271,6 +261,36 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
     mvwprintw(ui_mgr->chat_win, 0, 2, " Move Log ");
     wattroff(ui_mgr->chat_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
     replay_log_render(ui_mgr->chat_win, log);
+
+    // 하단 영역 렌더링 (bottom_win)
+    werase(ui_mgr->bottom_win);
+    box(ui_mgr->bottom_win, 0, 0);
+    mvwprintw(ui_mgr->bottom_win, 0, 2, " Replay Info ");
+
+    // 재생 상태 표시 (컬러)
+    int status_color = replay->playing ? (replay->paused ? COLOR_PAIR_SYSTEM : COLOR_PAIR_INFO) : COLOR_PAIR_DIM;
+    wattron(ui_mgr->bottom_win, COLOR_PAIR(status_color) | A_BOLD);
+    mvwprintw(ui_mgr->bottom_win, 1, 3, "Auto Play: %s", replay->playing ? (replay->paused ? "PAUSED" : "ON") : "OFF");
+    wattroff(ui_mgr->bottom_win, COLOR_PAIR(status_color) | A_BOLD);
+
+    // 속도 표시
+    wattron(ui_mgr->bottom_win, COLOR_PAIR(COLOR_PAIR_INFO));
+    mvwprintw(ui_mgr->bottom_win, 2, 3, "Speed: %s (1:Slow 2:Normal 3:Fast)", speed_str);
+    wattroff(ui_mgr->bottom_win, COLOR_PAIR(COLOR_PAIR_INFO));
+
+    // 총 수/현재 수 표시
+    wattron(ui_mgr->bottom_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvwprintw(ui_mgr->bottom_win, 3, 3, "Move: %d / %d", replay->current_move, replay->total_moves);
+    wattroff(ui_mgr->bottom_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+    // 단축키 표시 (우측)
+    wattron(ui_mgr->bottom_win, COLOR_PAIR(COLOR_PAIR_DIM));
+    mvwprintw(ui_mgr->bottom_win, 1, 50, "[SPACE] Play/Pause");
+    mvwprintw(ui_mgr->bottom_win, 2, 50, "[<-/->] Prev/Next Move");
+    mvwprintw(ui_mgr->bottom_win, 3, 50, "[Q/ESC] Quit");
+    wattroff(ui_mgr->bottom_win, COLOR_PAIR(COLOR_PAIR_DIM));
+
+    wrefresh(ui_mgr->bottom_win);
 }
 
 // 리플레이 실행

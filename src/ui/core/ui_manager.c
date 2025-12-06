@@ -158,9 +158,7 @@ void ui_manager_cleanup(UIManager *manager)
     if (manager->chat_input_win)
         delwin(manager->chat_input_win);
     if (manager->bottom_win)
-    {
-    }
-    // delwin(manager->bottom_win);
+        delwin(manager->bottom_win);
 
     endwin();
     manager->initialized = false;
@@ -176,6 +174,9 @@ void ui_manager_refresh_all(UIManager *manager)
     wrefresh(manager->chat_win);
     wrefresh(manager->chat_input_win);
     wrefresh(manager->bottom_win);
+
+    touchwin(stdscr);
+    wrefresh(stdscr);
 }
 
 void ui_manager_clear_all(UIManager *manager)
