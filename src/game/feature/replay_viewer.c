@@ -12,6 +12,109 @@
 #include <time.h>
 #include <ncurses.h>
 
+// 리플레이 로그 관련 상수
+#define MAX_REPLAY_LOG_LINES 100
+#define REPLAY_LOG_LINE_LEN 50
+
+// 리플레이 로그 구조체
+typedef struct
+{
+    char lines[MAX_REPLAY_LOG_LINES][REPLAY_LOG_LINE_LEN];
+    int count;      // 총 로그 개수
+    int scroll_pos; // 스크롤 위치 (표시 시작 인덱스)
+} ReplayLog;
+
+// 리플레이 로그 초기화
+static void replay_log_init(ReplayLog *log)
+{
+    memset(log, 0, sizeof(ReplayLog));
+    log->count = 0;
+    log->scroll_pos = 0;
+}
+
+// 리플레이 로그에 항목 추가
+static void replay_log_add(ReplayLog *log, const char *message)
+{
+    if (log->count < MAX_REPLAY_LOG_LINES)
+    {
+        strncpy(log->lines[log->count], message, REPLAY_LOG_LINE_LEN - 1);
+        log->lines[log->count][REPLAY_LOG_LINE_LEN - 1] = '\0';
+        log->count++;
+    }
+    else
+    {
+        // 꽉 찼으면 위로 밀고 마지막에 추가
+        for (int i = 0; i < MAX_REPLAY_LOG_LINES - 1; i++)
+        {
+            strcpy(log->lines[i], log->lines[i + 1]);
+        }
+        strncpy(log->lines[MAX_REPLAY_LOG_LINES - 1], message, REPLAY_LOG_LINE_LEN - 1);
+        log->lines[MAX_REPLAY_LOG_LINES - 1][REPLAY_LOG_LINE_LEN - 1] = '\0';
+    }
+}
+
+// 리플레이 로그를 특정 수까지 동기화
+static void replay_log_sync(ReplayLog *log, const ReplayState *replay, int target_move)
+{
+    replay_log_init(log);
+    for (int i = 0; i < target_move && i < replay->total_moves; i++)
+    {
+        const LogEntry *entry = &replay->logger.entries[i];
+        const char *player_str = (entry->player == BLACK) ? "Black" : "White";
+        char col_char = 'A' + entry->col;
+        char msg[REPLAY_LOG_LINE_LEN];
+        snprintf(msg, sizeof(msg), "%d. %s placed at %c%d", i + 1, player_str, col_char, entry->row + 1);
+        replay_log_add(log, msg);
+    }
+}
+
+// 리플레이 로그 렌더링
+static void replay_log_render(WINDOW *win, const ReplayLog *log)
+{
+    int max_y, max_x;
+    getmaxyx(win, max_y, max_x);
+
+    // 표시 가능한 최대 라인 수 (테두리 제외)
+    int visible_lines = max_y - 2;
+
+    // 스크롤 위치 계산 (항상 최신 로그가 보이도록)
+    int start_idx = 0;
+    if (log->count > visible_lines)
+    {
+        start_idx = log->count - visible_lines;
+    }
+
+    // 로그 창 내용 지우기
+    for (int i = 1; i < max_y - 1; i++)
+    {
+        mvwhline(win, i, 1, ' ', max_x - 2);
+    }
+
+    // 로그 출력
+    for (int i = 0; i < visible_lines && (start_idx + i) < log->count; i++)
+    {
+        const char *line = log->lines[start_idx + i];
+        // Black/White에 따라 색상 적용
+        if (strstr(line, "Black") != NULL)
+        {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+        }
+        else if (strstr(line, "White") != NULL)
+        {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+        }
+        else
+        {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        }
+        mvwprintw(win, 1 + i, 2, "%-*.*s", max_x - 4, max_x - 4, line);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    }
+
+    wrefresh(win);
+}
+
 // 리플레이 초기화
 bool replay_init(ReplayState *replay, const char *log_filename)
 {
@@ -92,7 +195,7 @@ bool replay_prev_move(ReplayState *replay, Board *board)
 }
 
 // 리플레이 UI 렌더링
-static void replay_render(UIManager *ui_mgr, const Board *board, const ReplayState *replay)
+static void replay_render(UIManager *ui_mgr, const Board *board, const ReplayState *replay, const ReplayLog *log)
 {
     // 보드 렌더링
     board_render_full(ui_mgr->board_win, board, NULL);
@@ -161,6 +264,13 @@ static void replay_render(UIManager *ui_mgr, const Board *board, const ReplaySta
 
     wrefresh(ui_mgr->info_win);
     wrefresh(ui_mgr->board_win);
+
+    // 로그 창 렌더링 (chat_win 사용)
+    wattron(ui_mgr->chat_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    box(ui_mgr->chat_win, 0, 0);
+    mvwprintw(ui_mgr->chat_win, 0, 2, " Move Log ");
+    wattroff(ui_mgr->chat_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    replay_log_render(ui_mgr->chat_win, log);
 }
 
 // 리플레이 실행
@@ -184,17 +294,21 @@ int replay_run(const char *log_filename)
     Board board;
     board_init(&board);
 
+    // 리플레이 로그 초기화
+    ReplayLog move_log;
+    replay_log_init(&move_log);
+
     keypad(ui_mgr.board_win, TRUE);
     wtimeout(ui_mgr.board_win, 50); // 50ms timeout for non-blocking input
 
     bool running = true;
-    time_t last_auto_play = time(NULL);
+    bool needs_render = true; // 렌더링 필요 여부 플래그
+
+    // 초기 렌더링
+    replay_render(&ui_mgr, &board, &replay, &move_log);
 
     while (running)
     {
-        // UI 렌더링
-        replay_render(&ui_mgr, &board, &replay);
-
         // 자동 재생
         if (replay.playing && !replay.paused)
         {
@@ -203,11 +317,30 @@ int replay_run(const char *log_filename)
             ts.tv_nsec = (replay.speed % 1000000) * 1000;
             nanosleep(&ts, NULL);
 
-            if (!replay_next_move(&replay, &board))
+            if (replay_next_move(&replay, &board))
+            {
+                // 로그에 추가
+                const LogEntry *entry = &replay.logger.entries[replay.current_move - 1];
+                const char *player_str = (entry->player == BLACK) ? "Black" : "White";
+                char col_char = 'A' + entry->col;
+                char msg[REPLAY_LOG_LINE_LEN];
+                snprintf(msg, sizeof(msg), "%d. %s placed at %c%d", replay.current_move, player_str, col_char, entry->row + 1);
+                replay_log_add(&move_log, msg);
+                needs_render = true;
+            }
+            else
             {
                 // 끝까지 재생 완료
                 replay.playing = false;
+                needs_render = true;
             }
+        }
+
+        // 변경이 있을 때만 렌더링
+        if (needs_render)
+        {
+            replay_render(&ui_mgr, &board, &replay, &move_log);
+            needs_render = false;
         }
 
         // 입력 처리
@@ -226,16 +359,32 @@ int replay_run(const char *log_filename)
                 replay.playing = true;
                 replay.paused = false;
             }
+            needs_render = true;
             break;
 
         case INPUT_MOVE_RIGHT: // 다음 수
             replay.playing = false;
-            replay_next_move(&replay, &board);
+            if (replay_next_move(&replay, &board))
+            {
+                // 로그에 추가
+                const LogEntry *entry = &replay.logger.entries[replay.current_move - 1];
+                const char *player_str = (entry->player == BLACK) ? "Black" : "White";
+                char col_char = 'A' + entry->col;
+                char msg[REPLAY_LOG_LINE_LEN];
+                snprintf(msg, sizeof(msg), "%d. %s placed at %c%d", replay.current_move, player_str, col_char, entry->row + 1);
+                replay_log_add(&move_log, msg);
+                needs_render = true;
+            }
             break;
 
         case INPUT_MOVE_LEFT: // 이전 수
             replay.playing = false;
-            replay_prev_move(&replay, &board);
+            if (replay_prev_move(&replay, &board))
+            {
+                // 로그를 현재 수까지만 동기화
+                replay_log_sync(&move_log, &replay, replay.current_move);
+                needs_render = true;
+            }
             break;
 
         case INPUT_QUIT: // Quit
@@ -251,14 +400,17 @@ int replay_run(const char *log_filename)
         {
         case '1': // Slow speed
             replay.speed = REPLAY_SPEED_SLOW;
+            needs_render = true;
             break;
 
         case '2': // Normal speed
             replay.speed = REPLAY_SPEED_NORMAL;
+            needs_render = true;
             break;
 
         case '3': // Fast speed
             replay.speed = REPLAY_SPEED_FAST;
+            needs_render = true;
             break;
         }
     }
