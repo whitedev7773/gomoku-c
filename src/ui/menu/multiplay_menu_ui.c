@@ -2159,8 +2159,9 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
         usleep(50000); // 50ms 대기
     }
 
-    // 정리
-    if (socket_created && result != 0)
+    // 정리 - 연결 성공/실패 상관없이 소켓 닫기
+    // (spectator_run에서 새로 연결하므로 여기서는 연결 가능 여부만 확인)
+    if (socket_created)
     {
         close(network.socket_fd);
     }
