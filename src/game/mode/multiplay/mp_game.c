@@ -39,6 +39,9 @@ bool mp_init_game_ui(UIManager *ui_mgr, MultiplayerGame *game, GameRule rule)
     chat_init(&game->chat_ui);
     modal_ui_init(&game->modal_ui);
 
+    // 게임 시작 시간 설정
+    game->game_start_time = time(NULL);
+
     // 로거 초기화
     if (!logger_init(&game->logger))
     {
@@ -111,6 +114,14 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
 
     chat_selective_render_input(ui_mgr->chat_input_win, &game->chat_ui,
                                 render_flags, game->first_render, 0, 0);
+
+    // SEND 버튼 표시
+    if (game->first_render)
+    {
+        wattron(stdscr, COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+        mvwprintw(stdscr, 23, 94, "SEND");
+        wattroff(stdscr, COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+    }
 
     // System Log 렌더링
     if (game->first_render)

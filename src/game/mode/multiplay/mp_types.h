@@ -65,6 +65,9 @@ typedef struct
 
     // 터미널 크기 경고 상태
     bool terminal_warning_shown;
+
+    // 게임 시간 추적
+    time_t game_start_time;
 } MultiplayerGame;
 
 // ============================================================================

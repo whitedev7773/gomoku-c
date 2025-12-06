@@ -252,7 +252,10 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                 network_send_message(&game->network, &msg);
 
                 mp_broadcast_chat_to_spectators(game, &msg);
-                chat_add_msg(&game->chat_ui, msg_text, CHAT_MSG_USER);
+
+                // 게임 경과 시간 계산 (초 단위)
+                int game_time_seconds = (int)difftime(time(NULL), game->game_start_time);
+                chat_add_msg_with_time(&game->chat_ui, msg_text, CHAT_MSG_USER, game_time_seconds);
             }
         }
         chat_exit_input(&game->chat_ui);

@@ -200,8 +200,7 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
     }
 
     char start_msg[128];
-    snprintf(start_msg, sizeof(start_msg), "Game started! You: %s (BLACK), Opponent: %s (WHITE)",
-             game.me.name, game.opponent.name);
+    snprintf(start_msg, sizeof(start_msg), "Game started! You: BLACK");
     log_add_msg(&game.log_ui, start_msg);
     chat_add_msg(&game.chat_ui, start_msg, CHAT_MSG_SYSTEM);
 
@@ -440,9 +439,8 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
     }
 
     char start_msg[128];
-    snprintf(start_msg, sizeof(start_msg), "Game started! You: %s (%s), Opponent: %s (%s)",
-             game.me.name, game.me.color == BLACK ? "BLACK" : "WHITE",
-             game.opponent.name, game.opponent.color == BLACK ? "BLACK" : "WHITE");
+    snprintf(start_msg, sizeof(start_msg), "Game started! You: %s",
+             game.me.color == BLACK ? "BLACK" : "WHITE");
     log_add_msg(&game.log_ui, start_msg);
     chat_add_msg(&game.chat_ui, start_msg, CHAT_MSG_SYSTEM);
 

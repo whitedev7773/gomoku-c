@@ -123,9 +123,13 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
         break;
 
     case MSG_CHAT:
-        chat_add_msg(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT);
+    {
+        // 게임 경과 시간 계산 (초 단위)
+        int game_time_seconds = (int)difftime(time(NULL), game->game_start_time);
+        chat_add_msg_with_time(&game->chat_ui, msg.payload.chat.message, CHAT_MSG_OPPONENT, game_time_seconds);
         mp_broadcast_chat_to_spectators(game, &msg);
-        break;
+    }
+    break;
 
     case MSG_COMMAND:
     {
