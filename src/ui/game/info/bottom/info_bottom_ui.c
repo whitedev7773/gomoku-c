@@ -8,116 +8,37 @@ void info_btm_init(InfoBottomUI *ui)
 {
     if (!ui)
         return;
-    ui->game_start_time = time(NULL);
-    ui->prev_last_row = -1;
-    ui->prev_last_col = -1;
-    ui->prev_current_player = EMPTY;
-    ui->prev_elapsed_seconds = -1;
-    ui->prev_remaining_seconds = -1;
+
+    // 각 하위 모듈 초기화
+    last_move_display_init(&ui->last_move);
+    now_turn_display_init(&ui->now_turn);
+    time_display_init(&ui->time_display);
+    system_log_display_init(&ui->system_log);
 }
 
-int info_btm_elapsed_sec(const InfoBottomUI *ui)
+int info_btm_elapsed_sec(const TimeDisplay *time_display)
 {
-    if (!ui)
-        return 0;
-    time_t now = time(NULL);
-    return (int)difftime(now, ui->game_start_time);
+    return time_display_elapsed_sec(time_display);
 }
 
 void info_btm_draw_last_mv(WINDOW *win, const Board *board)
 {
-    // if (!win || !board)
-    //     return;
-
-    // Position last_move = board_get_last_move(board);
-
-    // mvwprintw(win, 0, 4, "LAST MOVE");
-
-    // if (last_move.row == -1 || last_move.col == -1)
-    // {
-    //     mvwprintw(win, 1, 2, "  ----  ----");
-    //     return;
-    // }
-
-    // Stone last_stone = board_get_stone(board, last_move.row, last_move.col);
-
-    // // Draw stone ASCII art
-    // int x = 2;
-    // if (last_stone == BLACK)
-    // {
-    //     mvwprintw(win, 1, x, "  ┏━━┓ ┏━━┓┏━━┓");
-    //     mvwprintw(win, 2, x, "  ┣━━┫ ┃  ┃┃  ┃");
-    //     mvwprintw(win, 3, x, "  ╹  ╹ ┗━━┛┗━━┛");
-    // }
-    // else
-    // {
-    //     mvwprintw(win, 1, x, "  ┏━━┓  ━┓");
-    //     mvwprintw(win, 2, x, "  ┣━━┛   ┃");
-    //     mvwprintw(win, 3, x, "  ╹    ━━┻━");
-    // }
+    last_move_display_draw(win, board);
 }
 
 void info_btm_draw_turn(WINDOW *win, Stone current_player)
 {
-    if (!win)
-        return;
-
-    // NOW TURN 영역: bottom_win 내 좌표
-    // NOW TURN 박스는 stdscr (18, 24) 시작, bottom_win은 (1, 25) 시작
-    // 따라서 bottom_win 내에서 x=17 (18-1), y는 -1 (25-25=0 부터)
-    // 제목: row 24 -> bottom_win row -1 (범위 밖, stdscr에 직접 그려야 함)
-
-    // stdscr에 직접 그리기 (bottom_win 범위 밖)
-    mvprintw(25, 21, "NOW  TURN");
-
-    int x = 21;
-    if (current_player == BLACK)
-    {
-        mvprintw(27, x, "╻    ╻ ┏╸");
-        mvprintw(28, x, "┣━━┓ ┣┫  ");
-        mvprintw(29, x, "┗━━┛ ╹ ┗╸");
-    }
-    else
-    {
-        mvprintw(27, x, "╻┏┓╻ ━┳━ ");
-        mvprintw(28, x, "┃┃┃┃  ┃  ");
-        mvprintw(29, x, "┗┛┗┛  ╹  ");
-    }
-    refresh();
+    now_turn_display_draw(win, current_player);
 }
 
 void info_btm_draw_timer(WINDOW *win, int remaining_seconds)
 {
-    if (!win)
-        return;
-
-    int filled = (remaining_seconds * TURN_TIMEOUT_SECONDS) / TURN_TIMEOUT_SECONDS;
-    if (filled > TURN_TIMEOUT_SECONDS)
-        filled = TURN_TIMEOUT_SECONDS;
-
-    mvwprintw(win, 0, 35, "TIME: %2ds", remaining_seconds);
-
-    wmove(win, 0, 46);
-    for (int i = 0; i < filled; i++)
-    {
-        wprintw(win, "█");
-    }
-    for (int i = filled; i < TURN_TIMEOUT_SECONDS; i++)
-    {
-        wprintw(win, "░");
-    }
+    time_display_draw_timer(win, remaining_seconds);
 }
 
-void info_btm_draw_playtime(WINDOW *win, const InfoBottomUI *ui)
+void info_btm_draw_playtime(WINDOW *win, const TimeDisplay *time_display)
 {
-    if (!win || !ui)
-        return;
-
-    int elapsed = info_btm_elapsed_sec(ui);
-    int minutes = elapsed / 60;
-    int seconds = elapsed % 60;
-
-    mvwprintw(win, 0, 79, " PLAY TIME:  %02d:%02d ", minutes, seconds);
+    time_display_draw_playtime(win, time_display);
 }
 
 void info_btm_draw_btns(WINDOW *win)
@@ -146,10 +67,10 @@ void info_btm_init_win(WINDOW *win)
     wrefresh(win);
 }
 
-// 최적화된 업데이트 (변경된 부분만)
+// 최적화된 업데이트 (변경된 부분만) - 분리된 모듈 사용
 void info_btm_update(WINDOW *win, const Board *board,
-                           const TurnManager *turn_mgr,
-                           InfoBottomUI *ui)
+                     const TurnManager *turn_mgr,
+                     InfoBottomUI *ui)
 {
     if (!win || !board || !turn_mgr || !ui)
         return;
@@ -158,38 +79,46 @@ void info_btm_update(WINDOW *win, const Board *board,
 
     // 1. Last move 변경 체크
     Position last_move = board_get_last_move(board);
-    if (ui->prev_last_row != last_move.row || ui->prev_last_col != last_move.col)
+    if (ui->last_move.prev_row != last_move.row || ui->last_move.prev_col != last_move.col)
     {
-        info_btm_draw_last_mv(win, board);
-        ui->prev_last_row = last_move.row;
-        ui->prev_last_col = last_move.col;
+        last_move_display_draw(win, board);
+        ui->last_move.prev_row = last_move.row;
+        ui->last_move.prev_col = last_move.col;
         need_refresh = true;
     }
 
     // 2. 현재 턴 변경 체크
     Stone current_player = turn_manager_get_current_player(turn_mgr);
-    if (ui->prev_current_player != current_player)
+    if (ui->now_turn.prev_current_player != current_player)
     {
-        info_btm_draw_turn(win, current_player);
-        ui->prev_current_player = current_player;
+        now_turn_display_draw(win, current_player);
+        ui->now_turn.prev_current_player = current_player;
         need_refresh = true;
     }
 
     // 3. 타이머는 초 단위로만 업데이트
     int remaining = turn_manager_get_remaining_time(turn_mgr);
-    if (ui->prev_remaining_seconds != remaining)
+    if (ui->time_display.prev_remaining_seconds != remaining)
     {
-        info_btm_draw_timer(win, remaining);
-        ui->prev_remaining_seconds = remaining;
+        time_display_draw_timer(win, remaining);
+        ui->time_display.prev_remaining_seconds = remaining;
         need_refresh = true;
     }
 
     // 4. 경과 시간 (초 단위로만 체크)
-    int elapsed = info_btm_elapsed_sec(ui);
-    if (ui->prev_elapsed_seconds != elapsed)
+    int elapsed = time_display_elapsed_sec(&ui->time_display);
+    if (ui->time_display.prev_elapsed_seconds != elapsed)
     {
-        info_btm_draw_playtime(win, ui);
-        ui->prev_elapsed_seconds = elapsed;
+        time_display_draw_playtime(win, &ui->time_display);
+        ui->time_display.prev_elapsed_seconds = elapsed;
+        need_refresh = true;
+    }
+
+    // 5. 시스템 로그 업데이트
+    if (ui->system_log.dirty)
+    {
+        system_log_display_draw(win, &ui->system_log);
+        ui->system_log.dirty = false;
         need_refresh = true;
     }
 
@@ -204,10 +133,10 @@ void info_btm_update(WINDOW *win, const Board *board,
 // ============================================
 
 void info_btm_render(WINDOW *win, const Board *board,
-                                     const TurnManager *turn_mgr,
-                                     InfoBottomUI *ui,
-                                     UIRenderFlags *flags,
-                                     bool first_render)
+                     const TurnManager *turn_mgr,
+                     InfoBottomUI *ui,
+                     UIRenderFlags *flags,
+                     bool first_render)
 {
     if (!win || !board || !turn_mgr || !ui || !flags)
         return;
@@ -222,78 +151,57 @@ void info_btm_render(WINDOW *win, const Board *board,
         // 버튼 그리기 (고정)
         info_btm_draw_btns(win);
 
-        // 모든 정보 그리기
-        info_btm_draw_last_mv(win, board);
-        info_btm_draw_turn(win, turn_manager_get_current_player(turn_mgr));
-        info_btm_draw_timer(win, turn_manager_get_remaining_time(turn_mgr));
-        info_btm_draw_playtime(win, ui);
+        // 모든 정보 그리기 (분리된 모듈 사용)
+        last_move_display_draw(win, board);
+        now_turn_display_draw(win, turn_manager_get_current_player(turn_mgr));
+        time_display_draw_timer(win, turn_manager_get_remaining_time(turn_mgr));
+        time_display_draw_playtime(win, &ui->time_display);
+        system_log_display_draw(win, &ui->system_log);
 
-        // 상태 갱신
+        // 상태 갱신 (분리된 모듈의 상태 업데이트)
         Position last_move = board_get_last_move(board);
-        ui->prev_last_row = last_move.row;
-        ui->prev_last_col = last_move.col;
-        ui->prev_current_player = turn_manager_get_current_player(turn_mgr);
-        ui->prev_remaining_seconds = turn_manager_get_remaining_time(turn_mgr);
-        ui->prev_elapsed_seconds = info_btm_elapsed_sec(ui);
+        ui->last_move.prev_row = last_move.row;
+        ui->last_move.prev_col = last_move.col;
+        ui->now_turn.prev_current_player = turn_manager_get_current_player(turn_mgr);
+        ui->time_display.prev_remaining_seconds = turn_manager_get_remaining_time(turn_mgr);
+        ui->time_display.prev_elapsed_seconds = time_display_elapsed_sec(&ui->time_display);
+        ui->system_log.dirty = false;
 
         ui_render_flags_clear(flags, RENDER_BOTTOM_BORDER);
         need_refresh = true;
     }
     else
     {
-        // 개별 컴포넌트 업데이트
+        // 개별 컴포넌트 업데이트 (분리된 모듈의 render 함수 사용)
 
         // Last move
-        if (ui_render_flags_is_set(flags, RENDER_LAST_MOVE))
+        if (last_move_display_render(win, board, &ui->last_move, flags, false))
         {
-            Position last_move = board_get_last_move(board);
-            if (ui->prev_last_row != last_move.row || ui->prev_last_col != last_move.col)
-            {
-                info_btm_draw_last_mv(win, board);
-                ui->prev_last_row = last_move.row;
-                ui->prev_last_col = last_move.col;
-                need_refresh = true;
-            }
-            ui_render_flags_clear(flags, RENDER_LAST_MOVE);
+            need_refresh = true;
         }
 
         // Current turn
-        if (ui_render_flags_is_set(flags, RENDER_CURRENT_TURN))
+        if (now_turn_display_render(win, turn_mgr, &ui->now_turn, flags, false))
         {
-            Stone current_player = turn_manager_get_current_player(turn_mgr);
-            if (ui->prev_current_player != current_player)
-            {
-                info_btm_draw_turn(win, current_player);
-                ui->prev_current_player = current_player;
-                need_refresh = true;
-            }
-            ui_render_flags_clear(flags, RENDER_CURRENT_TURN);
+            need_refresh = true;
         }
 
-        // Timer (초 단위로만)
-        if (ui_render_flags_is_set(flags, RENDER_TIMER))
+        // Timer
+        if (time_display_render_timer(win, turn_mgr, &ui->time_display, flags, false))
         {
-            int remaining = turn_manager_get_remaining_time(turn_mgr);
-            if (ui->prev_remaining_seconds != remaining)
-            {
-                info_btm_draw_timer(win, remaining);
-                ui->prev_remaining_seconds = remaining;
-                need_refresh = true;
-            }
-            ui_render_flags_clear(flags, RENDER_TIMER);
+            need_refresh = true;
         }
 
-        // Play time (초 단위로만)
-        if (ui_render_flags_is_set(flags, RENDER_PLAY_TIME))
+        // Play time
+        if (time_display_render_playtime(win, &ui->time_display, flags, false))
         {
-            int elapsed = info_btm_elapsed_sec(ui);
-            if (ui->prev_elapsed_seconds != elapsed)
-            {
-                info_btm_draw_playtime(win, ui);
-                ui->prev_elapsed_seconds = elapsed;
-                need_refresh = true;
-            }
-            ui_render_flags_clear(flags, RENDER_PLAY_TIME);
+            need_refresh = true;
+        }
+
+        // System log
+        if (system_log_display_render(win, &ui->system_log, flags, false))
+        {
+            need_refresh = true;
         }
     }
 
@@ -301,4 +209,12 @@ void info_btm_render(WINDOW *win, const Board *board,
     {
         wrefresh(win);
     }
+}
+
+// 시스템 로그 추가 편의 함수
+void info_btm_add_system_log(InfoBottomUI *ui, const char *message)
+{
+    if (!ui || !message)
+        return;
+    system_log_display_add(&ui->system_log, message);
 }
