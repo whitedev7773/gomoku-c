@@ -1,5 +1,6 @@
 #include "menu_ui.h"
 #include "../core/theme.h"
+#include "../core/ui_manager.h"
 #include <string.h>
 
 void menu_ui_init(MenuUI *menu)
@@ -119,8 +120,8 @@ void menu_ui_draw_footer(WINDOW *win)
 {
     // int max_y, max_x;
     // getmaxyx(win, max_y, max_x);
-    int max_y = 31;
-    int max_x = 100;
+    int max_y = UI_MIN_HEIGHT;
+    int max_x = UI_MIN_WIDTH;
 
     wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
     mvwprintw(win, max_y - 3, 29, "https://github.com/whitedev7773/gomoku-c");
@@ -138,7 +139,7 @@ void menu_ui_render(WINDOW *win, const MenuUI *menu)
     int max_y, max_x;
     getmaxyx(win, max_y, max_x);
 
-    if (max_x < 100 || max_y < 31)
+    if (max_x < UI_MIN_WIDTH || max_y < UI_MIN_HEIGHT)
     {
         wattron(win, A_BOLD);
         mvwprintw(win, max_y / 2 - 1, (max_x - 18) / 2, "Terminal too small!");
@@ -148,8 +149,8 @@ void menu_ui_render(WINDOW *win, const MenuUI *menu)
         return;
     }
 
-    int box_w = 100;
-    int box_h = 31;
+    int box_w = UI_MIN_WIDTH;
+    int box_h = UI_MIN_HEIGHT;
     int start_y = 0;
     int start_x = 0;
 

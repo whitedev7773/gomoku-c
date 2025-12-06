@@ -4,6 +4,7 @@
 #include "multiplay_menu_ui.h"
 #include "../core/input_handler.h"
 #include "../core/theme.h"
+#include "../core/ui_manager.h"
 #include "../../network/core/network.h"
 #include <string.h>
 #include <stdlib.h>
@@ -90,7 +91,7 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
         mvwprintw(win, option_y - 1, host_x, "╔════════════════════════╗");
         mvwprintw(win, option_y + 0, host_x, "║     ▶ HOST GAME ◀      ║");
-        mvwprintw(win, option_y + 1, host_x, "║    Create & Wait       ║");
+        mvwprintw(win, option_y + 1, host_x, "║     Create & Wait      ║");
         mvwprintw(win, option_y + 2, host_x, "╚════════════════════════╝");
         wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
     }
@@ -99,7 +100,7 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
         mvwprintw(win, option_y - 1, host_x, "┌────────────────────────┐");
         mvwprintw(win, option_y + 0, host_x, "│       HOST GAME        │");
-        mvwprintw(win, option_y + 1, host_x, "│      Create & Wait     │");
+        mvwprintw(win, option_y + 1, host_x, "│     Create & Wait      │");
         mvwprintw(win, option_y + 2, host_x, "└────────────────────────┘");
         wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
     }
@@ -110,8 +111,8 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
         mvwprintw(win, option_y - 1, join_x, "╔════════════════════════╗");
-        mvwprintw(win, option_y + 0, join_x, "║     ▶ JOIN GAME ◀      ║");
-        mvwprintw(win, option_y + 1, join_x, "║   Connect to Host      ║");
+        mvwprintw(win, option_y + 0, join_x, "║     ▶ JOIN  GAME ◀     ║");
+        mvwprintw(win, option_y + 1, join_x, "║     Connect to Host    ║");
         mvwprintw(win, option_y + 2, join_x, "╚════════════════════════╝");
         wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_REVERSE);
     }
@@ -119,7 +120,7 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
         mvwprintw(win, option_y - 1, join_x, "┌────────────────────────┐");
-        mvwprintw(win, option_y + 0, join_x, "│       JOIN GAME        │");
+        mvwprintw(win, option_y + 0, join_x, "│       JOIN  GAME       │");
         mvwprintw(win, option_y + 1, join_x, "│     Connect to Host    │");
         mvwprintw(win, option_y + 2, join_x, "└────────────────────────┘");
         wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
@@ -242,12 +243,12 @@ void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
     if (ip_active)
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-        mvwprintw(win, ip_y, label_x, "▶ Server IP:");
+        mvwprintw(win, ip_y + 1, label_x, "▶ Server IP:");
     }
     else
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, ip_y, label_x, "  Server IP:");
+        mvwprintw(win, ip_y + 1, label_x, "  Server IP:");
     }
 
     // IP 입력 박스
@@ -294,12 +295,12 @@ void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
     if (port_active)
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-        mvwprintw(win, port_y, label_x, "▶ Port:     ");
+        mvwprintw(win, port_y + 1, label_x, "▶ Port:     ");
     }
     else
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, port_y, label_x, "  Port:     ");
+        mvwprintw(win, port_y + 1, label_x, "  Port:     ");
     }
 
     // PORT 입력 박스
@@ -346,12 +347,12 @@ void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
     if (name_active)
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-        mvwprintw(win, name_y, label_x, "▶ Nickname: ");
+        mvwprintw(win, name_y + 1, label_x, "▶ Nickname: ");
     }
     else
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, name_y, label_x, "  Nickname: ");
+        mvwprintw(win, name_y + 1, label_x, "  Nickname: ");
     }
 
     // NAME 입력 박스
@@ -609,7 +610,7 @@ void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui)
     int name_y = box_y + 2;
 
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-    mvwprintw(win, name_y, label_x, "▶ Nickname: ");
+    mvwprintw(win, name_y + 1, label_x, "▶ Nickname: ");
 
     // NAME 입력 박스
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -913,12 +914,12 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     if (ip_active)
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-        mvwprintw(win, ip_y, label_x, "▶ Server IP:");
+        mvwprintw(win, ip_y + 1, label_x, "▶ Server IP:");
     }
     else
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, ip_y, label_x, "  Server IP:");
+        mvwprintw(win, ip_y + 1, label_x, "  Server IP:");
     }
 
     // IP 입력 박스
@@ -965,12 +966,12 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     if (port_active)
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-        mvwprintw(win, port_y, label_x, "▶ Port:     ");
+        mvwprintw(win, port_y + 1, label_x, "▶ Port:     ");
     }
     else
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, port_y, label_x, "  Port:     ");
+        mvwprintw(win, port_y + 1, label_x, "  Port:     ");
     }
 
     // PORT 입력 박스
@@ -1017,12 +1018,12 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     if (name_active)
     {
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-        mvwprintw(win, name_y, label_x, "▶ Your Name:");
+        mvwprintw(win, name_y + 1, label_x, "▶ Your Name:");
     }
     else
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, name_y, label_x, "  Your Name:");
+        mvwprintw(win, name_y + 1, label_x, "  Your Name:");
     }
 
     // NAME 입력 박스
@@ -1230,8 +1231,8 @@ int multiplay_select_mode(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *select_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *select_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
@@ -1301,8 +1302,8 @@ int multiplay_input_connection(char *ip_out, int *port_out, char *name_out)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *input_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *input_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(input_win, TRUE);
 
     InputHandler input_handler;
@@ -1382,8 +1383,8 @@ int multiplay_select_rule(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *select_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *select_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
@@ -1453,8 +1454,8 @@ int multiplay_input_host_settings(char *name_out)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *input_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *input_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(input_win, TRUE);
 
     InputHandler input_handler;
@@ -1524,8 +1525,8 @@ int spectator_input_connection(char *ip_out, int *port_out, char *name_out)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *input_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *input_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(input_win, TRUE);
 
     InputHandler input_handler;
@@ -1814,8 +1815,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *wait_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *wait_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(wait_win, TRUE);
     nodelay(wait_win, TRUE); // 논블로킹 입력
 
@@ -2002,8 +2003,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *wait_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *wait_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(wait_win, TRUE);
     nodelay(wait_win, TRUE); // 논블로킹 입력
 
@@ -2321,8 +2322,8 @@ int multiplay_host_wait_for_client(int port, const char *host_name, GameRule rul
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *wait_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *wait_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(wait_win, TRUE);
     nodelay(wait_win, TRUE); // 논블로킹 입력
 

@@ -1,5 +1,6 @@
 #include "theme_selector_ui.h"
 #include "../core/input_handler.h"
+#include "../core/ui_manager.h"
 #include <string.h>
 
 void theme_selector_init(ThemeSelectorUI *selector)
@@ -158,8 +159,8 @@ ThemeType theme_selector_run(void)
         theme_init(current_theme);
     }
 
-    // 100x31 윈도우 생성
-    WINDOW *selector_win = newwin(31, 100, 0, 0);
+    // UI_MIN_WIDTH x UI_MIN_HEIGHT 윈도우 생성
+    WINDOW *selector_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(selector_win, TRUE);
 
     // 게임패드 입력 핸들러 초기화

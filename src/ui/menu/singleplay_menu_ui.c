@@ -1,6 +1,7 @@
 #include "singleplay_menu_ui.h"
 #include "../core/input_handler.h"
 #include "../core/theme.h"
+#include "../core/ui_manager.h"
 #include <string.h>
 #include <locale.h>
 
@@ -315,8 +316,8 @@ int singleplay_select_difficulty(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *select_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *select_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
@@ -383,8 +384,8 @@ int singleplay_select_rule(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 31, 100);
-    WINDOW *select_win = newwin(31, 100, 0, 0);
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
+    WINDOW *select_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
