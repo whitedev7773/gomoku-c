@@ -1,4 +1,5 @@
 #include "time_display.h"
+#include "../../../core/theme.h"
 #include <stdio.h>
 
 #define TURN_TIMEOUT_BAR_WIDTH 20
@@ -33,18 +34,21 @@ void time_display_draw_timer(WINDOW *win, int remaining_seconds)
     if (filled < 0)
         filled = 0;
 
-    mvwprintw(win, 0, 35, "TIME: %2ds", remaining_seconds);
+    attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvprintw(25, 35, "TIME: %2ds", remaining_seconds);
+    attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
-    wmove(win, 0, 46);
+    attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
     for (int i = 0; i < filled; i++)
     {
-        wprintw(win, "█");
+        mvprintw(25, 46 + i, "█");
     }
     for (int i = filled; i < TURN_TIMEOUT_SECONDS; i++)
     {
-        wprintw(win, "░");
+        mvprintw(25, 46 + i, "░");
     }
-    wrefresh(win);
+    attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    refresh();
 }
 
 void time_display_draw_playtime(WINDOW *win, const TimeDisplay *display)
@@ -58,8 +62,14 @@ void time_display_draw_playtime(WINDOW *win, const TimeDisplay *display)
     int minutes = elapsed / 60;
     int seconds = elapsed % 60;
 
-    mvwprintw(win, 0, 79, " PLAY TIME:  %02d:%02d ", minutes, seconds);
-    wrefresh(win);
+    attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+    mvprintw(25, 79, "┃");
+    attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+    attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvprintw(25, 81, "PLAY TIME:  %02d:%02d ", minutes, seconds);
+    attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    refresh();
 }
 
 bool time_display_render_timer(WINDOW *win, const TurnManager *turn_mgr,

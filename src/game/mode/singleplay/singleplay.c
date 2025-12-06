@@ -204,17 +204,17 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
         // 로그 렌더링 (우측 채팅창 영역)
         if (first_render)
         {
-            mvwprintw(ui_mgr.chat_win, 0, 0, "=== System Log ===");
-            wrefresh(ui_mgr.chat_win);
+            // mvwprintw(ui_mgr.system_log_win, 0, 0, "=== System Log ===");
+            wrefresh(ui_mgr.system_log_win);
         }
-        log_render_sel(ui_mgr.chat_win, &log_ui, render_flags, first_render, 2, 1);
+        log_render_sel(ui_mgr.system_log_win, &log_ui, render_flags, first_render, 0, 0);
 
-        // 우측 info 창 (현재 턴 표시) - 턴 변경 시에만
+        // 우측 상단 info 창 (현재 턴 표시) - 턴 변경 시에만
         if (first_render || ui_render_flags_is_set(render_flags, RENDER_INFO))
         {
-            mvwprintw(ui_mgr.info_win, 0, 0, "Current: %s",
-                      current_player == BLACK ? "You (BLACK)" : "AI (WHITE)");
-            wrefresh(ui_mgr.info_win);
+            mvwprintw(ui_mgr.turn_or_name_win, 0, 1, "TURN: %s",
+                      current_player == BLACK ? "ME" : "AI");
+            wrefresh(ui_mgr.turn_or_name_win);
             ui_render_flags_clear(render_flags, RENDER_INFO);
         }
 

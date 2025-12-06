@@ -40,12 +40,18 @@
 // Bottom 영역: ingame_border (0,24)~(99,31)
 // LAST MOVE: (0,24) 19x6, NOW TURN: (18,24) 15x6
 // TIMER: (32,24) 48x3, PLAY TIME: (79,24) 21x3
-// SYSTEM LOG: (32,26) 68x5
 // 내부 콘텐츠 좌표
 #define BOTTOM_WINDOW_WIDTH 98
 #define BOTTOM_WINDOW_HEIGHT 5
 #define BOTTOM_WINDOW_X 1
 #define BOTTOM_WINDOW_Y 25
+
+// System Log 영역
+// SYSTEM LOG: (34,27) 64x3
+#define SYSTEM_LOG_WINDOW_WIDTH 65
+#define SYSTEM_LOG_WINDOW_HEIGHT 3
+#define SYSTEM_LOG_WINDOW_X 33
+#define SYSTEM_LOG_WINDOW_Y 27
 
 // ============================================
 // Dirty Flag 기반 선택적 렌더링 시스템
@@ -81,10 +87,14 @@ typedef struct
 typedef struct
 {
     WINDOW *board_win;
-    WINDOW *info_win;
+    WINDOW *turn_or_name_win;
+    WINDOW *viewer_count_win;
+    WINDOW *ping_display_win;
+    WINDOW *port_display_win;
     WINDOW *chat_win;
     WINDOW *chat_input_win;
     WINDOW *bottom_win;
+    WINDOW *system_log_win;
     bool initialized;
     bool first_render;          // 첫 렌더링 여부 (테두리 등 초기화용)
     UIRenderFlags render_flags; // 렌더링 플래그

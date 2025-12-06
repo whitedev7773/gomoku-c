@@ -51,8 +51,8 @@ void board_draw_border(WINDOW *win)
     for (int row = 0; row < BOARD_SIZE; row++)
     {
         int y = 2 + row;
-        mvwprintw(win, y, 1, "%2d│", BOARD_SIZE - row);
-        mvwprintw(win, y, 43, "│%-2d", BOARD_SIZE - row);
+        mvwprintw(win, y, 1, "%2d│", row + 1);
+        mvwprintw(win, y, 43, "│%-2d", row + 1);
     }
 
     // 보드 프레임 하단

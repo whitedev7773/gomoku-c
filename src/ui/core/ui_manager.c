@@ -124,9 +124,11 @@ bool ui_manager_init(UIManager *manager)
                                      CHAT_INPUT_Y, CHAT_INPUT_X);
     manager->bottom_win = newwin(BOTTOM_WINDOW_HEIGHT, BOTTOM_WINDOW_WIDTH,
                                  BOTTOM_WINDOW_Y, BOTTOM_WINDOW_X);
+    manager->system_log_win = newwin(SYSTEM_LOG_WINDOW_HEIGHT, SYSTEM_LOG_WINDOW_WIDTH,
+                                     SYSTEM_LOG_WINDOW_Y, SYSTEM_LOG_WINDOW_X);
 
     if (!manager->board_win || !manager->info_win || !manager->chat_win ||
-        !manager->chat_input_win || !manager->bottom_win)
+        !manager->chat_input_win || !manager->bottom_win || !manager->system_log_win)
     {
         ui_manager_cleanup(manager);
         return false;
@@ -169,14 +171,20 @@ void ui_manager_refresh_all(UIManager *manager)
     if (!manager || !manager->initialized)
         return;
 
-    wrefresh(manager->board_win);
-    wrefresh(manager->info_win);
-    wrefresh(manager->chat_win);
-    wrefresh(manager->chat_input_win);
-    wrefresh(manager->bottom_win);
+    /* Use wnoutrefresh + doupdate to control update ordering and avoid
+       bottom window overwriting the static border drawn on stdscr.
+       Touch stdscr last so the border is restored after child windows. */
+    wnoutrefresh(manager->board_win);
+    wnoutrefresh(manager->info_win);
+    wnoutrefresh(manager->chat_win);
+    wnoutrefresh(manager->chat_input_win);
+    wnoutrefresh(manager->bottom_win);
 
+    /* Ensure stdscr (borders) is refreshed last to restore any overwritten
+       border characters */
     touchwin(stdscr);
-    wrefresh(stdscr);
+    wnoutrefresh(stdscr);
+    doupdate();
 }
 
 void ui_manager_clear_all(UIManager *manager)

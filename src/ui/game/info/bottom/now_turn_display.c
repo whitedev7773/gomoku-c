@@ -1,4 +1,5 @@
 #include "now_turn_display.h"
+#include "../../../core/theme.h"
 #include <stdio.h>
 
 void now_turn_display_init(NowTurnDisplay *display)
@@ -17,8 +18,15 @@ void now_turn_display_draw(WINDOW *win, Stone current_player)
     // 제목은 ingame_border에서 그리므로 여기서는 내용만
     // 내부 콘텐츠 영역: (19,27) ~ (32,29)
 
-    mvprintw(25, 21, "NOW  TURN");
+    attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+    mvprintw(25, 21, "NOW  TURN  ┃");
+    mvprintw(26, 18, "╂─────────────╊━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━━━━━━");
+    mvprintw(27, 32, "┃");
+    mvprintw(28, 32, "┃");
+    mvprintw(29, 32, "┃");
+    attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
 
+    attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
     int x = 21;
     if (current_player == BLACK)
     {
@@ -32,6 +40,7 @@ void now_turn_display_draw(WINDOW *win, Stone current_player)
         mvprintw(28, x, "┃┃┃┃  ┃  ");
         mvprintw(29, x, "┗┛┗┛  ╹  ");
     }
+    attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
     refresh();
 }
 
