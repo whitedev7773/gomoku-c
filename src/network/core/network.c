@@ -216,16 +216,34 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
 
 void network_cleanup(NetworkManager *net)
 {
-    if (net->client_fd >= 0)
+    // 1. 널 포인터 체크
+    if (net == NULL)
+        return;
+
+    if (net->state == NET_DISCONNECTED)
+        return;
+
+    if (net->socket_fd < 0 && net->client_fd < 0)
+        return;
+
+    if (net->role == NETWORK_SERVER && net->client_fd < 0)
+        return;
+
+    // 2. 스레드 안전성을 위한 락 (구조체에 mutex가 있다고 가정)
+    // pthread_mutex_lock(&net->mutex);
+
+    // 3. 상태를 먼저 변경하여 다른 스레드가 접근하지 못하게 함
+    net->state = NET_DISCONNECTED;
+
+    if (net->client_fd > 0)
     {
         close(net->client_fd);
         net->client_fd = -1;
     }
 
-    // 관전자 소켓 정리
     for (int i = 0; i < MAX_SPECTATORS; i++)
     {
-        if (net->spectator_fds[i] >= 0)
+        if (net->spectator_fds[i] > 0)
         {
             close(net->spectator_fds[i]);
             net->spectator_fds[i] = -1;
@@ -239,7 +257,7 @@ void network_cleanup(NetworkManager *net)
         net->socket_fd = -1;
     }
 
-    net->state = NET_DISCONNECTED;
+    // pthread_mutex_unlock(&net->mutex);
 }
 
 int network_send_message(NetworkManager *net, const Message *msg)

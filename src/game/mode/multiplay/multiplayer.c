@@ -6,9 +6,11 @@
 #include "mp_turn.h"
 #include "../../../utils/terminal_check.h"
 #include "../../../ui/game/border/ingame_border.h"
+#include "../../../ui/core/theme.h"
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <ncurses.h>
 
 // ============================================================================
 // 호스트 모드 실행
@@ -190,17 +192,51 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
         return -1;
     }
 
-    printf("=== GOMOKU MULTIPLAYER - CLIENT ===\n");
-    printf("Connecting to %s:%d...\n", server_ip, port);
+    // CLI 모드에서만 printf 사용 (TUI에서 호출 시 주석 처리)
+    // printf("=== GOMOKU MULTIPLAYER - CLIENT ===\n");
+    // printf("Connecting to %s:%d...\n", server_ip, port);
 
     if (!network_client_connect(&game.network, server_ip, port))
     {
-        printf("Failed to connect to server\n");
+        // 연결 실패 화면 표시
+        initscr();
+        start_color();
+        cbreak();
+        noecho();
+        curs_set(0);
+
+        // 테마 초기화
+        ThemeType saved_theme = theme_load_from_config();
+        theme_init(saved_theme);
+
+        clear();
+
+        // 타이틀
+        attron(COLOR_PAIR(1) | A_BOLD);
+        mvprintw(LINES / 2 - 3, (COLS - 20) / 2, "CONNECTION FAILED");
+        attroff(COLOR_PAIR(1) | A_BOLD);
+
+        // 에러 메시지
+        attron(COLOR_PAIR(2));
+        mvprintw(LINES / 2 - 1, (COLS - 30) / 2, "Failed to connect to server");
+        mvprintw(LINES / 2, (COLS - 30) / 2, "Server: %s:%d", server_ip, port);
+        attroff(COLOR_PAIR(2));
+
+        // 안내 메시지
+        attron(A_DIM);
+        mvprintw(LINES / 2 + 3, (COLS - 25) / 2, "Press any key to return");
+        attroff(A_DIM);
+
+        refresh();
+        timeout(-1); // blocking mode
+        getch();
+
+        endwin();
         network_cleanup(&game.network);
         return -1;
     }
 
-    printf("Connected to server!\n");
+    // printf("Connected to server!\n");
 
     // 플레이어 정보 설정 (TUI에서 받은 닉네임 사용)
     strncpy(game.me.name, player_name, MAX_PLAYER_NAME - 1);
@@ -232,7 +268,40 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
 
     if (!connected)
     {
-        printf("Connection timeout\n");
+        // 연결 타임아웃 화면 표시
+        initscr();
+        start_color();
+        cbreak();
+        noecho();
+        curs_set(0);
+
+        // 테마 초기화
+        ThemeType saved_theme = theme_load_from_config();
+        theme_init(saved_theme);
+
+        clear();
+
+        // 타이틀
+        attron(COLOR_PAIR(1) | A_BOLD);
+        mvprintw(LINES / 2 - 3, (COLS - 20) / 2, "CONNECTION TIMEOUT");
+        attroff(COLOR_PAIR(1) | A_BOLD);
+
+        // 에러 메시지
+        attron(COLOR_PAIR(2));
+        mvprintw(LINES / 2 - 1, (COLS - 40) / 2, "Server did not respond in time");
+        mvprintw(LINES / 2, (COLS - 30) / 2, "Server: %s:%d", server_ip, port);
+        attroff(COLOR_PAIR(2));
+
+        // 안내 메시지
+        attron(A_DIM);
+        mvprintw(LINES / 2 + 3, (COLS - 25) / 2, "Press any key to return");
+        attroff(A_DIM);
+
+        refresh();
+        timeout(-1); // blocking mode
+        getch();
+
+        endwin();
         network_cleanup(&game.network);
         return -1;
     }
