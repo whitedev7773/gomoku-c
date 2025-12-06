@@ -119,7 +119,7 @@ void menu_ui_draw_footer(WINDOW *win)
 {
     // int max_y, max_x;
     // getmaxyx(win, max_y, max_x);
-    int max_y = 30;
+    int max_y = 31;
     int max_x = 100;
 
     wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
@@ -134,22 +134,22 @@ void menu_ui_render(WINDOW *win, const MenuUI *menu)
 
     wclear(win);
 
-    // Ensure layout fits 100x30 and draw a centered border of that size
+    // Ensure layout fits 100x31 and draw a centered border of that size
     int max_y, max_x;
     getmaxyx(win, max_y, max_x);
 
-    if (max_x < 100 || max_y < 30)
+    if (max_x < 100 || max_y < 31)
     {
         wattron(win, A_BOLD);
         mvwprintw(win, max_y / 2 - 1, (max_x - 18) / 2, "Terminal too small!");
-        mvwprintw(win, max_y / 2, (max_x - 36) / 2, "Requires at least 100x30 (current %dx%d)", max_x, max_y);
+        mvwprintw(win, max_y / 2, (max_x - 36) / 2, "Requires at least 100x31 (current %dx%d)", max_x, max_y);
         mvwprintw(win, max_y / 2 + 1, (max_x - 26) / 2, "Resize terminal and try again.");
         wattroff(win, A_BOLD);
         return;
     }
 
     int box_w = 100;
-    int box_h = 30;
+    int box_h = 31;
     int start_y = 0;
     int start_x = 0;
 

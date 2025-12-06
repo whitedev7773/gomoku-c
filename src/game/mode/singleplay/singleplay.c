@@ -28,8 +28,8 @@ int singleplay_run(AIDifficulty difficulty, GameRule rule)
     noecho();
     curs_set(0);
 
-    // stdscr을 100x30으로 고정
-    wresize(stdscr, 30, 100);
+    // stdscr을 UI_MIN_WIDTH x UI_MIN_HEIGHT으로 고정
+    wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
 
     // 테마 초기화
     theme_init(theme_get_current());

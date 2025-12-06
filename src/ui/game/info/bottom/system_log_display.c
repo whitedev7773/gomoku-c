@@ -44,7 +44,7 @@ void system_log_display_draw(WINDOW *win, const SystemLogDisplay *display)
         return;
 
     // SYSTEM LOG 영역: (32,26) 시작, 68x5
-    // 내부 좌표: (33,27) ~ (98,30)
+    // 내부 좌표: (33,27) ~ (98,31)
     // 실제 로그 표시 영역: 3줄
 
     for (int i = 0; i < SYSTEM_LOG_MAX_LINES; i++)

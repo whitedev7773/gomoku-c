@@ -7,6 +7,7 @@
 #include "utils/arg_parser.h"
 #include "ui/menu/menu_ui.h"
 #include "ui/core/theme.h"
+#include "ui/core/ui_manager.h"
 #include "ui/menu/theme_selector_ui.h"
 #include "ui/menu/singleplay_menu_ui.h"
 #include "ui/menu/multiplay_menu_ui.h"
@@ -63,15 +64,15 @@ int main(int argc, char *argv[])
             noecho();
             curs_set(0);
 
-            // Limit stdscr to 100x30
-            wresize(stdscr, 30, 100);
+            // Limit stdscr to UI_MIN_WIDTH x UI_MIN_HEIGHT
+            wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
 
             // 저장된 테마 불러오기 및 초기화
             ThemeType saved_theme = theme_load_from_config();
             theme_init(saved_theme);
 
-            // Always use fixed 100x30 size
-            WINDOW *menu_win = newwin(30, 100, 0, 0);
+            // Always use fixed UI_MIN_WIDTH x UI_MIN_HEIGHT size
+            WINDOW *menu_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
             keypad(menu_win, TRUE);
 
             // 게임패드 입력 핸들러 초기화
@@ -131,10 +132,10 @@ int main(int argc, char *argv[])
                         cbreak();
                         noecho();
                         curs_set(0);
-                        wresize(stdscr, 30, 100);
+                        wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
                         theme_init(theme_get_current());
 
-                        menu_win = newwin(30, 100, 0, 0);
+                        menu_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
                         keypad(menu_win, TRUE);
 
                         // 게임패드 다시 초기화

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define MIN_TERMINAL_WIDTH 100
-#define MIN_TERMINAL_HEIGHT 30
+#define MIN_TERMINAL_HEIGHT 31
 
 typedef struct
 {

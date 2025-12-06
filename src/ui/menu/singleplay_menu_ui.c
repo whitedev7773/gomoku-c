@@ -315,8 +315,8 @@ int singleplay_select_difficulty(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *select_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *select_win = newwin(31, 100, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
@@ -383,8 +383,8 @@ int singleplay_select_rule(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *select_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *select_win = newwin(31, 100, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;

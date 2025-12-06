@@ -4,6 +4,7 @@
 #include <ncurses.h>
 #include "../ui/game/border/ingame_border.h"
 #include "../ui/core/theme.h"
+#include "../ui/core/ui_manager.h"
 
 // 테스트: ingame_border.c 모듈
 // 인게임 레이아웃 테두리가 올바르게 그려지는지 확인
@@ -24,10 +25,10 @@ int main(void)
     int max_y, max_x;
     getmaxyx(stdscr, max_y, max_x);
 
-    if (max_x < 100 || max_y < 30)
+    if (max_x < UI_MIN_WIDTH || max_y < UI_MIN_HEIGHT)
     {
         endwin();
-        fprintf(stderr, "Terminal too small! Need at least 100x30, got %dx%d\n", max_x, max_y);
+        fprintf(stderr, "Terminal too small! Need at least %dx%d, got %dx%d\n", UI_MIN_WIDTH, UI_MIN_HEIGHT, max_x, max_y);
         return 1;
     }
 

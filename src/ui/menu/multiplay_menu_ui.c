@@ -1230,8 +1230,8 @@ int multiplay_select_mode(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *select_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *select_win = newwin(31, 100, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
@@ -1301,8 +1301,8 @@ int multiplay_input_connection(char *ip_out, int *port_out, char *name_out)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *input_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *input_win = newwin(31, 100, 0, 0);
     keypad(input_win, TRUE);
 
     InputHandler input_handler;
@@ -1382,8 +1382,8 @@ int multiplay_select_rule(void)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *select_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *select_win = newwin(31, 100, 0, 0);
     keypad(select_win, TRUE);
 
     InputHandler input_handler;
@@ -1453,8 +1453,8 @@ int multiplay_input_host_settings(char *name_out)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *input_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *input_win = newwin(31, 100, 0, 0);
     keypad(input_win, TRUE);
 
     InputHandler input_handler;
@@ -1524,8 +1524,8 @@ int spectator_input_connection(char *ip_out, int *port_out, char *name_out)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *input_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *input_win = newwin(31, 100, 0, 0);
     keypad(input_win, TRUE);
 
     InputHandler input_handler;
@@ -1814,8 +1814,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *wait_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *wait_win = newwin(31, 100, 0, 0);
     keypad(wait_win, TRUE);
     nodelay(wait_win, TRUE); // 논블로킹 입력
 
@@ -2002,8 +2002,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *wait_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *wait_win = newwin(31, 100, 0, 0);
     keypad(wait_win, TRUE);
     nodelay(wait_win, TRUE); // 논블로킹 입력
 
@@ -2285,7 +2285,7 @@ void host_wait_ui_render_dynamic(WINDOW *win, const HostWaitUI *ui)
     mvwprintw(win, anim_y, (max_x - 34) / 2, "                                  ");
 
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
-    mvwprintw(win, anim_y, (max_x - 30) / 2, "%s Waiting for opponent %s %s",
+    mvwprintw(win, anim_y, (max_x - 31) / 2, "%s Waiting for opponent %s %s",
               loading_frames[spin_frame], dot_frames[dot_frame], loading_frames[(spin_frame + 2) % 4]);
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
 
@@ -2321,8 +2321,8 @@ int multiplay_host_wait_for_client(int port, const char *host_name, GameRule rul
         theme_init(saved_theme);
     }
 
-    wresize(stdscr, 30, 100);
-    WINDOW *wait_win = newwin(30, 100, 0, 0);
+    wresize(stdscr, 31, 100);
+    WINDOW *wait_win = newwin(31, 100, 0, 0);
     keypad(wait_win, TRUE);
     nodelay(wait_win, TRUE); // 논블로킹 입력
 

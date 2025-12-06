@@ -4,9 +4,9 @@
 #include <ncurses.h>
 #include <stdbool.h>
 
-// Window dimensions based on 100x30 layout (ingame_border.c 기준)
+// Window dimensions based on 100x31 layout (ingame_border.c 기준)
 #define UI_MIN_WIDTH 100
-#define UI_MIN_HEIGHT 30
+#define UI_MIN_HEIGHT 31
 
 // Layout constants - ingame_border.c 레이아웃과 일치
 // Board 영역: ingame_border (0,0)~(48,24) = 49x25
@@ -37,7 +37,7 @@
 #define CHAT_INPUT_X 49
 #define CHAT_INPUT_Y 23
 
-// Bottom 영역: ingame_border (0,24)~(99,30)
+// Bottom 영역: ingame_border (0,24)~(99,31)
 // LAST MOVE: (0,24) 19x6, NOW TURN: (18,24) 15x6
 // TIMER: (32,24) 48x3, PLAY TIME: (79,24) 21x3
 // SYSTEM LOG: (32,26) 68x5

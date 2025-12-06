@@ -158,8 +158,8 @@ ThemeType theme_selector_run(void)
         theme_init(current_theme);
     }
 
-    // 100x30 윈도우 생성
-    WINDOW *selector_win = newwin(30, 100, 0, 0);
+    // 100x31 윈도우 생성
+    WINDOW *selector_win = newwin(31, 100, 0, 0);
     keypad(selector_win, TRUE);
 
     // 게임패드 입력 핸들러 초기화

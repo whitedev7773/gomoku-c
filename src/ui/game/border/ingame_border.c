@@ -163,7 +163,7 @@ void ingame_draw_box(const int start_x, const int start_y,
     wattroff(stdscr, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 }
 
-// 100*30
+// UI_MIN_WIDTH * UI_MIN_HEIGHT
 void ingame_border_draw(void)
 {
     // 여기에 전부 그리면 됨

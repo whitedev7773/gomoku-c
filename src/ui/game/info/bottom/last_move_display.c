@@ -18,7 +18,7 @@ void last_move_display_draw(WINDOW *win, const Board *board)
 
     // 제목은 ingame_border에서 그리므로 여기서는 내용만
     // LAST MOVE 박스: (0,24) 시작, 19x7
-    // 내부 좌표: (1,25) ~ (17,30)
+    // 내부 좌표: (1,25) ~ (17,31)
 
     if (last_move.row == -1 || last_move.col == -1)
     {

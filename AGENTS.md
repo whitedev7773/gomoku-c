@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Gomoku-C** is a terminal-based Gomoku (Five-in-a-Row) game written in C for Linux/WSL2. The project features single-player (vs AI), multiplayer (LAN-based), spectator mode, and replay functionality with a sophisticated ncurses-based UI.
 
 **Target Platform**: Linux/WSL2
-**UI**: Terminal-based (ncurses with wide character support), minimum terminal size 100x30
+**UI**: Terminal-based (ncurses with wide character support), minimum terminal size 100x31
 **Network**: TCP socket communication with custom binary protocol
 **Build System**: CMake 3.10+
 
@@ -94,7 +94,7 @@ src/
 │       └── command.c/h          # Chat commands (/quit, /undo, /giveup)
 ├── ui/
 │   ├── core/                 # UI infrastructure
-│   │   ├── ui_manager.c/h       # Window layout manager (100x30 grid)
+│   │   ├── ui_manager.c/h       # Window layout manager (100x31 grid)
 │   │   ├── theme.c/h            # Color theme system
 │   │   ├── input_handler.c/h    # Unified input handling (keyboard + gamepad)
 │   │   └── gamepad_input.c/h    # Gamepad support
@@ -127,9 +127,9 @@ src/
 
 ### Key Architectural Patterns
 
-#### 1. UI Layout System (100x30 Grid)
+#### 1. UI Layout System (100x31 Grid)
 
-The game uses a fixed 100x30 terminal layout defined in `ui/core/ui_manager.h`:
+The game uses a fixed 100x31 terminal layout defined in `ui/core/ui_manager.h`:
 
 - **Board area** (left): 49x25 (columns 0-48, rows 0-24)
 - **Info panel** (top-right): 52x3 (columns 48-99, rows 0-2)
@@ -260,7 +260,7 @@ Two difficulty levels (`game/ai/ai_engine.c`):
 
 // Terminal
 #define UI_MIN_WIDTH 100
-#define UI_MIN_HEIGHT 30
+#define UI_MIN_HEIGHT 31
 
 // Network
 #define DEFAULT_PORT 7773
@@ -291,10 +291,10 @@ Two difficulty levels (`game/ai/ai_engine.c`):
 ### Working with ncurses UI
 
 - Always use ncursesw (wide character support) for UTF-8
-- Respect the 100x30 layout defined in `ui_manager.h`
+- Respect the 100x31 layout defined in `ui_manager.h`
 - Use theme system (`ui/core/theme.c`) for colors
 - Test with `export LANG=ko_KR.UTF-8` for Korean character support
-- Call `wresize(stdscr, 30, 100)` to enforce terminal size
+- Call `wresize(stdscr, 31, 100)` to enforce terminal size
 
 ### Network Message Development
 

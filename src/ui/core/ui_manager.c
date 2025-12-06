@@ -101,7 +101,7 @@ bool ui_manager_init(UIManager *manager)
     noecho();
     curs_set(0);
 
-    // Limit stdscr to 100x30
+    // Limit stdscr to 100x31
     wresize(stdscr, UI_MIN_HEIGHT, UI_MIN_WIDTH);
     keypad(stdscr, TRUE);
 

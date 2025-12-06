@@ -11,8 +11,8 @@ int main()
     noecho();
     curs_set(0);
 
-    // Limit stdscr to 100x30
-    wresize(stdscr, 30, 100);
+    // Limit stdscr to 100x31
+    wresize(stdscr, 31, 100);
 
     if (has_colors())
     {
@@ -27,8 +27,8 @@ int main()
         init_pair(8, COLOR_WHITE, COLOR_BLACK);
     }
 
-    // Always use fixed 100x30 size
-    WINDOW *menu_win = newwin(30, 100, 0, 0);
+    // Always use fixed 100x31 size
+    WINDOW *menu_win = newwin(31, 100, 0, 0);
     keypad(menu_win, TRUE);
 
     MenuUI menu;

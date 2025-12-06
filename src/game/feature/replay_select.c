@@ -3,6 +3,7 @@
 #include "../../ui/menu/replay_list_ui.h"
 #include "../../ui/core/theme.h"
 #include "../../ui/core/input_handler.h"
+#include "../../ui/core/ui_manager.h"
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
@@ -91,7 +92,7 @@ int replay_run_with_selection(void)
     theme_init(theme_get_current());
 
     // 파일 선택 UI
-    WINDOW *list_win = newwin(30, 100, 0, 0);
+    WINDOW *list_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
     keypad(list_win, TRUE);
 
     // 게임패드 입력 핸들러 초기화
@@ -225,7 +226,7 @@ int replay_run_with_selection(void)
             curs_set(0);
             theme_init(theme_get_current());
 
-            list_win = newwin(30, 100, 0, 0);
+            list_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
             keypad(list_win, TRUE);
 
             first_render = true; // 전체 재렌더링 필요
