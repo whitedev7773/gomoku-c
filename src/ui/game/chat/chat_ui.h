@@ -7,8 +7,8 @@
 #include "../../core/ui_manager.h"
 
 #define MAX_CHAT_MESSAGES 10
-#define MAX_CHAT_MESSAGE_LENGTH 34
-#define MAX_CHAT_INPUT_LENGTH 34
+#define MAX_CHAT_MESSAGE_LENGTH 30
+#define MAX_CHAT_INPUT_LENGTH 30
 
 // 채팅 메시지 타입
 typedef enum

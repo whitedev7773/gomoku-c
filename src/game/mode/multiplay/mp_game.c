@@ -110,7 +110,7 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
     chat_selective_render(ui_mgr->chat_win, &game->chat_ui, render_flags, game->first_render);
 
     chat_selective_render_input(ui_mgr->chat_input_win, &game->chat_ui,
-                                render_flags, game->first_render, 1, 1);
+                                render_flags, game->first_render, 0, 0);
 
     // System Log 렌더링
     if (game->first_render)

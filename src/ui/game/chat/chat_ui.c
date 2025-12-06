@@ -102,23 +102,23 @@ void chat_render(WINDOW *win, const ChatUI *chat)
             //                             └──────────────┘ ──
             int bubble_width = msg_len + 2;                     // 내용 + 좌우 여백
             int total_width = 6 + 1 + bubble_width + 1 + 2 + 3; // time + space + bubble + space + ME + padding
-            int start_x = max_x - total_width - 1;
+            int start_x = max_x - total_width;
             if (start_x < 1)
                 start_x = 1;
 
             // 상단 테두리
             wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
             mvwprintw(win, y, start_x + 7, "\u250c");
-            for (int j = 0; j < msg_len; j++)
+            for (int j = 0; j < msg_len + 2; j++)
                 waddstr(win, "\u2500");
             waddstr(win, "\u2510");
-            mvwprintw(win, y, start_x + 7 + msg_len + 2 + 1, "\u2500\u2500");
+            mvwprintw(win, y, start_x + 7 + msg_len + 2 + 1 + 2, "\u2500\u2500");
             wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
 
             // 중간 (시간 + 내용 + ME)
             y++;
             wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
-            mvwprintw(win, y, start_x, "%s", time_str);
+            mvwprintw(win, y, start_x + 1, "%s", time_str);
             wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
 
             wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
@@ -133,10 +133,10 @@ void chat_render(WINDOW *win, const ChatUI *chat)
             y++;
             wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
             mvwprintw(win, y, start_x + 7, "\u2514");
-            for (int j = 0; j < msg_len; j++)
+            for (int j = 0; j < msg_len + 2; j++)
                 waddstr(win, "\u2500");
             waddstr(win, "\u2518");
-            mvwprintw(win, y, start_x + 7 + msg_len + 2 + 1, "\u2500\u2500");
+            mvwprintw(win, y, start_x + 7 + msg_len + 2 + 1 + 2, "\u2500\u2500");
             wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
             y++;
         }
@@ -150,7 +150,7 @@ void chat_render(WINDOW *win, const ChatUI *chat)
             // 상단 테두리
             wattron(win, COLOR_PAIR(COLOR_PAIR_OPPONENT));
             mvwprintw(win, y, 1, "\u2500\u2500 \u250c");
-            for (int j = 0; j < msg_len; j++)
+            for (int j = 0; j < msg_len + 2; j++)
                 waddstr(win, "\u2500");
             waddstr(win, "\u2510");
             wattroff(win, COLOR_PAIR(COLOR_PAIR_OPPONENT));
@@ -173,7 +173,7 @@ void chat_render(WINDOW *win, const ChatUI *chat)
             y++;
             wattron(win, COLOR_PAIR(COLOR_PAIR_OPPONENT));
             mvwprintw(win, y, 1, "\u2500\u2500 \u2514");
-            for (int j = 0; j < msg_len; j++)
+            for (int j = 0; j < msg_len + 2; j++)
                 waddstr(win, "\u2500");
             waddstr(win, "\u2518");
             wattroff(win, COLOR_PAIR(COLOR_PAIR_OPPONENT));
@@ -190,7 +190,7 @@ void chat_render_input(WINDOW *win, const ChatUI *chat, int y, int x)
     {
         // 입력 모드 아닐 때: "Enter to Chat..." 플레이스홀더
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-        mvwprintw(win, y, x, "Enter to Chat...");
+        mvwprintw(win, y, x + 1, "Enter to Chat...");
         wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
         // 글자수 표시 (0/34)
@@ -201,15 +201,15 @@ void chat_render_input(WINDOW *win, const ChatUI *chat, int y, int x)
     // 입력 모드: 입력된 텍스트 표시
     wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
     // 입력 영역 클리어 (34칸)
-    mvwprintw(win, y, x, "                                  ");
-    mvwprintw(win, y, x, "%s", chat->input_buffer);
+    mvwprintw(win, y, x + 1, "                                  ");
+    mvwprintw(win, y, x + 1, "%s", chat->input_buffer);
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 자동완성 힌트 (회색으로 표시)
     if (strlen(chat->autocomplete_hint) > 0)
     {
         wattron(win, COLOR_PAIR(COLOR_PAIR_DIM) | A_DIM);
-        mvwprintw(win, y, x + input_len, "%s", chat->autocomplete_hint);
+        mvwprintw(win, y, x + 1 + input_len, "%s", chat->autocomplete_hint);
         wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM) | A_DIM);
     }
 
@@ -403,8 +403,10 @@ void chat_selective_render_input(WINDOW *win, ChatUI *chat,
     // 첫 렌더링이거나 입력이 변경됨
     if (first_render || ui_render_flags_is_set(flags, RENDER_CHAT_INPUT) || chat->input_dirty)
     {
-        // 입력창 영역만 클리어
-        for (int i = 0; i < 3; i++)
+        // 입력창 영역만 클리어 (윈도우 높이에 맞게)
+        int win_height, win_width;
+        getmaxyx(win, win_height, win_width);
+        for (int i = 0; i < win_height; i++)
         {
             wmove(win, i, 0);
             wclrtoeol(win);

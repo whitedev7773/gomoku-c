@@ -60,7 +60,7 @@ int main()
         // Draw chat input placeholder
         wclear(manager.chat_input_win);
         box(manager.chat_input_win, 0, 0);
-        mvwprintw(manager.chat_input_win, 1, 2, "Enter to Chat...");
+        mvwprintw(manager.chat_input_win, 0, 1, "Enter to Chat...");
         wrefresh(manager.chat_input_win);
 
         // Handle input
