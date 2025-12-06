@@ -6,6 +6,7 @@
 #include "mp_turn.h"
 #include "../../../utils/terminal_check.h"
 #include "../../../ui/game/border/ingame_border.h"
+#include "../../../ui/core/ui_manager.h"
 #include "../../../ui/core/theme.h"
 #include <unistd.h>
 #include <string.h>
@@ -93,7 +94,7 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
 
         // 서버 정보
         attron(COLOR_PAIR(2));
-        mvprintw(LINES / 2, (COLS - 20) / 2, "Server IP: %s", game.network.local_ip);
+        mvprintw(LINES / 2, (MIN_TERMINAL_WIDTH - strlen(game.network.local_ip)) / 2, "Server IP: %s", game.network.local_ip);
         mvprintw(LINES / 2 + 1, (COLS - 14) / 2, "Port: %d", port);
         attroff(COLOR_PAIR(2));
 
