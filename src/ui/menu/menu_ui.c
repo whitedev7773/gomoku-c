@@ -106,13 +106,13 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
 
     // 페이지 표시 - 테마 INFO 색상
     wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
-    mvwprintw(win, box_y + box_height - 1, box_x + box_width / 2 - 4, " Page %d/%d ",
+    mvwprintw(win, box_y + box_height - 1, box_x + box_width / 2 - 5, " Page %d/%d ",
               menu->current_page + 1, menu->total_pages);
     wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
 
     // Instructions - 테마 DIM 색상
     wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
-    mvwprintw(win, box_y + box_height + 1, box_x - 1, "↑↓:Move  ←→:Page  ↵:Select  Q:Exit");
+    mvwprintw(win, box_y + box_height + 1, box_x + 4, "↑↓:Move  ←→:Page  ↵:Select");
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 }
 

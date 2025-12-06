@@ -29,9 +29,9 @@ void difficulty_select_ui_render(WINDOW *win, const DifficultySelectUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -47,7 +47,7 @@ void difficulty_select_ui_render(WINDOW *win, const DifficultySelectUI *ui)
     int box_x = (max_x - box_w) / 2;
 
     // 옵션 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -63,7 +63,7 @@ void difficulty_select_ui_render(WINDOW *win, const DifficultySelectUI *ui)
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 옵션들 (가로 정렬)
     int option_y = box_y + 4;
@@ -175,9 +175,9 @@ void rule_select_ui_render(WINDOW *win, const RuleSelectUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -193,7 +193,7 @@ void rule_select_ui_render(WINDOW *win, const RuleSelectUI *ui)
     int box_x = (max_x - box_w) / 2;
 
     // 옵션 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -209,7 +209,7 @@ void rule_select_ui_render(WINDOW *win, const RuleSelectUI *ui)
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 옵션들 (가로 정렬)
     int option_y = box_y + 4;

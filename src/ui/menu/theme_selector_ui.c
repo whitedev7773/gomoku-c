@@ -22,39 +22,66 @@ void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector)
     int max_y, max_x;
     getmaxyx(win, max_y, max_x);
 
+    // 전체 윈도우 Border
+    int box_w = UI_MIN_WIDTH;
+    int box_h = UI_MIN_HEIGHT;
+    int start_y = 0;
+    int start_x = 0;
+
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    // Top border
+    mvwaddch(win, start_y, start_x, ACS_ULCORNER);
+    for (int i = 1; i < box_w - 1; ++i)
+        mvwaddch(win, start_y, start_x + i, ACS_HLINE);
+    mvwaddch(win, start_y, start_x + box_w - 1, ACS_URCORNER);
+
+    // Side borders
+    for (int j = 1; j < box_h - 1; ++j)
+    {
+        mvwaddch(win, start_y + j, start_x, ACS_VLINE);
+        mvwaddch(win, start_y + j, start_x + box_w - 1, ACS_VLINE);
+    }
+
+    // Bottom border
+    mvwaddch(win, start_y + box_h - 1, start_x, ACS_LLCORNER);
+    for (int i = 1; i < box_w - 1; ++i)
+        mvwaddch(win, start_y + box_h - 1, start_x + i, ACS_HLINE);
+    mvwaddch(win, start_y + box_h - 1, start_x + box_w - 1, ACS_LRCORNER);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 2, (max_x - 20) / 2, "=== THEME SELECTOR ===");
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 테마 목록 박스
-    int box_y = 5;
-    int box_x = 25;
-    int box_w = 50;
-    int box_h = 12;
+    int list_box_y = 5;
+    int list_box_x = 25;
+    int list_box_w = 50;
+    int list_box_h = 12;
 
-    // 박스 그리기
-    wattron(win, A_BOLD);
-    mvwaddch(win, box_y, box_x, ACS_ULCORNER);
-    for (int i = 1; i < box_w - 1; i++)
-        mvwaddch(win, box_y, box_x + i, ACS_HLINE);
-    mvwaddch(win, box_y, box_x + box_w - 1, ACS_URCORNER);
+    // 박스 그리기 (주색상 적용)
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    mvwaddch(win, list_box_y, list_box_x, ACS_ULCORNER);
+    for (int i = 1; i < list_box_w - 1; i++)
+        mvwaddch(win, list_box_y, list_box_x + i, ACS_HLINE);
+    mvwaddch(win, list_box_y, list_box_x + list_box_w - 1, ACS_URCORNER);
 
-    for (int j = 1; j < box_h - 1; j++)
+    for (int j = 1; j < list_box_h - 1; j++)
     {
-        mvwaddch(win, box_y + j, box_x, ACS_VLINE);
-        mvwaddch(win, box_y + j, box_x + box_w - 1, ACS_VLINE);
+        mvwaddch(win, list_box_y + j, list_box_x, ACS_VLINE);
+        mvwaddch(win, list_box_y + j, list_box_x + list_box_w - 1, ACS_VLINE);
     }
 
-    mvwaddch(win, box_y + box_h - 1, box_x, ACS_LLCORNER);
-    for (int i = 1; i < box_w - 1; i++)
-        mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
-    mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    mvwaddch(win, list_box_y + list_box_h - 1, list_box_x, ACS_LLCORNER);
+    for (int i = 1; i < list_box_w - 1; i++)
+        mvwaddch(win, list_box_y + list_box_h - 1, list_box_x + i, ACS_HLINE);
+    mvwaddch(win, list_box_y + list_box_h - 1, list_box_x + list_box_w - 1, ACS_LRCORNER);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 테마 목록 표시
-    int list_y = box_y + 2;
-    int list_x = box_x + 5;
+    int list_y = list_box_y + 2;
+    int list_x = list_box_x + 5;
 
     for (int i = 0; i < selector->theme_count; i++)
     {
@@ -73,8 +100,8 @@ void theme_selector_render(WINDOW *win, const ThemeSelectorUI *selector)
     }
 
     // 테마 미리보기
-    int preview_y = box_y + box_h + 2;
-    int preview_x = box_x;
+    int preview_y = list_box_y + list_box_h + 2;
+    int preview_x = list_box_x;
 
     wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, preview_y, preview_x, "Preview:");

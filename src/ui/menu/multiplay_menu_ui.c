@@ -41,9 +41,9 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -59,7 +59,7 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
     int box_x = (max_x - box_w) / 2;
 
     // 옵션 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -75,7 +75,7 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 옵션들 (가로 정렬)
     int option_y = box_y + 5;
@@ -196,9 +196,9 @@ void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -214,7 +214,7 @@ void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
     int box_x = (max_x - box_w) / 2;
 
     // 입력 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -566,9 +566,9 @@ void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -584,7 +584,7 @@ void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui)
     int box_x = (max_x - box_w) / 2;
 
     // 입력 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -600,7 +600,7 @@ void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui)
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     int label_x = box_x + 6;
     int input_x = box_x + 20;
@@ -712,9 +712,9 @@ void multiplay_rule_select_ui_render(WINDOW *win, const MultiplayRuleSelectUI *u
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -730,7 +730,7 @@ void multiplay_rule_select_ui_render(WINDOW *win, const MultiplayRuleSelectUI *u
     int box_x = (max_x - box_w) / 2;
 
     // 옵션 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -746,7 +746,7 @@ void multiplay_rule_select_ui_render(WINDOW *win, const MultiplayRuleSelectUI *u
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 옵션들 (가로 정렬)
     int option_y = box_y + 5;
@@ -867,9 +867,9 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
@@ -885,7 +885,7 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     int box_x = (max_x - box_w) / 2;
 
     // 입력 박스 테두리
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwaddch(win, box_y, box_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y, box_x + i, ACS_HLINE);
@@ -901,7 +901,7 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     for (int i = 1; i < box_w - 1; i++)
         mvwaddch(win, box_y + box_h - 1, box_x + i, ACS_HLINE);
     mvwaddch(win, box_y + box_h - 1, box_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     int label_x = box_x + 6;
     int input_x = box_x + 20;
@@ -1622,9 +1622,9 @@ void connection_wait_ui_render(WINDOW *win, const ConnectionWaitUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     const char *title = ui->is_spectator ? "SPECTATOR MODE" : "MULTIPLAYER";
@@ -1729,9 +1729,9 @@ void connection_fail_ui_render(WINDOW *win, const ConnectionWaitUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
@@ -2201,9 +2201,9 @@ void host_wait_ui_render(WINDOW *win, const HostWaitUI *ui)
     getmaxyx(win, max_y, max_x);
 
     // 외곽 박스
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(win, 0, 0);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));

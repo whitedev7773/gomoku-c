@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         current_size = get_terminal_size();
     }
 
-    system("clear");
+    // system("clear");
 
     // Handle different game modes
     switch (args.mode)
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
             {
                 // 프로그램 종료
                 app_running = false;
-                printf("Exiting...\n");
+                // printf("Exiting...\n");
             }
         } // end of app_running while loop
         break;
@@ -277,8 +277,8 @@ int main(int argc, char *argv[])
         break;
     }
 
-    printf("\nPress Enter to exit...\n");
-    getchar();
+    // printf("\nPress Enter to exit...\n");
+    // getchar();
 
     return 0;
 }
