@@ -8,6 +8,7 @@
 #include "ui/menu/menu_ui.h"
 #include "ui/core/theme.h"
 #include "ui/menu/theme_selector_ui.h"
+#include "ui/menu/singleplay_menu_ui.h"
 #include "ui/core/input_handler.h"
 #include "game/mode/singleplay/singleplay.h"
 #include "game/mode/multiplay/multiplayer.h"
@@ -161,42 +162,17 @@ int main(int argc, char *argv[])
             delwin(menu_win);
             endwin();
 
-            system("clear");
             if (selected_option == MENU_SINGLEPLAY)
             {
-                // 난이도 선택
-                printf("=== GOMOKU - SINGLEPLAY ===\n");
-                printf("Select difficulty:\n");
-                printf("  1. Easy\n");
-                printf("  2. Hard\n");
-                printf("Enter your choice (1-2): ");
+                // TUI 기반 난이도 및 규칙 선택
+                AIDifficulty difficulty;
+                GameRule rule;
 
-                char difficulty_choice;
-                scanf(" %c", &difficulty_choice);
-
-                // 규칙 선택
-                printf("\nSelect game rule:\n");
-                printf("  1. Standard (No forbidden moves)\n");
-                printf("  2. Renju (Forbidden moves for BLACK)\n");
-                printf("Enter your choice (1-2): ");
-
-                char rule_choice;
-                scanf(" %c", &rule_choice);
-
-                GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
-
-                if (difficulty_choice == '1')
+                if (singleplay_run_settings(&difficulty, &rule) == 0)
                 {
-                    singleplay_run(AI_EASY, rule);
+                    singleplay_run(difficulty, rule);
                 }
-                else if (difficulty_choice == '2')
-                {
-                    singleplay_run(AI_HARD, rule);
-                }
-                else
-                {
-                    printf("Invalid choice. Returning to menu.\n");
-                }
+                // 취소 시 메인 메뉴로 돌아감
             }
             else if (selected_option == MENU_MULTIPLAY)
             {

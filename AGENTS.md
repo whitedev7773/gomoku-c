@@ -4,185 +4,361 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Gomoku-C** is a terminal-based Gomoku (Five-in-a-Row) game written in C for Linux/Debian OS. The project supports single-player (vs AI), multiplayer (LAN-based), spectator mode, and replay functionality.
+**Gomoku-C** is a terminal-based Gomoku (Five-in-a-Row) game written in C for Linux/WSL2. The project features single-player (vs AI), multiplayer (LAN-based), spectator mode, and replay functionality with a sophisticated ncurses-based UI.
 
-**Target Platform**: Linux/Debian OS
-**UI**: Terminal-based (ncurses), minimum terminal size 120x30
-**Network**: TCP socket communication with protobuf-c for serialization
-**Build System**: CMake
+**Target Platform**: Linux/WSL2
+**UI**: Terminal-based (ncurses with wide character support), minimum terminal size 100x30
+**Network**: TCP socket communication with custom binary protocol
+**Build System**: CMake 3.10+
 
 ## Building and Running
 
-### Build Commands
+### Standard Build
 
 ```bash
-# Standard build
+# Using build script (recommended)
+./build_and_run.sh
+
+# Clean build
+./build_and_run.sh --clean
+
+# Manual build
 mkdir -p build && cd build
 cmake ..
 make
-
-# Run executable
-./build/gomoku-c
-
-# Clean build using script
-./build_and_run.sh --clean
-
-# Standard build and run
-./build_and_run.sh
+./gomoku-c
 ```
 
-### Command Line Arguments
-
-The game supports immediate launch with different modes:
+### Running Tests
 
 ```bash
-# Singleplay modes
-./build/gomoku-c --singleplay --easy
-./build/gomoku-c --singleplay --hard
+# Run all tests
+./run_tests.sh
 
-# Multiplayer modes
-./build/gomoku-c --multiplay-host
-./build/gomoku-c --multiplay-client -ip 192.168.0.2
-./build/gomoku-c --multiplay-client -ip 192.168.0.2 -port 9000
-
-# Spectator mode (max 3 spectators)
-./build/gomoku-c --spectator -ip 192.168.0.2 -port 7773
-
-# Help
-./build/gomoku-c --help
+# Individual tests
+cd build
+./test_board       # Board unit tests
+./test_rules       # Rules unit tests
+./test_ai          # AI engine tests
+./test_phase2      # Phase 2 integration tests
+./test_phase3_ui   # UI tests
+./test_menu        # Menu tests
 ```
 
-**Default port**: 7773 (for multiplayer and spectator modes)
+### Command Line Options
 
-## Architecture
+```bash
+# Menu mode (default)
+./gomoku-c
 
-### Directory Structure
+# Singleplay modes
+./gomoku-c --singleplay --easy
+./gomoku-c --singleplay --hard
+
+# Multiplayer modes
+./gomoku-c --multiplay-host
+./gomoku-c --multiplay-client -ip 192.168.0.2
+./gomoku-c --multiplay-client -ip 192.168.0.2 -port 9000
+
+# Spectator mode (max 3 spectators)
+./gomoku-c --spectator -ip 192.168.0.2 -port 7773
+```
+
+**Default port**: 7773
+
+## Architecture Overview
+
+This codebase follows a clean, modular architecture with clear separation between game logic, UI, and networking.
+
+### Core Module Structure
 
 ```
 src/
-├── main.c              # Entry point, mode routing, terminal size checking
-├── utils/              # Utility modules (Phase 1 - COMPLETE)
-│   ├── arg_parser.c/h      # CLI argument parsing
-│   └── terminal_check.c/h  # Terminal size validation (120x30)
-├── game/               # Game logic (Phase 2 - TODO)
-│   └── (board, win detection, turn management)
-├── ui/                 # UI rendering (Phase 3 - TODO)
-│   └── (ncurses-based game board, chat, timers)
-└── network/            # Network communication (Phase 5 - TODO)
-    └── (TCP sockets, protobuf-c messages)
+├── main.c                    # Entry point, mode routing
+├── game/
+│   ├── core/                 # Core game logic
+│   │   ├── board.c/h            # 19x19 board state, move validation
+│   │   ├── game_logic.c/h       # Win detection, five-in-a-row checking
+│   │   ├── rules.c/h            # Renju rules (3-3, 4-4, overline forbidden)
+│   │   └── turn_manager.c/h     # Turn control, timer management
+│   ├── ai/                   # AI engines
+│   │   └── ai_engine.c/h        # Easy (heuristic) + Hard (minimax/alpha-beta)
+│   ├── mode/                 # Game modes
+│   │   ├── singleplay/          # Player vs AI
+│   │   ├── multiplay/           # Online PvP (host/client)
+│   │   └── general/             # Shared mode utilities
+│   └── feature/              # Game features
+│       ├── game_logger.c/h      # Log moves to file (gomoku-YYYYMMDD-HHMM.log)
+│       ├── replay.c/h           # Replay playback system
+│       ├── replay_viewer.c/h    # Replay UI
+│       └── command.c/h          # Chat commands (/quit, /undo, /giveup)
+├── ui/
+│   ├── core/                 # UI infrastructure
+│   │   ├── ui_manager.c/h       # Window layout manager (100x30 grid)
+│   │   ├── theme.c/h            # Color theme system
+│   │   ├── input_handler.c/h    # Unified input handling (keyboard + gamepad)
+│   │   └── gamepad_input.c/h    # Gamepad support
+│   ├── game/                 # In-game UI components
+│   │   ├── board/               # Board rendering
+│   │   ├── border/              # UI borders and decorations
+│   │   ├── chat/                # Chat box UI
+│   │   ├── info/                # Game info panel
+│   │   └── log/                 # Move log UI
+│   └── menu/                 # Menu system
+│       ├── menu_ui.c/h          # Main menu
+│       ├── modal_ui.c/h         # Modal dialogs
+│       └── theme_selector_ui.c/h
+├── network/
+│   ├── core/                 # Network layer
+│   │   ├── network.c/h          # TCP socket management, server/client
+│   │   └── protocol.c/h         # Message serialization/deserialization
+│   └── messages/             # Message definitions
+│       ├── message.h            # Message union type
+│       ├── message_types.h      # MessageType enum, MessageHeader
+│       ├── connection.h         # Connection handshake messages
+│       ├── game.h               # Game state messages
+│       ├── chat.h               # Chat messages
+│       └── spectator.h          # Spectator messages
+└── utils/
+    ├── config.c/h            # Configuration management
+    ├── arg_parser.c/h        # CLI argument parsing
+    └── terminal_check.c/h    # Terminal size validation
 ```
 
-### Key Components
+### Key Architectural Patterns
 
-#### 1. Terminal Size Checking (src/utils/terminal_check.c)
+#### 1. UI Layout System (100x30 Grid)
 
-- **Requirement**: Minimum 120x30 terminal size (hard requirement)
-- Blocks execution until terminal is properly sized
-- Uses `ioctl(STDOUT_FILENO, TIOCGWINSZ, &w)` to detect size
+The game uses a fixed 100x30 terminal layout defined in `ui/core/ui_manager.h`:
 
-#### 2. CLI Argument Parser (src/utils/arg_parser.c)
+- **Board area** (left): 49x25 (columns 0-48, rows 0-24)
+- **Info panel** (top-right): 52x3 (columns 48-99, rows 0-2)
+- **Chat area** (middle-right): 52x21 (columns 48-99, rows 2-22)
+- **Bottom panel**: 100x6 (columns 0-99, rows 24-29)
+  - Last move display, current turn indicator
+  - Timer, play time counter
+  - System log
 
-- Parses 6 game modes: menu, singleplay (easy/hard), multiplay (host/client), spectator
-- Handles optional `-port <PORT>` argument (default: 7773)
-- Returns `ParsedArgs` struct with `GameMode`, IP address, port, and validation status
+All UI components respect these boundaries. When modifying UI, ensure changes align with the layout in `src/ui/game/border/ingame_border.c`.
 
-#### 3. Main Entry Point (src/main.c)
+#### 2. Network Protocol Architecture
 
-- Flow: Parse args → Check terminal size → Route to game mode
-- Currently shows placeholder messages for unimplemented phases
-- Each mode will be implemented according to `roadmap.md` phases
+The network layer uses a custom binary protocol with a message-based architecture:
 
-## Development Phases
+**Message Structure**:
 
-The project follows a **14-phase roadmap** (see `roadmap.md`). Current status: **Phase 1 complete**.
+```c
+Message {
+    MessageHeader header;  // type, sequence, timestamp, payload_size
+    union payload {
+        // Connection: ConnectMessage, ConnectAckMessage, PlayerInfoMessage, etc.
+        // Game: GameStartMessage, MoveMessage, MoveAckMessage, etc.
+        // Chat: ChatMessage, CommandMessage, etc.
+        // Spectator: SpectatorConnectMessage, etc.
+    }
+}
+```
 
-### Phase Status
+**Protocol Flow** (Multiplayer):
 
-- **Phase 1** ✅: Project foundation (CMake, terminal check, CLI parser)
-- **Phase 2-14** 🚧: In planning (game logic, UI, networking, etc.)
+1. Client → Server: `MSG_CONNECT` (player name)
+2. Server → Client: `MSG_CONNECT_ACK` (assigned color, rule)
+3. Server → Client: `MSG_GAME_START` (player info)
+4. During game:
+   - Player → Opponent: `MSG_MOVE` (row, col)
+   - Opponent → Player: `MSG_MOVE_ACK` (success/forbidden)
+   - Player ↔ Opponent: `MSG_CURSOR_UPDATE` (cursor position)
+   - Player ↔ Opponent: `MSG_CHAT` (message)
+5. End: `MSG_GAME_RESULT` (winner, reason)
 
-### Key Implementation Notes
+**Spectator Flow**:
 
-#### Game Rules & Features
+- Spectator → Server: `MSG_SPECTATOR_CONNECT`
+- Server → Spectator: `MSG_SPECTATOR_CONNECT_ACK` + state sync
+- Server → All Spectators: Broadcasts of all game events
 
-- **Board size**: 15x15 or 19x19 (to be decided in Phase 2)
-- **Turn timer**: 20 seconds per turn
-- **Player names**: Max 8 characters
-- **Chat messages**: Max 15 characters
-- **Spectators**: Max 3 per game
-- **Game logs**: Auto-saved as `gomoku-{YYYYMMDD}-{HH:MM}.log`
+See `src/network/core/network.h` and `src/network/messages/` for full protocol details.
 
-#### Networking (Phase 5)
+#### 3. Game State Management
 
-- **Protocol**: TCP sockets with protobuf-c serialization
-- **Port forwarding**: Designed to work through NAT with port forwarding
-- **Default port**: 7773
-- **Domain support**: Should resolve domains like `multiplay.gomoku.kr` to IP
+Game state flows through these core modules:
 
-#### Chat Commands (Phase 6)
+1. **Board** (`game/core/board.c`): 19x19 grid state, move validation, forbidden move marking
+2. **GameLogic** (`game/core/game_logic.c`): Win detection (five-in-a-row checking)
+3. **Rules** (`game/core/rules.c`): Renju rules (3-3, 4-4, overline forbidden for BLACK)
+4. **TurnManager** (`game/core/turn_manager.c`): Turn switching, timer management (20s per turn)
 
-- `/quit` - Leave game
-- `/undo` - Request take-back (10s timeout)
-- `/giveup` - Forfeit game
-- Command auto-completion with placeholder text
+**Renju Rules**: When `GameRule = RULE_RENJU`, BLACK cannot make:
 
-#### Advanced Rules (Phase 12 - Optional)
+- **3-3**: Two open-three patterns simultaneously
+- **4-4**: Two open-four patterns simultaneously
+- **Overline**: More than 5 stones in a row
 
-- **Renju Rule**: Prevents black's advantage (ban 3-3, 4-4, overline)
-- **Swap Rule**: After 3 moves, white can swap colors
+Forbidden positions are marked on the board and displayed in the UI.
 
-## Code Conventions
+#### 4. Input Handling System
 
-### File Organization
+Unified input system (`ui/core/input_handler.c`) supports both keyboard and gamepad:
 
-- Headers define public interfaces, implementations in .c files
-- Use `#ifndef HEADER_NAME_H` guards for all headers
-- Place module-specific constants in headers (e.g., `MIN_TERMINAL_WIDTH`)
+**Keyboard Controls**:
 
-### Error Handling
+- Arrow keys / WASD / HJKL: Move cursor
+- Enter / Space: Place stone / Select
+- ESC / Q: Quit / Back
+- C: Chat mode
+- R: Request undo
 
-- Validation errors should display error message + usage information
-- Network errors should show user-friendly messages and return to main menu
-- Terminal size errors block execution with clear instructions
+**Gamepad Support**: Xbox/PlayStation controller support via Linux input event interface (`ui/core/gamepad_input.c`).
 
-### Build System
+#### 5. Multiplayer Game Flow
 
-- CMakeLists.txt uses `GLOB_RECURSE` to auto-discover source files
-- New modules in `src/*/` are automatically included
-- Link libraries: `ncurses` (current), `protobuf-c` (Phase 5), `pthread` (Phase 5)
+**Host** (`game/mode/multiplay/multiplayer.c` - `multiplayer_run_host()`):
+
+1. Initialize network server, listen on port
+2. Accept client connection
+3. Assign colors (host = BLACK, client = WHITE)
+4. Send `MSG_GAME_START` with player info
+5. Game loop: handle moves, chat, cursor updates
+6. Broadcast to spectators
+
+**Client** (`multiplayer_run_client()`):
+
+1. Connect to server IP:port
+2. Receive color assignment and rule from server
+3. Receive `MSG_GAME_START`
+4. Game loop: synchronized with host
+
+**Key files**:
+
+- `mp_types.h`: Shared types (`MultiplayerGame`, `PlayerData`)
+- `mp_game.c/h`: Core game loop
+- `mp_network.c/h`: Network event handling
+- `mp_turn.c/h`: Turn management
+- `mp_input.c/h`: Input processing
+
+#### 6. AI Engine
+
+Two difficulty levels (`game/ai/ai_engine.c`):
+
+- **AI_EASY**: Heuristic-based evaluation
+
+  - Pattern recognition (open-four, threat detection)
+  - Position scoring
+  - Quick response (~instant)
+
+- **AI_HARD**: Minimax with alpha-beta pruning
+  - Depth-limited search (adjustable depth)
+  - Board evaluation function
+  - Considers offensive and defensive moves
+  - Response time: ~1-3 seconds
 
 ## Important Constants
 
 ```c
+// Board
+#define BOARD_SIZE 19                    // 19x19 board
+
 // Terminal
-MIN_TERMINAL_WIDTH  = 120
-MIN_TERMINAL_HEIGHT = 30
+#define UI_MIN_WIDTH 100
+#define UI_MIN_HEIGHT 30
 
 // Network
-DEFAULT_PORT        = 7773
-MAX_SPECTATORS      = 3
+#define DEFAULT_PORT 7773
+#define MAX_SPECTATORS 3
+#define MAX_PLAYER_NAME 8
 
 // Game
-TURN_TIMEOUT        = 20  // seconds
-MAX_PLAYER_NAME     = 8   // characters
-MAX_CHAT_MESSAGE    = 15  // characters
+#define TURN_TIMEOUT 20                  // seconds
+#define MAX_MOVE_HISTORY (BOARD_SIZE * BOARD_SIZE)
+
+// UI Layout (from ui_manager.h)
+#define BOARD_WINDOW_WIDTH 47
+#define BOARD_WINDOW_HEIGHT 23
+#define CHAT_WINDOW_WIDTH 50
+#define CHAT_WINDOW_HEIGHT 18
 ```
 
-## Testing
+## Development Guidelines
 
-When implementing new features:
+### Adding New Game Modes
 
-1. Build successfully: `cd build && cmake .. && make`
-2. Test all command-line argument combinations
-3. Verify terminal size requirements (test with smaller terminals)
-4. Check that mode routing works correctly in `main.c`
+1. Create mode directory in `src/game/mode/<mode_name>/`
+2. Implement mode entry point: `<mode_name>_run(args...)`
+3. Add mode enum to `utils/arg_parser.h`
+4. Wire mode in `main.c` switch statement
+5. Use `MultiplayerGame` struct pattern for state management
 
-## Next Steps
+### Working with ncurses UI
 
-Refer to `roadmap.md` for the complete implementation plan. The next phases are:
+- Always use ncursesw (wide character support) for UTF-8
+- Respect the 100x30 layout defined in `ui_manager.h`
+- Use theme system (`ui/core/theme.c`) for colors
+- Test with `export LANG=ko_KR.UTF-8` for Korean character support
+- Call `wresize(stdscr, 30, 100)` to enforce terminal size
 
-- **Phase 2**: Core game logic (board, win detection, turn management)
-- **Phase 3**: Basic UI (ncurses rendering, input handling)
-- **Phase 4**: AI implementation (Easy: heuristic, Hard: minimax)
+### Network Message Development
 
-See `features.txt` for detailed feature specifications.
+1. Define message struct in appropriate header (`network/messages/*.h`)
+2. Add message type to `MessageType` enum in `message_types.h`
+3. Add union member in `message.h`
+4. Implement serialization/deserialization in `protocol.c`
+5. Update `protocol_get_message_size()` for new message type
+
+### Testing Strategy
+
+- Unit tests use `test_framework.c/h` (custom test framework)
+- Integration tests in `test/test_phase*.c`
+- Test both RULE_STANDARD and RULE_RENJU for rule-dependent features
+- Network tests: test both host and client roles
+
+## Common Tasks
+
+### Run the game in menu mode
+
+```bash
+./build_and_run.sh
+```
+
+### Build and run a specific test
+
+```bash
+cd build
+cmake ..
+make test_board
+./test_board
+```
+
+### Debug network issues
+
+Enable verbose logging in `network/core/network.c` and check socket state transitions.
+
+### Add a new UI component
+
+1. Create `.c/.h` in appropriate `ui/` subdirectory
+2. Define window dimensions in `ui_manager.h`
+3. Integrate in game loop (singleplay or multiplayer)
+4. Test with `test_ingame_border` or `test_phase3_ui`
+
+### Fix forbidden move detection
+
+The logic is in `game/core/rules.c`. Update `board_update_forbidden_marks()` and test with `test_rules`.
+
+## Dependencies
+
+- **ncursesw**: Wide character ncurses for UTF-8 support
+- **pthread**: For future async networking (currently unused)
+- **Standard C libraries**: socket, netinet, arpa/inet
+
+Install on Ubuntu/Debian:
+
+```bash
+sudo apt-get install build-essential cmake libncursesw5-dev
+```
+
+## Localization Notes
+
+The codebase contains Korean comments and UI text. When modifying:
+
+- Preserve UTF-8 encoding
+- Use `setlocale(LC_ALL, "")` before ncurses initialization
+- Test Korean character rendering with `export LC_ALL=ko_KR.UTF-8`
