@@ -38,21 +38,122 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
         return -1;
     }
 
-    printf("=== GOMOKU MULTIPLAYER - HOST ===\n");
-    printf("Server started on %s:%d\n", game.network.local_ip, port);
-    printf("Waiting for client to connect...\n");
-    printf("(Press Ctrl+C to cancel)\n\n");
+    // 대기 화면을 위한 ncurses 초기화
+    initscr();
+    start_color();
+    cbreak();
+    noecho();
+    curs_set(0);
+    nodelay(stdscr, TRUE); // non-blocking 입력
+
+    // 테마 초기화
+    ThemeType saved_theme = theme_load_from_config();
+    theme_init(saved_theme);
 
     network_set_nonblocking(game.network.socket_fd, true);
 
-    while (!network_server_accept_client(&game.network))
+    // 애니메이션 프레임
+    const char *spinner[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
+    const int spinner_frames = 10;
+    int frame = 0;
+    int dots = 0;
+    time_t start_time = time(NULL);
+    bool connected = false;
+    bool cancelled = false;
+
+    while (!connected && !cancelled)
     {
-        usleep(100000);
+        // 클라이언트 연결 확인
+        if (network_server_accept_client(&game.network))
+        {
+            connected = true;
+            break;
+        }
+
+        // 키 입력 확인 (취소)
+        int ch = getch();
+        if (ch == 'q' || ch == 'Q' || ch == 27) // ESC
+        {
+            cancelled = true;
+            break;
+        }
+
+        // 화면 렌더링
+        clear();
+
+        // 타이틀
+        attron(COLOR_PAIR(1) | A_BOLD);
+        mvprintw(LINES / 2 - 5, (COLS - 24) / 2, "WAITING FOR PLAYER");
+        attroff(COLOR_PAIR(1) | A_BOLD);
+
+        // 스피너 애니메이션
+        attron(COLOR_PAIR(3) | A_BOLD);
+        mvprintw(LINES / 2 - 2, (COLS - 2) / 2, "%s", spinner[frame]);
+        attroff(COLOR_PAIR(3) | A_BOLD);
+
+        // 서버 정보
+        attron(COLOR_PAIR(2));
+        mvprintw(LINES / 2, (COLS - 20) / 2, "Server IP: %s", game.network.local_ip);
+        mvprintw(LINES / 2 + 1, (COLS - 14) / 2, "Port: %d", port);
+        attroff(COLOR_PAIR(2));
+
+        // 대기 시간 표시
+        int elapsed = (int)difftime(time(NULL), start_time);
+        char dots_str[4] = "";
+        for (int i = 0; i < (dots % 4); i++)
+            strcat(dots_str, ".");
+
+        attron(A_DIM);
+        mvprintw(LINES / 2 + 3, (COLS - 20) / 2, "Waiting%s", dots_str);
+        mvprintw(LINES / 2 + 4, (COLS - 16) / 2, "(%d seconds)", elapsed);
+        attroff(A_DIM);
+
+        // 안내 메시지
+        attron(COLOR_PAIR(2) | A_DIM);
+        mvprintw(LINES / 2 + 7, (COLS - 24) / 2, "Press Q or ESC to cancel");
+        attroff(COLOR_PAIR(2) | A_DIM);
+
+        refresh();
+
+        // 애니메이션 업데이트
+        frame = (frame + 1) % spinner_frames;
+        dots++;
+
+        usleep(100000); // 100ms
     }
 
-    printf("Client connected from %s:%d\n", game.network.remote_ip, game.network.remote_port);
-    printf("Starting game...\n");
-    sleep(1);
+    endwin();
+
+    if (cancelled)
+    {
+        network_cleanup(&game.network);
+        return -1;
+    }
+
+    // 연결 성공 - 잠시 메시지 표시
+    initscr();
+    start_color();
+    cbreak();
+    noecho();
+    curs_set(0);
+    theme_init(saved_theme);
+
+    clear();
+    attron(COLOR_PAIR(3) | A_BOLD);
+    mvprintw(LINES / 2 - 1, (COLS - 18) / 2, "PLAYER CONNECTED!");
+    attroff(COLOR_PAIR(3) | A_BOLD);
+
+    attron(COLOR_PAIR(2));
+    mvprintw(LINES / 2 + 1, (COLS - 30) / 2, "Client: %s:%d", game.network.remote_ip, game.network.remote_port);
+    attroff(COLOR_PAIR(2));
+
+    attron(A_DIM);
+    mvprintw(LINES / 2 + 3, (COLS - 18) / 2, "Starting game...");
+    attroff(A_DIM);
+
+    refresh();
+    usleep(1500000); // 1.5초 대기
+    endwin();
 
     // 플레이어 정보 설정 (TUI에서 받은 닉네임 사용)
     strncpy(game.me.name, player_name, MAX_PLAYER_NAME - 1);
