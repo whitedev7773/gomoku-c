@@ -275,7 +275,7 @@ int network_send_message(NetworkManager *net, const Message *msg)
     }
 
     int fd = (net->role == NETWORK_SERVER) ? net->client_fd : net->socket_fd;
-    ssize_t sent = send(fd, buffer, size, 0);
+    ssize_t sent = send(fd, buffer, size, MSG_NOSIGNAL);
 
     if (sent < 0)
     {
@@ -568,7 +568,7 @@ int network_broadcast_to_spectators(NetworkManager *net, const Message *msg)
     {
         if (net->spectator_fds[i] >= 0)
         {
-            ssize_t sent = send(net->spectator_fds[i], buffer, size, 0);
+            ssize_t sent = send(net->spectator_fds[i], buffer, size, MSG_NOSIGNAL);
             if (sent > 0)
             {
                 sent_count++;
@@ -608,7 +608,7 @@ int network_send_to_spectator(NetworkManager *net, int spectator_index, const Me
         return -1;
     }
 
-    ssize_t sent = send(net->spectator_fds[spectator_index], buffer, size, 0);
+    ssize_t sent = send(net->spectator_fds[spectator_index], buffer, size, MSG_NOSIGNAL);
     if (sent < 0)
     {
         if (errno != EWOULDBLOCK && errno != EAGAIN)
