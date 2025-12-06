@@ -112,6 +112,13 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
     chat_selective_render_input(ui_mgr->chat_input_win, &game->chat_ui,
                                 render_flags, game->first_render, 1, 1);
 
+    // System Log 렌더링
+    if (game->first_render)
+    {
+        wrefresh(ui_mgr->system_log_win);
+    }
+    log_render_sel(ui_mgr->system_log_win, &game->log_ui, render_flags, game->first_render, 0, 0);
+
     game->first_render = false;
 
     if (modal_ui_is_active(&game->modal_ui))
