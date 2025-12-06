@@ -1,4 +1,5 @@
 #include "modal_ui.h"
+#include "../core/theme.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -143,22 +144,15 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
     int modal_y = (parent_h - modal_h) / 2;
     int modal_x = (parent_w - modal_w) / 2;
 
-    // 모달 윈도우 생성
+    // 모달 윤도우 생성
     WINDOW *modal_win = newwin(modal_h, modal_w, modal_y, modal_x);
 
-    // 배경 그리기 (어두운 배경)
-    wattron(modal_win, COLOR_PAIR(2));
-    for (int y = 0; y < modal_h; y++)
-    {
-        for (int x = 0; x < modal_w; x++)
-        {
-            mvwaddch(modal_win, y, x, ' ');
-        }
-    }
-    wattroff(modal_win, COLOR_PAIR(2));
+    // 배경 그리기 (검정색 배경)
+    wbkgd(modal_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    werase(modal_win);
 
-    // 테두리 그리기
-    wattron(modal_win, A_BOLD);
+    // 테두리 그리기 - 테마 주색상
+    wattron(modal_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     box(modal_win, 0, 0);
 
     // 타이틀
@@ -195,9 +189,10 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
     {
         mvwprintw(modal_win, 0, (modal_w - strlen(title)) / 2, "%s", title);
     }
-    wattroff(modal_win, A_BOLD);
+    wattroff(modal_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
-    // 메시지 표시 (중앙 정렬, 여러 줄 지원)
+    // 메시지 표시 (중앙 정렬, 여러 줄 지원) - 테마 주색상
+    wattron(modal_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
     int msg_y = 3;
     int msg_x = 4;
     int max_line_width = modal_w - 8;
@@ -227,8 +222,9 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
         line_count++;
     }
     free(msg_copy);
+    wattroff(modal_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
-    // 버튼 렌더링
+    // 버튼 렌더링 - 테마 색상 적용
     if (modal->button_count > 0)
     {
         int button_y = modal_h - 3;
@@ -254,13 +250,15 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
 
             if (i == modal->selected_button)
             {
-                wattron(modal_win, A_REVERSE | A_BOLD);
+                wattron(modal_win, A_REVERSE | A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
                 mvwprintw(modal_win, button_y, button_x, "[ %s ]", btn_name);
-                wattroff(modal_win, A_REVERSE | A_BOLD);
+                wattroff(modal_win, A_REVERSE | A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
             }
             else
             {
+                wattron(modal_win, COLOR_PAIR(COLOR_PAIR_DIM));
                 mvwprintw(modal_win, button_y, button_x, "[ %s ]", btn_name);
+                wattroff(modal_win, COLOR_PAIR(COLOR_PAIR_DIM));
             }
 
             button_x += btn_width + 4;
@@ -268,10 +266,10 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
     }
     else
     {
-        // 버튼이 없으면 "Waiting..." 표시
-        wattron(modal_win, COLOR_PAIR(5));
+        // 버튼이 없으면 "Waiting..." 표시 - 테마 INFO 색상
+        wattron(modal_win, COLOR_PAIR(COLOR_PAIR_INFO));
         mvwprintw(modal_win, modal_h - 3, (modal_w - 13) / 2, "Waiting...");
-        wattroff(modal_win, COLOR_PAIR(5));
+        wattroff(modal_win, COLOR_PAIR(COLOR_PAIR_INFO));
     }
 
     wrefresh(modal_win);
