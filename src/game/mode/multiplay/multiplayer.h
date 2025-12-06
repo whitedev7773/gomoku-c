@@ -1,7 +1,7 @@
 #ifndef MULTIPLAYER_H
 #define MULTIPLAYER_H
 
-#include "../../../network/network.h"
+#include "../../../network/core/network.h"
 #include "../../core/board.h"
 
 /**

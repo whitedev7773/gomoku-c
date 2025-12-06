@@ -8,7 +8,7 @@
 #include "../../../ui/game/border/ingame_border.h"
 #include "../../core/game_logic.h"
 #include "../../core/turn_manager.h"
-#include "../../../network/protocol.h"
+#include "../../../network/core/protocol.h"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

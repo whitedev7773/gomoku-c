@@ -14,7 +14,7 @@
 #include "game/mode/multiplay/spectator.h"
 #include "game/feature/replay.h"
 #include "game/ai/ai_engine.h"
-#include "network/network.h"
+#include "network/core/network.h"
 #include <ncurses.h>
 
 int main(int argc, char *argv[])

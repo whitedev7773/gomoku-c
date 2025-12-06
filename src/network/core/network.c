@@ -10,7 +10,8 @@
 #include <netinet/tcp.h>
 #include <ifaddrs.h>
 
-bool network_init_server(NetworkManager *net, int port) {
+bool network_init_server(NetworkManager *net, int port)
+{
     memset(net, 0, sizeof(NetworkManager));
     net->role = NETWORK_SERVER;
     net->state = NET_DISCONNECTED;
@@ -19,28 +20,32 @@ bool network_init_server(NetworkManager *net, int port) {
     net->client_fd = -1;
 
     // 관전자 배열 초기화
-    for (int i = 0; i < MAX_SPECTATORS; i++) {
+    for (int i = 0; i < MAX_SPECTATORS; i++)
+    {
         net->spectator_fds[i] = -1;
     }
     net->spectator_count = 0;
 
     // 소켓 생성
     net->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (net->socket_fd < 0) {
+    if (net->socket_fd < 0)
+    {
         perror("socket");
         return false;
     }
 
     // SO_REUSEADDR 설정
     int opt = 1;
-    if (setsockopt(net->socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    if (setsockopt(net->socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+    {
         perror("setsockopt");
         close(net->socket_fd);
         return false;
     }
 
     // TCP_NODELAY 설정 (Nagle 알고리즘 비활성화)
-    if (setsockopt(net->socket_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
+    if (setsockopt(net->socket_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0)
+    {
         perror("setsockopt TCP_NODELAY");
     }
 
@@ -51,7 +56,8 @@ bool network_init_server(NetworkManager *net, int port) {
     net->address.sin_port = htons(port);
 
     // 바인드
-    if (bind(net->socket_fd, (struct sockaddr *)&net->address, sizeof(net->address)) < 0) {
+    if (bind(net->socket_fd, (struct sockaddr *)&net->address, sizeof(net->address)) < 0)
+    {
         perror("bind");
         close(net->socket_fd);
         return false;
@@ -63,12 +69,15 @@ bool network_init_server(NetworkManager *net, int port) {
     return true;
 }
 
-bool network_server_start_listen(NetworkManager *net) {
-    if (net->role != NETWORK_SERVER || net->socket_fd < 0) {
+bool network_server_start_listen(NetworkManager *net)
+{
+    if (net->role != NETWORK_SERVER || net->socket_fd < 0)
+    {
         return false;
     }
 
-    if (listen(net->socket_fd, MAX_CONNECTIONS) < 0) {
+    if (listen(net->socket_fd, MAX_CONNECTIONS) < 0)
+    {
         perror("listen");
         return false;
     }
@@ -77,8 +86,10 @@ bool network_server_start_listen(NetworkManager *net) {
     return true;
 }
 
-bool network_server_accept_client(NetworkManager *net) {
-    if (net->role != NETWORK_SERVER || net->socket_fd < 0) {
+bool network_server_accept_client(NetworkManager *net)
+{
+    if (net->role != NETWORK_SERVER || net->socket_fd < 0)
+    {
         return false;
     }
 
@@ -86,8 +97,10 @@ bool network_server_accept_client(NetworkManager *net) {
     socklen_t addr_len = sizeof(client_addr);
 
     net->client_fd = accept(net->socket_fd, (struct sockaddr *)&client_addr, &addr_len);
-    if (net->client_fd < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (net->client_fd < 0)
+    {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
             perror("accept");
         }
         return false;
@@ -105,25 +118,31 @@ bool network_server_accept_client(NetworkManager *net) {
     return true;
 }
 
-void network_get_local_ip(char *ip_buffer, size_t buffer_size) {
+void network_get_local_ip(char *ip_buffer, size_t buffer_size)
+{
     struct ifaddrs *ifaddr, *ifa;
 
-    strcpy(ip_buffer, "127.0.0.1");  // 기본값
+    strcpy(ip_buffer, "127.0.0.1"); // 기본값
 
-    if (getifaddrs(&ifaddr) == -1) {
+    if (getifaddrs(&ifaddr) == -1)
+    {
         return;
     }
 
     // 첫 번째 non-loopback IPv4 주소 찾기
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == NULL) continue;
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
 
-        if (ifa->ifa_addr->sa_family == AF_INET) {
+        if (ifa->ifa_addr->sa_family == AF_INET)
+        {
             struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
             char *ip_str = inet_ntoa(addr->sin_addr);
 
             // 루프백이 아닌 주소
-            if (strcmp(ip_str, "127.0.0.1") != 0) {
+            if (strcmp(ip_str, "127.0.0.1") != 0)
+            {
                 strncpy(ip_buffer, ip_str, buffer_size - 1);
                 ip_buffer[buffer_size - 1] = '\0';
                 break;
@@ -134,7 +153,8 @@ void network_get_local_ip(char *ip_buffer, size_t buffer_size) {
     freeifaddrs(ifaddr);
 }
 
-bool network_init_client(NetworkManager *net) {
+bool network_init_client(NetworkManager *net)
+{
     memset(net, 0, sizeof(NetworkManager));
     net->role = NETWORK_CLIENT;
     net->state = NET_DISCONNECTED;
@@ -143,14 +163,17 @@ bool network_init_client(NetworkManager *net) {
     return true;
 }
 
-bool network_client_connect(NetworkManager *net, const char *server_ip, int port) {
-    if (net->role != NETWORK_CLIENT) {
+bool network_client_connect(NetworkManager *net, const char *server_ip, int port)
+{
+    if (net->role != NETWORK_CLIENT)
+    {
         return false;
     }
 
     // 소켓 생성
     net->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (net->socket_fd < 0) {
+    if (net->socket_fd < 0)
+    {
         perror("socket");
         return false;
     }
@@ -165,7 +188,8 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0)
+    {
         perror("inet_pton");
         close(net->socket_fd);
         net->socket_fd = -1;
@@ -174,7 +198,8 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
 
     // 연결
     net->state = NET_CONNECTING;
-    if (connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
         perror("connect");
         close(net->socket_fd);
         net->socket_fd = -1;
@@ -189,22 +214,27 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
     return true;
 }
 
-void network_cleanup(NetworkManager *net) {
-    if (net->client_fd >= 0) {
+void network_cleanup(NetworkManager *net)
+{
+    if (net->client_fd >= 0)
+    {
         close(net->client_fd);
         net->client_fd = -1;
     }
 
     // 관전자 소켓 정리
-    for (int i = 0; i < MAX_SPECTATORS; i++) {
-        if (net->spectator_fds[i] >= 0) {
+    for (int i = 0; i < MAX_SPECTATORS; i++)
+    {
+        if (net->spectator_fds[i] >= 0)
+        {
             close(net->spectator_fds[i]);
             net->spectator_fds[i] = -1;
         }
     }
     net->spectator_count = 0;
 
-    if (net->socket_fd >= 0) {
+    if (net->socket_fd >= 0)
+    {
         close(net->socket_fd);
         net->socket_fd = -1;
     }
@@ -212,22 +242,27 @@ void network_cleanup(NetworkManager *net) {
     net->state = NET_DISCONNECTED;
 }
 
-int network_send_message(NetworkManager *net, const Message *msg) {
-    if (!network_is_connected(net)) {
+int network_send_message(NetworkManager *net, const Message *msg)
+{
+    if (!network_is_connected(net))
+    {
         return -1;
     }
 
     uint8_t buffer[RECV_BUFFER_SIZE];
     int size = protocol_serialize(msg, buffer, sizeof(buffer));
-    if (size < 0) {
+    if (size < 0)
+    {
         return -1;
     }
 
     int fd = (net->role == NETWORK_SERVER) ? net->client_fd : net->socket_fd;
     ssize_t sent = send(fd, buffer, size, 0);
 
-    if (sent < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (sent < 0)
+    {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
             perror("send");
             net->state = NET_ERROR;
         }
@@ -240,25 +275,32 @@ int network_send_message(NetworkManager *net, const Message *msg) {
     return sent;
 }
 
-int network_receive_message(NetworkManager *net, Message *msg) {
-    if (!network_is_connected(net)) {
+int network_receive_message(NetworkManager *net, Message *msg)
+{
+    if (!network_is_connected(net))
+    {
         return -1;
     }
 
     int fd = (net->role == NETWORK_SERVER) ? net->client_fd : net->socket_fd;
 
     // 헤더만큼 먼저 읽기
-    if (net->recv_buffer_used < sizeof(MessageHeader)) {
+    if (net->recv_buffer_used < sizeof(MessageHeader))
+    {
         ssize_t received = recv(fd, net->recv_buffer + net->recv_buffer_used,
-                               sizeof(MessageHeader) - net->recv_buffer_used, MSG_DONTWAIT);
+                                sizeof(MessageHeader) - net->recv_buffer_used, MSG_DONTWAIT);
 
-        if (received < 0) {
-            if (errno != EWOULDBLOCK && errno != EAGAIN) {
+        if (received < 0)
+        {
+            if (errno != EWOULDBLOCK && errno != EAGAIN)
+            {
                 perror("recv");
                 net->state = NET_ERROR;
             }
-            return 0;  // No data available
-        } else if (received == 0) {
+            return 0; // No data available
+        }
+        else if (received == 0)
+        {
             // Connection closed
             net->state = NET_DISCONNECTED;
             return -1;
@@ -266,8 +308,9 @@ int network_receive_message(NetworkManager *net, Message *msg) {
 
         net->recv_buffer_used += received;
 
-        if (net->recv_buffer_used < sizeof(MessageHeader)) {
-            return 0;  // Need more data
+        if (net->recv_buffer_used < sizeof(MessageHeader))
+        {
+            return 0; // Need more data
         }
     }
 
@@ -278,31 +321,38 @@ int network_receive_message(NetworkManager *net, Message *msg) {
     size_t total_size = sizeof(MessageHeader) + temp_header.length;
 
     // 전체 메시지 읽기
-    if (net->recv_buffer_used < total_size) {
+    if (net->recv_buffer_used < total_size)
+    {
         ssize_t received = recv(fd, net->recv_buffer + net->recv_buffer_used,
-                               total_size - net->recv_buffer_used, MSG_DONTWAIT);
+                                total_size - net->recv_buffer_used, MSG_DONTWAIT);
 
-        if (received < 0) {
-            if (errno != EWOULDBLOCK && errno != EAGAIN) {
+        if (received < 0)
+        {
+            if (errno != EWOULDBLOCK && errno != EAGAIN)
+            {
                 perror("recv");
                 net->state = NET_ERROR;
             }
             return 0;
-        } else if (received == 0) {
+        }
+        else if (received == 0)
+        {
             net->state = NET_DISCONNECTED;
             return -1;
         }
 
         net->recv_buffer_used += received;
 
-        if (net->recv_buffer_used < total_size) {
-            return 0;  // Need more data
+        if (net->recv_buffer_used < total_size)
+        {
+            return 0; // Need more data
         }
     }
 
     // 메시지 역직렬화
     int result = protocol_deserialize(msg, net->recv_buffer, net->recv_buffer_used);
-    if (result < 0) {
+    if (result < 0)
+    {
         // 역직렬화 실패, 버퍼 초기화
         net->recv_buffer_used = 0;
         return -1;
@@ -310,7 +360,8 @@ int network_receive_message(NetworkManager *net, Message *msg) {
 
     // 성공, 버퍼에서 메시지 제거
     net->recv_buffer_used -= result;
-    if (net->recv_buffer_used > 0) {
+    if (net->recv_buffer_used > 0)
+    {
         memmove(net->recv_buffer, net->recv_buffer + result, net->recv_buffer_used);
     }
 
@@ -320,36 +371,45 @@ int network_receive_message(NetworkManager *net, Message *msg) {
     return result;
 }
 
-bool network_is_connected(const NetworkManager *net) {
+bool network_is_connected(const NetworkManager *net)
+{
     return net->state == NET_CONNECTED;
 }
 
-void network_set_nonblocking(int socket_fd, bool nonblocking) {
+void network_set_nonblocking(int socket_fd, bool nonblocking)
+{
     int flags = fcntl(socket_fd, F_GETFL, 0);
-    if (flags < 0) {
+    if (flags < 0)
+    {
         perror("fcntl F_GETFL");
         return;
     }
 
-    if (nonblocking) {
+    if (nonblocking)
+    {
         flags |= O_NONBLOCK;
-    } else {
+    }
+    else
+    {
         flags &= ~O_NONBLOCK;
     }
 
-    if (fcntl(socket_fd, F_SETFL, flags) < 0) {
+    if (fcntl(socket_fd, F_SETFL, flags) < 0)
+    {
         perror("fcntl F_SETFL");
     }
 }
 
-int network_get_ping_ms(NetworkManager *net) {
+int network_get_ping_ms(NetworkManager *net)
+{
     // TODO: PING/PONG 메시지로 실제 RTT 측정
     return 0;
 }
 
 // 관전자 관련 함수들
 
-bool network_init_spectator(NetworkManager *net) {
+bool network_init_spectator(NetworkManager *net)
+{
     memset(net, 0, sizeof(NetworkManager));
     net->role = NETWORK_SPECTATOR;
     net->state = NET_DISCONNECTED;
@@ -358,14 +418,17 @@ bool network_init_spectator(NetworkManager *net) {
     return true;
 }
 
-bool network_spectator_connect(NetworkManager *net, const char *server_ip, int port) {
-    if (net->role != NETWORK_SPECTATOR) {
+bool network_spectator_connect(NetworkManager *net, const char *server_ip, int port)
+{
+    if (net->role != NETWORK_SPECTATOR)
+    {
         return false;
     }
 
     // 소켓 생성
     net->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (net->socket_fd < 0) {
+    if (net->socket_fd < 0)
+    {
         perror("socket");
         return false;
     }
@@ -380,7 +443,8 @@ bool network_spectator_connect(NetworkManager *net, const char *server_ip, int p
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0)
+    {
         perror("inet_pton");
         close(net->socket_fd);
         net->socket_fd = -1;
@@ -389,7 +453,8 @@ bool network_spectator_connect(NetworkManager *net, const char *server_ip, int p
 
     // 연결
     net->state = NET_CONNECTING;
-    if (connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
         perror("connect");
         close(net->socket_fd);
         net->socket_fd = -1;
@@ -404,13 +469,16 @@ bool network_spectator_connect(NetworkManager *net, const char *server_ip, int p
     return true;
 }
 
-bool network_server_accept_spectator(NetworkManager *net) {
-    if (net->role != NETWORK_SERVER || net->socket_fd < 0) {
+bool network_server_accept_spectator(NetworkManager *net)
+{
+    if (net->role != NETWORK_SERVER || net->socket_fd < 0)
+    {
         return false;
     }
 
     // 관전자 수 체크
-    if (net->spectator_count >= MAX_SPECTATORS) {
+    if (net->spectator_count >= MAX_SPECTATORS)
+    {
         return false;
     }
 
@@ -418,8 +486,10 @@ bool network_server_accept_spectator(NetworkManager *net) {
     socklen_t addr_len = sizeof(spectator_addr);
 
     int spectator_fd = accept(net->socket_fd, (struct sockaddr *)&spectator_addr, &addr_len);
-    if (spectator_fd < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (spectator_fd < 0)
+    {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
             perror("accept spectator");
         }
         return false;
@@ -430,8 +500,10 @@ bool network_server_accept_spectator(NetworkManager *net) {
     setsockopt(spectator_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
 
     // 빈 슬롯에 추가
-    for (int i = 0; i < MAX_SPECTATORS; i++) {
-        if (net->spectator_fds[i] < 0) {
+    for (int i = 0; i < MAX_SPECTATORS; i++)
+    {
+        if (net->spectator_fds[i] < 0)
+        {
             net->spectator_fds[i] = spectator_fd;
             net->spectator_count++;
             return true;
@@ -443,12 +515,15 @@ bool network_server_accept_spectator(NetworkManager *net) {
     return false;
 }
 
-void network_server_remove_spectator(NetworkManager *net, int index) {
-    if (index < 0 || index >= MAX_SPECTATORS) {
+void network_server_remove_spectator(NetworkManager *net, int index)
+{
+    if (index < 0 || index >= MAX_SPECTATORS)
+    {
         return;
     }
 
-    if (net->spectator_fds[index] >= 0) {
+    if (net->spectator_fds[index] >= 0)
+    {
         close(net->spectator_fds[index]);
         net->spectator_fds[index] = -1;
         memset(net->spectator_names[index], 0, MAX_PLAYER_NAME);
@@ -456,24 +531,32 @@ void network_server_remove_spectator(NetworkManager *net, int index) {
     }
 }
 
-int network_broadcast_to_spectators(NetworkManager *net, const Message *msg) {
-    if (net->role != NETWORK_SERVER) {
+int network_broadcast_to_spectators(NetworkManager *net, const Message *msg)
+{
+    if (net->role != NETWORK_SERVER)
+    {
         return -1;
     }
 
     uint8_t buffer[RECV_BUFFER_SIZE];
     int size = protocol_serialize(msg, buffer, sizeof(buffer));
-    if (size < 0) {
+    if (size < 0)
+    {
         return -1;
     }
 
     int sent_count = 0;
-    for (int i = 0; i < MAX_SPECTATORS; i++) {
-        if (net->spectator_fds[i] >= 0) {
+    for (int i = 0; i < MAX_SPECTATORS; i++)
+    {
+        if (net->spectator_fds[i] >= 0)
+        {
             ssize_t sent = send(net->spectator_fds[i], buffer, size, 0);
-            if (sent > 0) {
+            if (sent > 0)
+            {
                 sent_count++;
-            } else if (sent < 0 && errno != EWOULDBLOCK && errno != EAGAIN) {
+            }
+            else if (sent < 0 && errno != EWOULDBLOCK && errno != EAGAIN)
+            {
                 // 연결 끊김, 관전자 제거
                 network_server_remove_spectator(net, i);
             }
@@ -483,28 +566,35 @@ int network_broadcast_to_spectators(NetworkManager *net, const Message *msg) {
     return sent_count;
 }
 
-int network_send_to_spectator(NetworkManager *net, int spectator_index, const Message *msg) {
-    if (net->role != NETWORK_SERVER) {
+int network_send_to_spectator(NetworkManager *net, int spectator_index, const Message *msg)
+{
+    if (net->role != NETWORK_SERVER)
+    {
         return -1;
     }
 
-    if (spectator_index < 0 || spectator_index >= MAX_SPECTATORS) {
+    if (spectator_index < 0 || spectator_index >= MAX_SPECTATORS)
+    {
         return -1;
     }
 
-    if (net->spectator_fds[spectator_index] < 0) {
+    if (net->spectator_fds[spectator_index] < 0)
+    {
         return -1;
     }
 
     uint8_t buffer[RECV_BUFFER_SIZE];
     int size = protocol_serialize(msg, buffer, sizeof(buffer));
-    if (size < 0) {
+    if (size < 0)
+    {
         return -1;
     }
 
     ssize_t sent = send(net->spectator_fds[spectator_index], buffer, size, 0);
-    if (sent < 0) {
-        if (errno != EWOULDBLOCK && errno != EAGAIN) {
+    if (sent < 0)
+    {
+        if (errno != EWOULDBLOCK && errno != EAGAIN)
+        {
             perror("send to spectator");
             network_server_remove_spectator(net, spectator_index);
         }

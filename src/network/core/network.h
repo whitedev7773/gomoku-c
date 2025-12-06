@@ -11,14 +11,16 @@
 #define RECV_BUFFER_SIZE 4096
 
 // 네트워크 역할
-typedef enum {
+typedef enum
+{
     NETWORK_SERVER,
     NETWORK_CLIENT,
     NETWORK_SPECTATOR
 } NetworkRole;
 
 // 네트워크 상태
-typedef enum {
+typedef enum
+{
     NET_DISCONNECTED,
     NET_CONNECTING,
     NET_CONNECTED,
@@ -26,12 +28,13 @@ typedef enum {
 } NetworkState;
 
 // 네트워크 매니저
-typedef struct {
+typedef struct
+{
     NetworkRole role;
     NetworkState state;
 
-    int socket_fd;              // 서버 소켓 (SERVER) or 클라이언트 소켓 (CLIENT/SPECTATOR)
-    int client_fd;              // 연결된 클라이언트 (SERVER only)
+    int socket_fd; // 서버 소켓 (SERVER) or 클라이언트 소켓 (CLIENT/SPECTATOR)
+    int client_fd; // 연결된 클라이언트 (SERVER only)
     struct sockaddr_in address;
 
     char local_ip[16];
@@ -46,9 +49,9 @@ typedef struct {
     size_t recv_buffer_used;
 
     // 관전자 관리 (SERVER only)
-    int spectator_fds[MAX_SPECTATORS];         // 관전자 소켓 파일 디스크립터
-    char spectator_names[MAX_SPECTATORS][MAX_PLAYER_NAME];  // 관전자 이름
-    int spectator_count;                       // 현재 관전자 수
+    int spectator_fds[MAX_SPECTATORS];                     // 관전자 소켓 파일 디스크립터
+    char spectator_names[MAX_SPECTATORS][MAX_PLAYER_NAME]; // 관전자 이름
+    int spectator_count;                                   // 현재 관전자 수
 
     // 통계
     uint64_t bytes_sent;

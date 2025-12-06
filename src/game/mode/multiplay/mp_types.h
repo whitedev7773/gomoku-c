@@ -13,8 +13,8 @@
 #include "../../../ui/game/chat/chat_ui.h"
 #include "../../../ui/menu/modal_ui.h"
 #include "../../../ui/core/input_handler.h"
-#include "../../../network/network.h"
-#include "../../../network/protocol.h"
+#include "../../../network/core/network.h"
+#include "../../../network/core/protocol.h"
 
 // ============================================================================
 // 게임 결과 정의 (관전자 브로드캐스트용)
