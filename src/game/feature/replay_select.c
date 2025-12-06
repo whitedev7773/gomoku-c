@@ -106,23 +106,31 @@ int replay_run_with_selection(void)
         getmaxyx(list_win, max_y, max_x);
 
         werase(list_win);
-        box(list_win, 0, 0);
-        mvwprintw(list_win, 0, 2, " Select Replay File ");
 
-        // 빈 폴더 아이콘
+        // 테마 주색상으로 border
+        wattron(list_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        box(list_win, 0, 0);
+        wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+        // 테마 주색상으로 타이틀
+        wattron(list_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        mvwprintw(list_win, 0, 2, " Select Replay File ");
+        wattroff(list_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+        // 빈 폴더 아이콘 - 테마 주색상 적용
         int center_y = max_y / 2 - 6;
         int center_x = (max_x - 16) / 2;
 
-        wattron(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+        wattron(list_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
         mvwprintw(list_win, center_y + 0, center_x, " ╭────────╮     ");
         mvwprintw(list_win, center_y + 1, center_x, "╭╯        ╰─────╮");
         mvwprintw(list_win, center_y + 2, center_x, "│               │");
         mvwprintw(list_win, center_y + 3, center_x, "│    O     O    │");
         mvwprintw(list_win, center_y + 4, center_x, "│       ^       │");
         mvwprintw(list_win, center_y + 5, center_x, "╰───────────────╯");
-        wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+        wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
-        // 메시지
+        // 메시지 - 테마 INFO 색상
         wattron(list_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
         mvwprintw(list_win, center_y + 7, (max_x - 21) / 2, "No Replay Files Found");
         wattroff(list_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));

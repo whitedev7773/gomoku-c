@@ -31,26 +31,33 @@ void replay_list_ui_render(WINDOW *win, const ReplayListUI *ui)
     getmaxyx(win, max_y, max_x);
 
     werase(win);
-    box(win, 0, 0);
 
+    // 테마 주색상으로 border 렌더링
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+    box(win, 0, 0);
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+    // 테마 주색상으로 타이틀
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 0, 2, " Select Replay File ");
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     if (ui->file_list.file_count == 0)
     {
-        // 빈 폴더 아이콘
+        // 빈 폴더 아이콘 - 테마 주색상 적용
         int center_y = max_y / 2 - 4;
         int center_x = (max_x - 24) / 2;
 
-        wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
+        wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
         mvwprintw(win, center_y, center_x, "    ╭─────────────╮    ");
         mvwprintw(win, center_y + 1, center_x, "   ╭╯             ╰╮   ");
         mvwprintw(win, center_y + 2, center_x, "   │               │   ");
         mvwprintw(win, center_y + 3, center_x, "   │      📂      │   ");
         mvwprintw(win, center_y + 4, center_x, "   │               │   ");
         mvwprintw(win, center_y + 5, center_x, "   ╰───────────────╯   ");
-        wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
-        // 메시지
+        // 메시지 - 테마 INFO 색상
         wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
         mvwprintw(win, center_y + 7, (max_x - 22) / 2, "No Replay Files Found");
         wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
@@ -86,27 +93,34 @@ void replay_list_ui_render(WINDOW *win, const ReplayListUI *ui)
 
         if (i == ui->selected_index)
         {
-            wattron(win, A_REVERSE);
-            mvwprintw(win, y, 2, "> %s", info->display_name);
-            wattroff(win, A_REVERSE);
+            // 선택 항목 - 테마 주색상 + 반전
+            wattron(win, A_BOLD | A_REVERSE | COLOR_PAIR(COLOR_PAIR_DEFAULT));
+            mvwprintw(win, y, 2, "> %-*s", max_x - 6, info->display_name);
+            wattroff(win, A_BOLD | A_REVERSE | COLOR_PAIR(COLOR_PAIR_DEFAULT));
         }
         else
         {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
             mvwprintw(win, y, 2, "  %s", info->display_name);
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
         }
 
         y++;
     }
 
-    // 스크롤 인디케이터
+    // 스크롤 인디케이터 - 테마 INFO 색상
     if (ui->file_list.file_count > visible_lines)
     {
+        wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
         mvwprintw(win, max_y - 2, max_x - 20, "(%d/%d files)",
                   ui->selected_index + 1, ui->file_list.file_count);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
     }
 
-    // 조작 안내
+    // 조작 안내 - 테마 DIM 색상
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
     mvwprintw(win, max_y - 1, 2, "UP/DOWN: Select | ENTER: Play | Q: Back");
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
 }
@@ -128,29 +142,33 @@ void replay_list_ui_render_selection_only(WINDOW *win, const ReplayListUI *ui, i
         end_index = ui->file_list.file_count;
     }
 
-    // 이전 선택 항목 클리어 (화면에 보이는 경우만)
+    // 이전 선택 항목 클리어 (화면에 보이는 경우만) - 테마 DIM 색상
     if (prev_selected >= start_index && prev_selected < end_index)
     {
         int prev_y = 2 + (prev_selected - start_index);
         const LogFileInfo *prev_info = &ui->file_list.files[prev_selected];
+        wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
         mvwprintw(win, prev_y, 2, "  %-*s", max_x - 6, prev_info->display_name);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
     }
 
-    // 현재 선택 항목 강조 (화면에 보이는 경우만)
+    // 현재 선택 항목 강조 (화면에 보이는 경우만) - 테마 주색상 + 반전
     if (ui->selected_index >= start_index && ui->selected_index < end_index)
     {
         int curr_y = 2 + (ui->selected_index - start_index);
         const LogFileInfo *curr_info = &ui->file_list.files[ui->selected_index];
-        wattron(win, A_REVERSE);
+        wattron(win, A_BOLD | A_REVERSE | COLOR_PAIR(COLOR_PAIR_DEFAULT));
         mvwprintw(win, curr_y, 2, "> %-*s", max_x - 6, curr_info->display_name);
-        wattroff(win, A_REVERSE);
+        wattroff(win, A_BOLD | A_REVERSE | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     }
 
-    // 스크롤 인디케이터 업데이트
+    // 스크롤 인디케이터 업데이트 - 테마 INFO 색상
     if (ui->file_list.file_count > visible_lines)
     {
+        wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
         mvwprintw(win, max_y - 2, max_x - 20, "(%d/%d files)",
                   ui->selected_index + 1, ui->file_list.file_count);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
     }
 
     wrefresh(win);

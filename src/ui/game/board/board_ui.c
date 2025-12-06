@@ -29,6 +29,9 @@ void board_draw_border(WINDOW *win)
     // Board 영역: ingame_border (0,0)~(48,24) = 49x25
     // board_win은 (1,1)~(47,23) = 47x23 크기
 
+    // 테마 주색상 적용
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
     // 상단 좌표 레이블 (A-T)
     mvwprintw(win, 0, 4, " ");
     for (int i = 0; i < BOARD_SIZE; i++)
@@ -66,6 +69,8 @@ void board_draw_border(WINDOW *win)
     {
         wprintw(win, "%c ", COL_LABELS[i]);
     }
+
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
 }
 
 void board_draw(WINDOW *win, const Board *board, const BoardCursor *cursor)
@@ -97,19 +102,23 @@ void board_draw(WINDOW *win, const Board *board, const BoardCursor *cursor)
 
             if (stone == BLACK)
             {
+                wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
                 if (is_last_move)
-                    wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+                    wattron(win, A_BOLD);
                 wprintw(win, "●");
                 if (is_last_move)
-                    wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+                    wattroff(win, A_BOLD);
+                wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
             }
             else if (stone == WHITE)
             {
+                wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
                 if (is_last_move)
-                    wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+                    wattron(win, A_BOLD);
                 wprintw(win, "○");
                 if (is_last_move)
-                    wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+                    wattroff(win, A_BOLD);
+                wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
             }
             else
             {
@@ -122,7 +131,9 @@ void board_draw(WINDOW *win, const Board *board, const BoardCursor *cursor)
                 }
                 else
                 {
+                    wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
                     wprintw(win, "·");
+                    wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
                 }
             }
 
@@ -232,19 +243,23 @@ void board_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *curso
 
     if (stone == BLACK)
     {
+        wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
         if (is_last_move)
-            wattron(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+            wattron(win, A_BOLD);
         wprintw(win, "●");
         if (is_last_move)
-            wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE) | A_BOLD);
+            wattroff(win, A_BOLD);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_BLACK_STONE));
     }
     else if (stone == WHITE)
     {
+        wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
         if (is_last_move)
-            wattron(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+            wattron(win, A_BOLD);
         wprintw(win, "○");
         if (is_last_move)
-            wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE) | A_BOLD);
+            wattroff(win, A_BOLD);
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_WHITE_STONE));
     }
     else
     {
@@ -257,7 +272,9 @@ void board_redraw_cell(WINDOW *win, const Board *board, const BoardCursor *curso
         }
         else
         {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
             wprintw(win, "·");
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
         }
     }
 

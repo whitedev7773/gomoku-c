@@ -69,19 +69,7 @@ static const ThemeDef themes[THEME_COUNT] = {
                          {COLOR_MAGENTA, COLOR_BLACK}, // OPPONENT
                          {COLOR_CYAN, COLOR_BLACK},    // INFO
                          {COLOR_MAGENTA, COLOR_BLACK}  // DIM
-                     }},
-
-    // THEME_RAINBOW (무지개 - 다양한 색상 조합)
-    {.name = "Rainbow", .pairs = {
-                            {COLOR_WHITE, COLOR_BLACK},   // DEFAULT
-                            {COLOR_BLACK, COLOR_WHITE},   // INVERTED
-                            {COLOR_RED, COLOR_BLACK},     // BLACK_STONE
-                            {COLOR_YELLOW, COLOR_BLACK},  // WHITE_STONE
-                            {COLOR_GREEN, COLOR_BLACK},   // SYSTEM
-                            {COLOR_BLUE, COLOR_BLACK},    // OPPONENT
-                            {COLOR_MAGENTA, COLOR_BLACK}, // INFO
-                            {COLOR_CYAN, COLOR_BLACK}     // DIM
-                        }}};
+                     }}};
 
 // 테마 초기화
 bool theme_init(ThemeType theme)

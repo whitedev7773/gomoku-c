@@ -1,4 +1,5 @@
 #include "menu_ui.h"
+#include "../core/theme.h"
 #include <string.h>
 
 void menu_ui_init(MenuUI *menu)
@@ -16,7 +17,7 @@ void menu_ui_draw_logo(WINDOW *win)
     int start_y = 3;
     int start_x = 14;
 
-    wattron(win, A_BOLD);
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // GO
     mvwprintw(win, start_y + 0, start_x, "     ████████████         ████████████████████             █████████████");
@@ -31,7 +32,7 @@ void menu_ui_draw_logo(WINDOW *win)
     mvwprintw(win, start_y + 9, start_x, "██████████████████████                    ████    ███    \\_█████████████");
     mvwprintw(win, start_y + 10, start_x, "\\____________________/                    \\__/    \\_/      \\___________/");
 
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 }
 
 void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
@@ -41,8 +42,8 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     int box_width = 33;
     int box_height = 7; // 3개 아이템 + 여백
 
-    // Draw box
-    wattron(win, A_BOLD);
+    // Draw box - 테마 주색상
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, box_y, box_x, "┏");
     for (int i = 1; i < box_width - 1; i++)
     {
@@ -62,7 +63,7 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
         wprintw(win, "━");
     }
     wprintw(win, "┛");
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 메뉴 이름 배열
     const char *menu_names[] = {
@@ -79,7 +80,7 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
     if (end_idx > menu->option_count)
         end_idx = menu->option_count;
 
-    // Draw options (현재 페이지의 아이템만)
+    // Draw options (현재 페이지의 아이템만) - 테마 주색상
     int option_y = box_y + 2;
     int option_x = box_x + 3;
 
@@ -90,26 +91,28 @@ void menu_ui_draw_options(WINDOW *win, const MenuUI *menu)
 
         if (menu->selected == i)
         {
-            wattron(win, A_BOLD | COLOR_PAIR(4));
+            wattron(win, A_BOLD | A_REVERSE | COLOR_PAIR(COLOR_PAIR_DEFAULT));
             wprintw(win, " ▶  %-25s", menu_names[i]);
-            wattroff(win, A_BOLD | COLOR_PAIR(4));
+            wattroff(win, A_BOLD | A_REVERSE | COLOR_PAIR(COLOR_PAIR_DEFAULT));
         }
         else
         {
+            wattron(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
             wprintw(win, "    %-25s", menu_names[i]);
+            wattroff(win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
         }
     }
 
-    // 페이지 표시
-    wattron(win, COLOR_PAIR(7));
+    // 페이지 표시 - 테마 INFO 색상
+    wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
     mvwprintw(win, box_y + box_height - 1, box_x + box_width / 2 - 4, " Page %d/%d ",
               menu->current_page + 1, menu->total_pages);
-    wattroff(win, COLOR_PAIR(7));
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
 
-    // Instructions
-    wattron(win, COLOR_PAIR(8)); // gray
+    // Instructions - 테마 DIM 색상
+    wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
     mvwprintw(win, box_y + box_height + 1, box_x - 1, "↑↓:Move  ←→:Page  ↵:Select  Q:Exit");
-    wattroff(win, COLOR_PAIR(8));
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 }
 
 void menu_ui_draw_footer(WINDOW *win)
@@ -119,9 +122,9 @@ void menu_ui_draw_footer(WINDOW *win)
     int max_y = 30;
     int max_x = 100;
 
-    wattron(win, COLOR_PAIR(7));
+    wattron(win, COLOR_PAIR(COLOR_PAIR_INFO));
     mvwprintw(win, max_y - 3, 29, "https://github.com/whitedev7773/gomoku-c");
-    wattroff(win, COLOR_PAIR(7));
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_INFO));
 }
 
 void menu_ui_render(WINDOW *win, const MenuUI *menu)
@@ -150,7 +153,8 @@ void menu_ui_render(WINDOW *win, const MenuUI *menu)
     int start_y = 0;
     int start_x = 0;
 
-    wattron(win, A_BOLD);
+    // Border - 테마 주색상
+    wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     // Top border
     mvwaddch(win, start_y, start_x, ACS_ULCORNER);
     for (int i = 1; i < box_w - 1; ++i)
@@ -169,7 +173,7 @@ void menu_ui_render(WINDOW *win, const MenuUI *menu)
     for (int i = 1; i < box_w - 1; ++i)
         mvwaddch(win, start_y + box_h - 1, start_x + i, ACS_HLINE);
     mvwaddch(win, start_y + box_h - 1, start_x + box_w - 1, ACS_LRCORNER);
-    wattroff(win, A_BOLD);
+    wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     menu_ui_draw_logo(win);
     menu_ui_draw_options(win, menu);

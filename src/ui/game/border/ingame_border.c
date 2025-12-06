@@ -134,7 +134,8 @@ void smart_box_draw(WINDOW *win, int y, int x, const char *new_char_str)
 void ingame_draw_box(const int start_x, const int start_y,
                      const int width, const int height)
 {
-    wattron(stdscr, A_BOLD);
+    // 테마 주색상으로 border 그리기
+    wattron(stdscr, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
     // 상단 (Top)
     smart_box_draw(stdscr, start_y, start_x, "┏");
@@ -159,7 +160,7 @@ void ingame_draw_box(const int start_x, const int start_y,
     }
     smart_box_draw(stdscr, start_y + height - 1, start_x + width - 1, "┛");
 
-    wattroff(stdscr, A_BOLD);
+    wattroff(stdscr, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 }
 
 // 100*30
