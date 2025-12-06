@@ -487,17 +487,17 @@ bool network_spectator_connect(NetworkManager *net, const char *server_ip, int p
     return true;
 }
 
-bool network_server_accept_spectator(NetworkManager *net)
+int network_server_accept_spectator(NetworkManager *net)
 {
     if (net->role != NETWORK_SERVER || net->socket_fd < 0)
     {
-        return false;
+        return -1;
     }
 
     // 관전자 수 체크
     if (net->spectator_count >= MAX_SPECTATORS)
     {
-        return false;
+        return -1;
     }
 
     struct sockaddr_in spectator_addr;
@@ -510,7 +510,7 @@ bool network_server_accept_spectator(NetworkManager *net)
         {
             perror("accept spectator");
         }
-        return false;
+        return -1;
     }
 
     // TCP_NODELAY 설정
@@ -524,13 +524,13 @@ bool network_server_accept_spectator(NetworkManager *net)
         {
             net->spectator_fds[i] = spectator_fd;
             net->spectator_count++;
-            return true;
+            return i; // Return actual slot index
         }
     }
 
     // 이론적으로 여기 도달하면 안됨 (spectator_count < MAX_SPECTATORS 체크했으므로)
     close(spectator_fd);
-    return false;
+    return -1;
 }
 
 void network_server_remove_spectator(NetworkManager *net, int index)

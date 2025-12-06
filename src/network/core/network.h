@@ -76,7 +76,7 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
 // 관전자 함수
 bool network_init_spectator(NetworkManager *net);
 bool network_spectator_connect(NetworkManager *net, const char *server_ip, int port);
-bool network_server_accept_spectator(NetworkManager *net);
+int network_server_accept_spectator(NetworkManager *net); // Returns slot index or -1 on failure
 void network_server_remove_spectator(NetworkManager *net, int index);
 int network_broadcast_to_spectators(NetworkManager *net, const Message *msg);
 int network_send_to_spectator(NetworkManager *net, int spectator_index, const Message *msg);

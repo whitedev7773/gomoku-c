@@ -223,6 +223,32 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
     }
     break;
 
+    case MSG_SPECTATOR_JOIN:
+    {
+        // 관전자 입장 알림 (클라이언트 측에서 수신)
+        game->network.spectator_count = msg.payload.spectator_join_leave.spectator_count;
+        char sys_msg[128];
+        snprintf(sys_msg, sizeof(sys_msg), "[Viewer] %s joined (%d)",
+                 msg.payload.spectator_join_leave.spectator_name,
+                 game->network.spectator_count);
+        chat_add_msg(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
+        ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
+    }
+    break;
+
+    case MSG_SPECTATOR_LEAVE:
+    {
+        // 관전자 퇴장 알림 (클라이언트 측에서 수신)
+        game->network.spectator_count = msg.payload.spectator_join_leave.spectator_count;
+        char sys_msg[128];
+        snprintf(sys_msg, sizeof(sys_msg), "[Viewer] %s left (%d)",
+                 msg.payload.spectator_join_leave.spectator_name,
+                 game->network.spectator_count);
+        chat_add_msg(&game->chat_ui, sys_msg, CHAT_MSG_SYSTEM);
+        ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
+    }
+    break;
+
     default:
         break;
     }
@@ -297,10 +323,9 @@ void mp_send_game_state_to_spectator(MultiplayerGame *game, int spectator_index)
 
 void mp_handle_spectator_connections(MultiplayerGame *game)
 {
-    if (network_server_accept_spectator(&game->network))
+    int new_spectator_index = network_server_accept_spectator(&game->network);
+    if (new_spectator_index >= 0)
     {
-        int new_spectator_index = game->network.spectator_count - 1;
-
         uint8_t temp_buffer[1024];
         int spectator_fd = game->network.spectator_fds[new_spectator_index];
 
@@ -339,6 +364,45 @@ void mp_handle_spectator_connections(MultiplayerGame *game)
                     if (i != new_spectator_index && game->network.spectator_fds[i] >= 0)
                     {
                         network_send_to_spectator(&game->network, i, &join_msg);
+                    }
+                }
+            }
+        }
+    }
+
+    // 기존 관전자들의 연결 상태 체크
+    for (int i = 0; i < MAX_SPECTATORS; i++)
+    {
+        if (game->network.spectator_fds[i] >= 0)
+        {
+            // 연결 상태 확인을 위한 peek
+            char peek_buf[1];
+            ssize_t peek_result = recv(game->network.spectator_fds[i], peek_buf, 1, MSG_PEEK | MSG_DONTWAIT);
+
+            if (peek_result == 0)
+            {
+                // 연결 끊김 감지 - MSG_SPECTATOR_LEAVE 브로드캐스트
+                char spectator_name[MAX_PLAYER_NAME];
+                strncpy(spectator_name, game->network.spectator_names[i], MAX_PLAYER_NAME);
+
+                // 관전자 제거 (spectator_count 감소)
+                network_server_remove_spectator(&game->network, i);
+
+                // 퇴장 메시지 전송
+                Message leave_msg;
+                protocol_init_message(&leave_msg, MSG_SPECTATOR_LEAVE, game->network.sequence_number++);
+                strncpy(leave_msg.payload.spectator_join_leave.spectator_name, spectator_name, MAX_PLAYER_NAME);
+                leave_msg.payload.spectator_join_leave.spectator_count = game->network.spectator_count;
+
+                // 클라이언트에게 전송
+                network_send_message(&game->network, &leave_msg);
+
+                // 다른 관전자들에게 전송
+                for (int j = 0; j < MAX_SPECTATORS; j++)
+                {
+                    if (game->network.spectator_fds[j] >= 0)
+                    {
+                        network_send_to_spectator(&game->network, j, &leave_msg);
                     }
                 }
             }
