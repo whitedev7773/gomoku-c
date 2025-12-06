@@ -1,4 +1,5 @@
 #include "replay_list_ui.h"
+#include "../core/theme.h"
 #include <string.h>
 
 // 초기화
@@ -36,7 +37,33 @@ void replay_list_ui_render(WINDOW *win, const ReplayListUI *ui)
 
     if (ui->file_list.file_count == 0)
     {
-        mvwprintw(win, max_y / 2, (max_x - 20) / 2, "No replay files found");
+        // 빈 폴더 아이콘
+        int center_y = max_y / 2 - 4;
+        int center_x = (max_x - 24) / 2;
+
+        wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
+        mvwprintw(win, center_y, center_x, "    ╭─────────────╮    ");
+        mvwprintw(win, center_y + 1, center_x, "   ╭╯             ╰╮   ");
+        mvwprintw(win, center_y + 2, center_x, "   │               │   ");
+        mvwprintw(win, center_y + 3, center_x, "   │      📂      │   ");
+        mvwprintw(win, center_y + 4, center_x, "   │               │   ");
+        mvwprintw(win, center_y + 5, center_x, "   ╰───────────────╯   ");
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
+
+        // 메시지
+        wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
+        mvwprintw(win, center_y + 7, (max_x - 22) / 2, "No Replay Files Found");
+        wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
+
+        wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
+        mvwprintw(win, center_y + 9, (max_x - 38) / 2, "Play a game first to create replays!");
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
+
+        // 하단 안내
+        wattron(win, COLOR_PAIR(COLOR_PAIR_DIM));
+        mvwprintw(win, max_y - 2, (max_x - 16) / 2, "Press Q to back");
+        wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
+
         wrefresh(win);
         return;
     }

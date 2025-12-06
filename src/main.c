@@ -9,6 +9,7 @@
 #include "ui/core/theme.h"
 #include "ui/menu/theme_selector_ui.h"
 #include "ui/menu/singleplay_menu_ui.h"
+#include "ui/menu/multiplay_menu_ui.h"
 #include "ui/core/input_handler.h"
 #include "game/mode/singleplay/singleplay.h"
 #include "game/mode/multiplay/multiplayer.h"
@@ -176,78 +177,67 @@ int main(int argc, char *argv[])
             }
             else if (selected_option == MENU_MULTIPLAY)
             {
-                // 호스트/클라이언트 선택
-                printf("=== GOMOKU - MULTIPLAY ===\n");
-                printf("Select mode:\n");
-                printf("  1. Host (create game)\n");
-                printf("  2. Join (connect to game)\n");
-                printf("Enter your choice (1-2): ");
+                // TUI 기반 HOST/JOIN 선택
+                int mode_result = multiplay_select_mode();
 
-                char mode_choice;
-                scanf(" %c", &mode_choice);
-                getchar(); // 버퍼 비우기
-
-                if (mode_choice == '1')
+                if (mode_result == 0)
                 {
-                    // 호스트: 규칙 선택
-                    printf("\nSelect game rule:\n");
-                    printf("  1. Standard (No forbidden moves)\n");
-                    printf("  2. Renju (Forbidden moves for BLACK)\n");
-                    printf("Enter your choice (1-2): ");
-
-                    char rule_choice;
-                    scanf(" %c", &rule_choice);
-                    getchar(); // 버퍼 비우기
-
-                    GameRule rule = (rule_choice == '1') ? RULE_STANDARD : RULE_RENJU;
-                    multiplayer_run_host(DEFAULT_PORT, rule);
+                    // HOST 모드 선택됨 - 닉네임 입력
+                    char host_name[MAX_PLAYER_NAME + 1];
+                    if (multiplay_input_host_settings(host_name) == 0)
+                    {
+                        // 규칙 선택
+                        int rule_result = multiplay_select_rule();
+                        if (rule_result >= 0)
+                        {
+                            GameRule rule = (rule_result == 0) ? RULE_STANDARD : RULE_RENJU;
+                            // 연결 대기 화면 표시
+                            if (multiplay_host_wait_for_client(DEFAULT_PORT, host_name, rule) == 0)
+                            {
+                                multiplayer_run_host(DEFAULT_PORT, rule, host_name);
+                            }
+                            // 취소 시 메인 메뉴로 돌아감
+                        }
+                    }
+                    // 취소 시 메인 메뉴로 돌아감
                 }
-                else if (mode_choice == '2')
+                else if (mode_result == 1)
                 {
-                    // 클라이언트: 규칙은 호스트로부터 받음
+                    // JOIN 모드 선택됨 - IP/PORT/닉네임 입력
                     char server_ip[64];
                     int port;
-                    printf("Enter server IP address: ");
-                    scanf("%s", server_ip);
-                    printf("Enter port (default 7773): ");
-                    if (scanf("%d", &port) != 1)
-                    {
-                        port = DEFAULT_PORT;
-                    }
-                    getchar(); // 버퍼 비우기
+                    char player_name[MAX_PLAYER_NAME + 1];
 
-                    multiplayer_run_client(server_ip, port, RULE_STANDARD); // 규칙은 호스트로부터 받을 예정
+                    if (multiplay_input_connection(server_ip, &port, player_name) == 0)
+                    {
+                        // 연결 대기 화면 표시 (10초 타임아웃)
+                        if (multiplay_wait_connection(server_ip, port, player_name) == 0)
+                        {
+                            multiplayer_run_client(server_ip, port, RULE_STANDARD, player_name);
+                        }
+                        // 연결 실패 또는 취소 시 메인 메뉴로 돌아감
+                    }
+                    // 취소 시 메인 메뉴로 돌아감
                 }
-                else
-                {
-                    printf("Invalid choice. Returning to menu.\n");
-                }
+                // mode_result == -1 이면 취소 (메인 메뉴로 돌아감)
             }
             else if (selected_option == MENU_SPECTATOR)
             {
-                printf("=== GOMOKU - SPECTATOR ===\n");
+                // TUI 기반 관전자 연결 정보 입력
                 char server_ip[64];
                 int port;
                 char spectator_name[MAX_PLAYER_NAME + 1];
 
-                printf("Enter server IP address: ");
-                scanf("%s", server_ip);
-                printf("Enter port (default 7773): ");
-                if (scanf("%d", &port) != 1)
+                if (spectator_input_connection(server_ip, &port, spectator_name) == 0)
                 {
-                    port = DEFAULT_PORT;
+                    // 연결 대기 화면 표시 (10초 타임아웃)
+                    if (spectator_wait_connection(server_ip, port, spectator_name) == 0)
+                    {
+                        spectator_run(server_ip, port, spectator_name);
+                    }
+                    // 연결 실패 또는 취소 시 메인 메뉴로 돌아감
                 }
-                getchar(); // 버퍼 비우기
-
-                printf("Enter your name (max 8 chars): ");
-                fgets(spectator_name, sizeof(spectator_name), stdin);
-                spectator_name[strcspn(spectator_name, "\n")] = '\0';
-                if (strlen(spectator_name) == 0)
-                {
-                    strcpy(spectator_name, "Viewer");
-                }
-
-                spectator_run(server_ip, port, spectator_name);
+                // 취소 시 메인 메뉴로 돌아감
             }
             else if (selected_option == MENU_REPLAY)
             {
@@ -274,11 +264,11 @@ int main(int argc, char *argv[])
         break;
 
     case MODE_MULTIPLAY_HOST:
-        multiplayer_run_host(args.port > 0 ? args.port : DEFAULT_PORT, RULE_RENJU); // CLI 모드는 기본 Renju Rule
+        multiplayer_run_host(args.port > 0 ? args.port : DEFAULT_PORT, RULE_RENJU, "Host"); // CLI 모드는 기본 Renju Rule
         break;
 
     case MODE_MULTIPLAY_CLIENT:
-        multiplayer_run_client(args.ip_address, args.port, RULE_STANDARD); // 규칙은 호스트로부터 받음
+        multiplayer_run_client(args.ip_address, args.port, RULE_STANDARD, "Client"); // 규칙은 호스트로부터 받음
         break;
 
     case MODE_SPECTATOR:

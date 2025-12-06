@@ -101,8 +101,41 @@ int replay_run_with_selection(void)
     ReplayListUI list_ui;
     if (!replay_list_ui_init(&list_ui))
     {
-        mvwprintw(list_win, 15, 30, "No replay files found!");
-        mvwprintw(list_win, 17, 25, "Press any key to exit...");
+        // 창 크기 가져오기
+        int max_y, max_x;
+        getmaxyx(list_win, max_y, max_x);
+
+        werase(list_win);
+        box(list_win, 0, 0);
+        mvwprintw(list_win, 0, 2, " Select Replay File ");
+
+        // 빈 폴더 아이콘
+        int center_y = max_y / 2 - 6;
+        int center_x = (max_x - 16) / 2;
+
+        wattron(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+        mvwprintw(list_win, center_y + 0, center_x, " ╭────────╮     ");
+        mvwprintw(list_win, center_y + 1, center_x, "╭╯        ╰─────╮");
+        mvwprintw(list_win, center_y + 2, center_x, "│               │");
+        mvwprintw(list_win, center_y + 3, center_x, "│    O     O    │");
+        mvwprintw(list_win, center_y + 4, center_x, "│       ^       │");
+        mvwprintw(list_win, center_y + 5, center_x, "╰───────────────╯");
+        wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+
+        // 메시지
+        wattron(list_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
+        mvwprintw(list_win, center_y + 7, (max_x - 21) / 2, "No Replay Files Found");
+        wattroff(list_win, A_BOLD | COLOR_PAIR(COLOR_PAIR_INFO));
+
+        wattron(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+        mvwprintw(list_win, center_y + 9, (max_x - 36) / 2, "Play a game first to create replays!");
+        wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+
+        // 하단 안내
+        wattron(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+        mvwprintw(list_win, max_y - 3, (max_x - 21) / 2, "Press any key to exit");
+        wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
+
         wrefresh(list_win);
         InputEvent event = input_handler_get_event(&input_handler, list_win);
         input_handler_cleanup(&input_handler);

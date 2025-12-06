@@ -14,7 +14,7 @@
 // 호스트 모드 실행
 // ============================================================================
 
-int multiplayer_run_host(int port, GameRule rule)
+int multiplayer_run_host(int port, GameRule rule, const char *player_name)
 {
     if (port == 0)
         port = DEFAULT_PORT;
@@ -52,10 +52,9 @@ int multiplayer_run_host(int port, GameRule rule)
     printf("Starting game...\n");
     sleep(1);
 
-    // 플레이어 정보 설정
-    printf("Enter your name (max 8 chars): ");
-    fgets(game.me.name, sizeof(game.me.name), stdin);
-    game.me.name[strcspn(game.me.name, "\n")] = '\0';
+    // 플레이어 정보 설정 (TUI에서 받은 닉네임 사용)
+    strncpy(game.me.name, player_name, MAX_PLAYER_NAME - 1);
+    game.me.name[MAX_PLAYER_NAME - 1] = '\0';
     if (strlen(game.me.name) == 0)
     {
         strcpy(game.me.name, "Host");
@@ -179,7 +178,7 @@ int multiplayer_run_host(int port, GameRule rule)
 // 클라이언트 모드 실행
 // ============================================================================
 
-int multiplayer_run_client(const char *server_ip, int port, GameRule rule)
+int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const char *player_name)
 {
     MultiplayerGame game;
     memset(&game, 0, sizeof(game));
@@ -203,9 +202,9 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule)
 
     printf("Connected to server!\n");
 
-    printf("Enter your name (max 8 chars): ");
-    fgets(game.me.name, sizeof(game.me.name), stdin);
-    game.me.name[strcspn(game.me.name, "\n")] = '\0';
+    // 플레이어 정보 설정 (TUI에서 받은 닉네임 사용)
+    strncpy(game.me.name, player_name, MAX_PLAYER_NAME - 1);
+    game.me.name[MAX_PLAYER_NAME - 1] = '\0';
     if (strlen(game.me.name) == 0)
     {
         strcpy(game.me.name, "Client");
