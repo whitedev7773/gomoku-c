@@ -82,36 +82,92 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
         // 화면 렌더링
         clear();
 
-        // 타이틀
+        // 전체 터미널을 채우는 border box 그리기 (100x31)
+        int box_width = 100;
+        int box_height = 31;
+        int box_start_x = 0;
+        int box_start_y = 0;
+
+        // 테두리 색상
         attron(COLOR_PAIR(1) | A_BOLD);
-        mvprintw(LINES / 2 - 5, (COLS - 24) / 2, "WAITING FOR PLAYER");
+
+        // 상단 테두리
+        mvprintw(box_start_y, box_start_x, "┏");
+        for (int i = 1; i < box_width - 1; i++)
+            mvprintw(box_start_y, box_start_x + i, "━");
+        mvprintw(box_start_y, box_start_x + box_width - 1, "┓");
+
+        // 측면 테두리
+        for (int i = 1; i < box_height - 1; i++)
+        {
+            mvprintw(box_start_y + i, box_start_x, "┃");
+            mvprintw(box_start_y + i, box_start_x + box_width - 1, "┃");
+        }
+
+        // 하단 테두리
+        mvprintw(box_start_y + box_height - 1, box_start_x, "┗");
+        for (int i = 1; i < box_width - 1; i++)
+            mvprintw(box_start_y + box_height - 1, box_start_x + i, "━");
+        mvprintw(box_start_y + box_height - 1, box_start_x + box_width - 1, "┛");
+
         attroff(COLOR_PAIR(1) | A_BOLD);
 
-        // 스피너 애니메이션
+        // 타이틀 영역 (상단)
+        attron(COLOR_PAIR(1) | A_BOLD);
+        mvprintw(box_start_y + 2, box_start_x + (box_width - 20) / 2, "GOMOKU MULTIPLAYER");
+        attroff(COLOR_PAIR(1) | A_BOLD);
+
+        // 서브 타이틀
         attron(COLOR_PAIR(3) | A_BOLD);
-        mvprintw(LINES / 2 - 2, (COLS - 2) / 2, "%s", spinner[frame]);
+        mvprintw(box_start_y + 4, box_start_x + (box_width - 18) / 2, "HOST MODE ACTIVE");
         attroff(COLOR_PAIR(3) | A_BOLD);
 
-        // 서버 정보
+        // 서버 정보 박스 (중앙)
+        int info_box_width = 60;
+        int info_box_height = 12;
+        int info_box_start_x = box_start_x + (box_width - info_box_width) / 2;
+        int info_box_start_y = box_start_y + 7;
+
+        // 정보 박스 테두리
         attron(COLOR_PAIR(2));
-        mvprintw(LINES / 2, (MIN_TERMINAL_WIDTH - strlen(game.network.local_ip)) / 2, "Server IP: %s", game.network.local_ip);
-        mvprintw(LINES / 2 + 1, (COLS - 14) / 2, "Port: %d", port);
+        mvprintw(info_box_start_y, info_box_start_x, "┌");
+        for (int i = 1; i < info_box_width - 1; i++)
+            mvprintw(info_box_start_y, info_box_start_x + i, "─");
+        mvprintw(info_box_start_y, info_box_start_x + info_box_width - 1, "┐");
+
+        for (int i = 1; i < info_box_height - 1; i++)
+        {
+            mvprintw(info_box_start_y + i, info_box_start_x, "│");
+            mvprintw(info_box_start_y + i, info_box_start_x + info_box_width - 1, "│");
+        }
+
+        mvprintw(info_box_start_y + info_box_height - 1, info_box_start_x, "└");
+        for (int i = 1; i < info_box_width - 1; i++)
+            mvprintw(info_box_start_y + info_box_height - 1, info_box_start_x + i, "─");
+        mvprintw(info_box_start_y + info_box_height - 1, info_box_start_x + info_box_width - 1, "┘");
         attroff(COLOR_PAIR(2));
 
-        // 대기 시간 표시
-        int elapsed = (int)difftime(time(NULL), start_time);
-        char dots_str[4] = "";
-        for (int i = 0; i < (dots % 4); i++)
-            strcat(dots_str, ".");
+        // 서버 정보 내용
+        attron(COLOR_PAIR(2) | A_BOLD);
+        mvprintw(info_box_start_y + 1, info_box_start_x + 2, "Server Information");
+        attroff(COLOR_PAIR(2) | A_BOLD);
 
-        attron(A_DIM);
-        mvprintw(LINES / 2 + 3, (COLS - 20) / 2, "Waiting%s", dots_str);
-        mvprintw(LINES / 2 + 4, (COLS - 16) / 2, "(%d seconds)", elapsed);
-        attroff(A_DIM);
+        attron(COLOR_PAIR(2));
+        mvprintw(info_box_start_y + 3, info_box_start_x + 2, "IP Address: %s", game.network.local_ip);
+        mvprintw(info_box_start_y + 4, info_box_start_x + 2, "Port: %d", port);
+        mvprintw(info_box_start_y + 5, info_box_start_x + 2, "Host: %s", player_name);
+        mvprintw(info_box_start_y + 6, info_box_start_x + 2, "Rule: %s", rule == RULE_STANDARD ? "Standard" : "Renju");
+        attroff(COLOR_PAIR(2));
 
-        // 안내 메시지
+        // 스피너와 대기 메시지
+        attron(COLOR_PAIR(3) | A_BOLD);
+        mvprintw(info_box_start_y + 8, info_box_start_x + (info_box_width - 2) / 2, "%s", spinner[frame]);
+        mvprintw(info_box_start_y + 9, info_box_start_x + (info_box_width - 20) / 2, "Waiting for player...");
+        attroff(COLOR_PAIR(3) | A_BOLD);
+
+        // 안내 메시지 (하단)
         attron(COLOR_PAIR(2) | A_DIM);
-        mvprintw(LINES / 2 + 7, (COLS - 24) / 2, "Press Q or ESC to cancel");
+        mvprintw(box_start_y + box_height - 2, box_start_x + (box_width - 24) / 2, "Press Q or ESC to cancel");
         attroff(COLOR_PAIR(2) | A_DIM);
 
         refresh();
