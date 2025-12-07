@@ -56,7 +56,7 @@ size_t protocol_get_message_size(MessageType type)
     case MSG_GAME_RESULT:
         return header_size + sizeof(GameResultMessage);
     default:
-        return header_size;
+        return 0; // Invalid message type
     }
 }
 
@@ -116,14 +116,28 @@ int protocol_deserialize(Message *msg, const uint8_t *buffer, size_t buffer_size
         return -2; // Version mismatch
     }
 
-    // 페이로드 역직렬화
+    // 메시지 타입 검증
     size_t expected_size = protocol_get_message_size(msg->header.type);
+    if (expected_size == 0)
+    {
+        return -3; // Invalid message type
+    }
+
+    // 페이로드 역직렬화
     if (buffer_size < expected_size)
     {
         return -1; // Buffer too small for payload
     }
 
     size_t payload_size = msg->header.length;
+    size_t max_payload_size = expected_size - sizeof(MessageHeader);
+
+    // 페이로드 크기 검증 (Buffer overflow 방지)
+    if (payload_size > max_payload_size)
+    {
+        return -1; // Invalid payload size
+    }
+
     if (payload_size > 0)
     {
         memcpy(&msg->payload, ptr, payload_size);

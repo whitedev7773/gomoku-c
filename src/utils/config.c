@@ -1,4 +1,5 @@
 #include "config.h"
+#include "../ui/core/theme.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -52,7 +53,12 @@ bool config_load(GameConfig *config)
         // 설정 값 파싱
         if (strcmp(key, "theme") == 0)
         {
-            config->theme = atoi(value);
+            char *endptr;
+            long theme = strtol(value, &endptr, 10);
+            if (*endptr == '\0' && theme >= 0 && theme < THEME_COUNT)
+            {
+                config->theme = (int)theme;
+            }
         }
     }
 

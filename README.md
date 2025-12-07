@@ -67,13 +67,13 @@
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y build-essential libncursesw5-dev git
+sudo apt-get install -y build-essential libncursesw5-dev libssl-dev git
 ```
 
 **Fedora / RHEL:**
 
 ```bash
-sudo dnf install -y gcc ncurses-devel git
+sudo dnf install -y gcc ncurses-devel openssl-devel git
 ```
 
 ### Step 2: CMake 설치 (3.10 이상 필요)
@@ -352,6 +352,135 @@ rm -rf build
 
 ---
 
+## 보안 기능
+
+Gomoku-C는 프로그램의 무결성과 공정한 게임 플레이를 보장하기 위해 다음과 같은 보안 기능을 제공합니다.
+
+### 실행 파일 무결성 검증
+
+릴리즈 버전의 Gomoku-C는 SHA256 해시를 이용한 자가 무결성 검증을 수행합니다.
+
+#### 작동 방식
+
+1. GitHub Actions에서 자동으로 실행 파일의 SHA256 해시를 계산
+2. `.sha256` 파일에 공식 해시값 저장
+3. 프로그램 실행 시 현재 실행 파일의 해시를 계산하여 공식 해시와 비교
+4. 해시 불일치 시 프로그램 실행을 차단
+
+#### 다운로드 검증 방법
+
+릴리즈에서 다운로드한 실행 파일의 무결성을 직접 확인할 수 있습니다:
+
+```bash
+# 다운로드한 파일의 SHA256 해시 계산
+sha256sum gomoku-c
+
+# .sha256 파일의 내용과 비교
+cat gomoku-c.sha256
+
+# 두 값이 일치하면 무결성 OK
+```
+
+#### 무결성 검증 결과
+
+- **INTEGRITY_OK**: 무결성 검증 통과, 정상 실행
+- **INTEGRITY_HASH_FILE_MISSING**: 해시 파일 없음 (개발 버전), 경고 후 실행
+- **INTEGRITY_HASH_MISMATCH**: 해시 불일치, 실행 차단
+- **INTEGRITY_SELF_READ_ERROR**: 실행 파일 읽기 오류, 실행 차단
+
+### 안티 디버깅 (Anti-Debugging)
+
+릴리즈 버전에서는 디버거를 이용한 메모리 변조를 방지하기 위해 디버거 감지 기능이 작동합니다.
+
+#### 감지 메커니즘
+
+| 메커니즘                | 설명                                      |
+| :---------------------- | :---------------------------------------- |
+| ptrace 감지             | `PTRACE_TRACEME` 시스템 콜을 이용한 검사  |
+| /proc/self/status 검사  | TracerPid 값을 확인하여 디버거 탐지       |
+| 디버거 프로세스 탐지    | gdb, lldb, strace 등의 프로세스 검색      |
+| 타이밍 공격 감지 (예정) | 실행 시간 측정을 통한 브레이크포인트 탐지 |
+
+#### 개발 모드 (디버거 사용)
+
+개발 또는 디버깅을 위해 안티 디버깅 체크를 건너뛸 수 있습니다:
+
+```bash
+# 환경 변수 설정 후 실행
+export GOMOKU_SKIP_DEBUG_CHECK=1
+./build/gomoku-c
+```
+
+> **주의**: 개발 목적으로만 사용하세요. 릴리즈 버전에서는 이 옵션을 사용하지 마세요.
+
+### 메모리 무결성 체크
+
+프로그램 실행 중 메모리 변조를 감지하기 위한 시스템입니다.
+
+#### 기능
+
+- **함수 보호**: 중요 함수의 CRC32 체크섬 계산 및 검증
+- **.text 세그먼트 보호**: 코드 영역의 무결성 주기적 검사 (예정)
+- **실시간 감지**: 변조 발생 시 즉시 감지 및 대응
+
+#### 향후 적용 예정
+
+- 게임 로직 함수 보호
+- AI 평가 함수 보호
+- 네트워크 메시지 처리 함수 보호
+
+### 보안 로깅
+
+모든 보안 관련 이벤트는 `security.log` 파일에 기록됩니다.
+
+#### 로그 위치
+
+```
+./security.log
+```
+
+#### 로그 레벨
+
+| 레벨     | 설명                         |
+| :------- | :--------------------------- |
+| INFO     | 일반 정보 (시작, 초기화 등)  |
+| WARNING  | 경고 (해시 파일 없음 등)     |
+| ALERT    | 의심스러운 활동 감지         |
+| CRITICAL | 치명적 보안 위협 (실행 차단) |
+
+#### 로그 예시
+
+```
+[2025-12-07 17:23:13] [INFO] [STARTUP] Gomoku-C starting (PID: 29508)
+[2025-12-07 17:23:13] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: ./build/gomoku-c
+[2025-12-07 17:23:13] [INFO] [INTEGRITY_CHECK] Security initialization completed successfully
+```
+
+#### 로그 확인
+
+```bash
+# 전체 로그 보기
+cat security.log
+
+# 최근 로그만 보기
+tail -n 20 security.log
+
+# CRITICAL 레벨만 필터링
+grep CRITICAL security.log
+```
+
+### 네트워크 보안 (향후 개발 예정)
+
+서버-클라이언트 간 추가 보안 검증 기능이 계획되어 있습니다:
+
+- 클라이언트 해시 검증 (서버에서 클라이언트 무결성 확인)
+- 프로토콜 암호화
+- 세션 토큰 기반 인증
+- 실행 파일 무결성 검증 (SHA256)
+- 안티 디버깅 기능
+
+---
+
 ## 프로젝트 구조
 
 ```
@@ -370,11 +499,18 @@ gomoku-c/
 │   ├── network/               # 네트워크 통신
 │   │   ├── core/              # TCP 소켓, 클라이언트/서버
 │   │   └── messages/          # 프로토콜 메시지
+│   ├── security/              # 보안 시스템
+│   │   ├── memory_check.c     # 메모리 무결성 체크
+│   │   └── security_log.c     # 보안 이벤트 로깅
 │   └── utils/                 # 유틸리티 함수
 ├── docs/
 │   └── images/                # README 이미지
+├── .github/
+│   └── workflows/
+│       └── release.yml        # 자동 빌드 및 해시 생성
 ├── CMakeLists.txt             # CMake 빌드 설정
 ├── build_and_run.sh           # 빌드 및 실행 스크립트
+├── security.log               # 보안 이벤트 로그 (실행 시 생성)
 └── README.md                  # 이 문서
 ```
 

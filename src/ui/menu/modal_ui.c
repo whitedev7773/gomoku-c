@@ -217,6 +217,12 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
 
     // 간단한 줄바꿈 처리
     char *msg_copy = strdup(modal->message);
+    if (!msg_copy)
+    {
+        wattroff(modal_win, COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        return;
+    }
+
     char *line = msg_copy;
     int line_count = 0;
 

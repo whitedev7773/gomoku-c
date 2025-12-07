@@ -303,11 +303,13 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
     game.me.name[MAX_PLAYER_NAME - 1] = '\0';
     if (strlen(game.me.name) == 0)
     {
-        strcpy(game.me.name, "Host");
+        strncpy(game.me.name, "Host", MAX_PLAYER_NAME - 1);
+        game.me.name[MAX_PLAYER_NAME - 1] = '\0';
     }
     game.me.color = BLACK;
 
-    strcpy(game.opponent.name, "Client");
+    strncpy(game.opponent.name, "Client", MAX_PLAYER_NAME - 1);
+    game.opponent.name[MAX_PLAYER_NAME - 1] = '\0';
     game.opponent.color = WHITE;
 
     // 연결 승인 메시지 전송
@@ -315,7 +317,8 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
     protocol_init_message(&msg, MSG_CONNECT_ACK, game.network.sequence_number++);
     msg.payload.connect_ack.your_color = WHITE;
     msg.payload.connect_ack.game_rule = rule;
-    strncpy(msg.payload.connect_ack.opponent_name, game.me.name, MAX_PLAYER_NAME);
+    strncpy(msg.payload.connect_ack.opponent_name, game.me.name, MAX_PLAYER_NAME - 1);
+    msg.payload.connect_ack.opponent_name[MAX_PLAYER_NAME - 1] = '\0';
     network_send_message(&game.network, &msg);
 
     // 상대방 이름 수신 대기
@@ -621,7 +624,8 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
     game.me.name[MAX_PLAYER_NAME - 1] = '\0';
     if (strlen(game.me.name) == 0)
     {
-        strcpy(game.me.name, "Client");
+        strncpy(game.me.name, "Client", MAX_PLAYER_NAME - 1);
+        game.me.name[MAX_PLAYER_NAME - 1] = '\0';
     }
 
     // 연결 승인 대기

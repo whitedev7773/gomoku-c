@@ -135,7 +135,8 @@ void network_get_local_ip(char *ip_buffer, size_t buffer_size)
 {
     struct ifaddrs *ifaddr, *ifa;
 
-    strcpy(ip_buffer, "127.0.0.1"); // 기본값
+    strncpy(ip_buffer, "127.0.0.1", buffer_size - 1);
+    ip_buffer[buffer_size - 1] = '\0'; // 기본값
 
     if (getifaddrs(&ifaddr) == -1)
     {
@@ -440,6 +441,16 @@ int network_receive_message(NetworkManager *net, Message *msg)
     MessageHeader temp_header;
     memcpy(&temp_header, net->recv_buffer, sizeof(MessageHeader));
     temp_header.length = ntohs(*(uint16_t *)(net->recv_buffer + 2));
+
+    // 패킷 길이 검증 (Buffer overflow 방지)
+    if (temp_header.length > RECV_BUFFER_SIZE - sizeof(MessageHeader))
+    {
+        fprintf(stderr, "[SECURITY] Invalid message length: %u (max: %zu)\n",
+                temp_header.length, RECV_BUFFER_SIZE - sizeof(MessageHeader));
+        net->recv_buffer_used = 0;
+        return -1;
+    }
+
     size_t total_size = sizeof(MessageHeader) + temp_header.length;
 
     // 전체 메시지 읽기

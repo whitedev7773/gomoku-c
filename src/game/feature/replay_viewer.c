@@ -46,7 +46,8 @@ static void replay_log_add(ReplayLog *log, const char *message)
         // 꽉 찼으면 위로 밀고 마지막에 추가
         for (int i = 0; i < MAX_REPLAY_LOG_LINES - 1; i++)
         {
-            strcpy(log->lines[i], log->lines[i + 1]);
+            strncpy(log->lines[i], log->lines[i + 1], REPLAY_LOG_LINE_LEN - 1);
+            log->lines[i][REPLAY_LOG_LINE_LEN - 1] = '\0';
         }
         strncpy(log->lines[MAX_REPLAY_LOG_LINES - 1], message, REPLAY_LOG_LINE_LEN - 1);
         log->lines[MAX_REPLAY_LOG_LINES - 1][REPLAY_LOG_LINE_LEN - 1] = '\0';

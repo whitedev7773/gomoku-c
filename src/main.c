@@ -19,6 +19,8 @@
 #include "game/feature/replay.h"
 #include "game/ai/ai_engine.h"
 #include "network/core/network.h"
+#include "security/memory_check.h"
+#include "security/security_log.h"
 #include <ncurses.h>
 
 // 터미널 리사이징 감지를 위한 시그널 핸들러
@@ -31,6 +33,35 @@ void handle_sigwinch(int sig)
 
 int main(int argc, char *argv[])
 {
+    // ============================================
+    // Phase 14: 보안 시스템 초기화
+    // ============================================
+
+    // 보안 로그 초기화
+    if (!security_log_init())
+    {
+        fprintf(stderr, "Failed to initialize security logging\n");
+        // 로그 실패는 치명적이지 않으므로 계속 진행
+    }
+
+    security_log_write(SEC_LOG_INFO, SEC_EVENT_STARTUP,
+                       "Gomoku-C starting (PID: %d)", getpid());
+
+    // 2. 메모리 무결성 체크 초기화
+    MemoryCheckState memory_check_state;
+    memory_check_init(&memory_check_state);
+
+    // 주요 함수들을 보호 목록에 추가 (예시)
+    // 실제 함수 크기는 수동으로 측정하거나 추정해야 함
+    // memory_check_add_protected_function(&memory_check_state, (void*)main, 256, "main");
+
+    security_log_write(SEC_LOG_INFO, SEC_EVENT_STARTUP,
+                       "Security initialization completed successfully");
+
+    // ============================================
+    // 기존 초기화 코드
+    // ============================================
+
     // Parse command line arguments
     ParsedArgs args = parse_arguments(argc, argv);
 

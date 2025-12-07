@@ -24,13 +24,21 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential libncursesw5-dev
+          sudo apt-get install -y cmake build-essential libncursesw5-dev libssl-dev
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Generate SHA256 Hash
+        run: |
+          # Calculate SHA256 hash of the executable
+          cd build
+          sha256sum gomoku-c | awk '{print $1}' > gomoku-c.sha256
+          echo "Generated SHA256 hash:"
+          cat gomoku-c.sha256
 
       - name: Calculate next version
         id: version
@@ -151,6 +159,7 @@ jobs:
         run: |
           mkdir -p release-package
           cp build/gomoku-c release-package/
+          cp build/gomoku-c.sha256 release-package/
           cp README.md release-package/ 2>/dev/null || true
           cd release-package
           tar -czvf ../gomoku-c-linux-x86_64.tar.gz .

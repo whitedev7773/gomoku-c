@@ -16,7 +16,8 @@ CommandResult command_parse(const char *message)
     {
         result.type = CMD_NONE;
         result.valid = false;
-        strcpy(result.error_message, "Not a command");
+        strncpy(result.error_message, "Not a command", sizeof(result.error_message) - 1);
+        result.error_message[sizeof(result.error_message) - 1] = '\0';
         return result;
     }
 

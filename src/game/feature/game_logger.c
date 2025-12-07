@@ -134,7 +134,7 @@ bool logger_load_from_file(GameLogger *logger, const char *filename)
         char col_char;
         int row;
 
-        if (sscanf(line, "Move %d: %s placed at %c%d", &move_num, player_str, &col_char, &row) == 4)
+        if (sscanf(line, "Move %d: %15s placed at %c%d", &move_num, player_str, &col_char, &row) == 4)
         {
             LogEntry *entry = &logger->entries[entry_count];
             entry->move_number = move_num;
