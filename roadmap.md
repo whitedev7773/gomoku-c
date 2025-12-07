@@ -43,7 +43,7 @@
   - [x] 턴 타임아웃 (20초)
 - [x] 게임 로그 시스템
   - [x] 게임 진행 상황 기록
-  - [x] 로그 파일 저장 (`gomoku-{YYYYMMDD}-{HH:MM}.log`)
+  - [x] 로그 파일 저장 (`gomoku-{YYYYMMDD}-{HH:MM}.omk`)
 - [x] 각종 룰 지원
   - [x] Renju Rules: Implements 3-3, 4-4, and overline prohibitions for black stones
   - [x] Swap Rules: Color exchange option after first 3 moves
@@ -164,7 +164,7 @@
 
 - [x] 로그 파일 관리
   - [x] 게임 종료 시 로그 저장
-  - [x] 파일명 형식: `gomoku-{YYYYMMDD}-{HH:MM}.log`
+  - [x] 파일명 형식: `gomoku-{YYYYMMDD}-{HH:MM}.omk`
 - [x] 리플레이 목록 UI
   - [x] 저장된 로그 파일 목록 표시
   - [x] 화살표 키로 파일 선택

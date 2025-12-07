@@ -1,0 +1,143 @@
+[2025-12-07 17:20:49] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 17:20:49] [INFO] [STARTUP] Gomoku-C starting (PID: 28383)
+[2025-12-07 17:20:49] [WARNING] [SUSPICIOUS_ACTIVITY] Official hash file not found: ./build/gomoku-c.sha256
+[2025-12-07 17:20:49] [WARNING] [SUSPICIOUS_ACTIVITY] Hash file not found - skipping integrity check (development mode)
+[2025-12-07 17:20:49] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 17:20:49] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 17:22:10] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 17:22:10] [INFO] [STARTUP] Gomoku-C starting (PID: 29024)
+[2025-12-07 17:22:10] [WARNING] [SUSPICIOUS_ACTIVITY] Official hash file not found: ./build/gomoku-c.sha256
+[2025-12-07 17:22:10] [WARNING] [SUSPICIOUS_ACTIVITY] Hash file not found - skipping integrity check (development mode)
+[2025-12-07 17:22:10] [WARNING] [SUSPICIOUS_ACTIVITY] Debug check skipped (GOMOKU_SKIP_DEBUG_CHECK=1)
+[2025-12-07 17:22:10] [INFO] [INTEGRITY_CHECK] Security initialization completed successfully
+[2025-12-07 17:23:13] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 17:23:13] [INFO] [STARTUP] Gomoku-C starting (PID: 29508)
+[2025-12-07 17:23:13] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: ./build/gomoku-c
+[2025-12-07 17:23:13] [WARNING] [SUSPICIOUS_ACTIVITY] Debug check skipped (GOMOKU_SKIP_DEBUG_CHECK=1)
+[2025-12-07 17:23:13] [INFO] [INTEGRITY_CHECK] Security initialization completed successfully
+[2025-12-07 19:45:01] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 19:45:01] [INFO] [STARTUP] Gomoku-C starting (PID: 449)
+[2025-12-07 19:45:01] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: build/gomoku-c
+[2025-12-07 19:45:01] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 19:45:01] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 19:45:20] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 19:45:20] [INFO] [STARTUP] Gomoku-C starting (PID: 455)
+[2025-12-07 19:45:20] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: build/gomoku-c
+[2025-12-07 19:45:20] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 19:45:20] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 19:45:29] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 19:45:29] [INFO] [STARTUP] Gomoku-C starting (PID: 459)
+[2025-12-07 19:45:29] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: build/gomoku-c
+[2025-12-07 19:45:29] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 19:45:29] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 19:45:29] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 19:45:29] [INFO] [STARTUP] Gomoku-C starting (PID: 463)
+[2025-12-07 19:45:29] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: build/gomoku-c
+[2025-12-07 19:45:29] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 19:45:29] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 19:45:30] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 19:45:30] [INFO] [STARTUP] Gomoku-C starting (PID: 467)
+[2025-12-07 19:45:30] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: build/gomoku-c
+[2025-12-07 19:45:30] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 19:45:30] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 19:45:31] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 19:45:31] [INFO] [STARTUP] Gomoku-C starting (PID: 471)
+[2025-12-07 19:45:31] [INFO] [INTEGRITY_CHECK] Integrity verification passed for: build/gomoku-c
+[2025-12-07 19:45:31] [ALERT] [DEBUG_DETECTED] Debugger detected via: /proc/self/status (TracerPid)
+[2025-12-07 19:45:31] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to debugger detection
+[2025-12-07 20:03:23] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 20:03:23] [INFO] [STARTUP] Gomoku-C starting (PID: 5230)
+[2025-12-07 20:03:23] [CRITICAL] [INTEGRITY_VIOLATION] Integrity violation detected: Hash mismatch!
+[2025-12-07 20:03:23] [CRITICAL] [SUSPICIOUS_ACTIVITY] Current:  2a6d29507edba4a175b526d440f51205793063e6acb463651dc2373d2316902c
+[2025-12-07 20:03:23] [CRITICAL] [SUSPICIOUS_ACTIVITY] Official: da0400bc597e33d51943a232a27550c1debb4690b1248aaa8768afcba029d768
+[2025-12-07 20:03:23] [CRITICAL] [SUSPICIOUS_ACTIVITY] Program terminated due to integrity failure
+[2025-12-07 21:38:38] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 21:38:38] [INFO] [STARTUP] Gomoku-C starting (PID: 33327)
+[2025-12-07 21:38:38] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 21:41:04] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 21:41:04] [INFO] [STARTUP] Gomoku-C starting (PID: 34038)
+[2025-12-07 21:41:04] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 21:45:54] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 21:45:54] [INFO] [STARTUP] Gomoku-C starting (PID: 35329)
+[2025-12-07 21:45:54] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 21:46:13] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 21:46:13] [INFO] [STARTUP] Gomoku-C starting (PID: 35394)
+[2025-12-07 21:46:13] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 21:50:18] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 21:50:18] [INFO] [STARTUP] Gomoku-C starting (PID: 36613)
+[2025-12-07 21:50:18] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 21:50:55] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 21:50:55] [INFO] [STARTUP] Gomoku-C starting (PID: 36738)
+[2025-12-07 21:50:55] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 22:35:50] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 22:35:50] [INFO] [STARTUP] Gomoku-C starting (PID: 2758)
+[2025-12-07 22:35:50] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 22:42:59] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 22:42:59] [INFO] [STARTUP] Gomoku-C starting (PID: 4841)
+[2025-12-07 22:42:59] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 22:43:59] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 22:43:59] [INFO] [STARTUP] Gomoku-C starting (PID: 5084)
+[2025-12-07 22:43:59] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 22:58:24] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 22:58:24] [INFO] [STARTUP] Gomoku-C starting (PID: 8427)
+[2025-12-07 22:58:24] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:03:51] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:03:51] [INFO] [STARTUP] Gomoku-C starting (PID: 10089)
+[2025-12-07 23:03:51] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:04:23] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:04:23] [INFO] [STARTUP] Gomoku-C starting (PID: 10181)
+[2025-12-07 23:04:23] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:04:33] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:04:33] [INFO] [STARTUP] Gomoku-C starting (PID: 10277)
+[2025-12-07 23:04:33] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:10:01] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:10:01] [INFO] [STARTUP] Gomoku-C starting (PID: 11760)
+[2025-12-07 23:10:01] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:16:55] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:16:55] [INFO] [STARTUP] Gomoku-C starting (PID: 13955)
+[2025-12-07 23:16:55] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:17:07] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:17:07] [INFO] [STARTUP] Gomoku-C starting (PID: 13996)
+[2025-12-07 23:17:07] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:17:37] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:17:37] [INFO] [STARTUP] Gomoku-C starting (PID: 14136)
+[2025-12-07 23:17:37] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:24:52] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:24:52] [INFO] [STARTUP] Gomoku-C starting (PID: 16473)
+[2025-12-07 23:24:52] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:42:56] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:42:56] [INFO] [STARTUP] Gomoku-C starting (PID: 21325)
+[2025-12-07 23:42:56] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:50:58] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:50:58] [INFO] [STARTUP] Gomoku-C starting (PID: 23595)
+[2025-12-07 23:50:58] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:54:15] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:54:15] [INFO] [STARTUP] Gomoku-C starting (PID: 24641)
+[2025-12-07 23:54:15] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:55:18] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:55:18] [INFO] [STARTUP] Gomoku-C starting (PID: 24839)
+[2025-12-07 23:55:18] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:55:50] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:55:50] [INFO] [STARTUP] Gomoku-C starting (PID: 25031)
+[2025-12-07 23:55:50] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:59:03] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:59:03] [INFO] [STARTUP] Gomoku-C starting (PID: 25859)
+[2025-12-07 23:59:03] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-07 23:59:03] [INFO] [STARTUP] Security logging initialized
+[2025-12-07 23:59:03] [INFO] [STARTUP] Gomoku-C starting (PID: 25860)
+[2025-12-07 23:59:03] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-08 00:00:33] [INFO] [STARTUP] Security logging initialized
+[2025-12-08 00:00:33] [INFO] [STARTUP] Gomoku-C starting (PID: 26412)
+[2025-12-08 00:00:33] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-08 00:03:01] [INFO] [STARTUP] Security logging initialized
+[2025-12-08 00:03:01] [INFO] [STARTUP] Gomoku-C starting (PID: 26978)
+[2025-12-08 00:03:01] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-08 00:03:49] [INFO] [STARTUP] Security logging initialized
+[2025-12-08 00:03:49] [INFO] [STARTUP] Gomoku-C starting (PID: 27301)
+[2025-12-08 00:03:49] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-08 00:05:26] [INFO] [STARTUP] Security logging initialized
+[2025-12-08 00:05:26] [INFO] [STARTUP] Gomoku-C starting (PID: 27717)
+[2025-12-08 00:05:26] [INFO] [STARTUP] Security initialization completed successfully
+[2025-12-08 00:06:13] [INFO] [STARTUP] Security logging initialized
+[2025-12-08 00:06:13] [INFO] [STARTUP] Gomoku-C starting (PID: 27986)
+[2025-12-08 00:06:13] [INFO] [STARTUP] Security initialization completed successfully

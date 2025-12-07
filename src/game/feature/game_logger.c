@@ -7,7 +7,7 @@ void logger_generate_filename(char *filename, size_t size)
     time_t now = time(NULL);
     struct tm *t = localtime(&now);
 
-    snprintf(filename, size, "gomoku-%04d%02d%02d-%02d:%02d.log",
+    snprintf(filename, size, "gomoku-%04d%02d%02d-%02d:%02d.omk",
              t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
              t->tm_hour, t->tm_min);
 }

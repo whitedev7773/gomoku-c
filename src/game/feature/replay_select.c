@@ -27,14 +27,14 @@ bool replay_get_log_files(LogFileList *list)
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL && list->file_count < MAX_LOG_FILES)
     {
-        // "gomoku-" 로 시작하고 ".log"로 끝나는 파일 찾기
+        // "gomoku-" 로 시작하고 ".omk"로 끝나는 파일 찾기
         if (strncmp(entry->d_name, "gomoku-", 7) == 0 &&
-            strstr(entry->d_name, ".log") != NULL)
+            strstr(entry->d_name, ".omk") != NULL)
         {
             // 배열 범위 검증
             if (list->file_count >= MAX_LOG_FILES)
             {
-                break;  // 더 이상 추가하지 않음
+                break; // 더 이상 추가하지 않음
             }
 
             LogFileInfo *info = &list->files[list->file_count];

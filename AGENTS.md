@@ -88,7 +88,7 @@ src/
 │   │   ├── multiplay/           # Online PvP (host/client)
 │   │   └── general/             # Shared mode utilities
 │   └── feature/              # Game features
-│       ├── game_logger.c/h      # Log moves to file (gomoku-YYYYMMDD-HHMM.log)
+│       ├── game_logger.c/h      # Log moves to file (gomoku-YYYYMMDD-HHMM.omk)
 │       ├── replay.c/h           # Replay playback system
 │       ├── replay_viewer.c/h    # Replay UI
 │       └── command.c/h          # Chat commands (/quit, /undo, /giveup)
