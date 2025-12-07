@@ -334,7 +334,9 @@ void chat_handle_input(ChatUI *chat, int ch)
         // Tab: 자동완성 적용
         if (strlen(chat->autocomplete_hint) > 0)
         {
-            strcat(chat->input_buffer, chat->autocomplete_hint);
+            size_t current_len = strlen(chat->input_buffer);
+            size_t remaining = MAX_CHAT_INPUT_LENGTH - current_len - 1;
+            strncat(chat->input_buffer, chat->autocomplete_hint, remaining);
             chat->input_cursor_pos = strlen(chat->input_buffer);
             memset(chat->autocomplete_hint, 0, sizeof(chat->autocomplete_hint));
             chat->input_dirty = true;

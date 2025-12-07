@@ -177,8 +177,10 @@ void connection_input_ui_init(ConnectionInputUI *ui)
         return;
 
     memset(ui->ip_address, 0, MAX_IP_LENGTH);
-    strcpy(ui->port, "7773");   // 기본 포트
-    strcpy(ui->name, "Player"); // 기본 이름
+    strncpy(ui->port, "7773", MAX_PORT_LENGTH - 1);   // 기본 포트
+    ui->port[MAX_PORT_LENGTH - 1] = '\0';
+    strncpy(ui->name, "Player", MAX_NAME_LENGTH - 1); // 기본 이름
+    ui->name[MAX_NAME_LENGTH - 1] = '\0';
     ui->ip_cursor = 0;
     ui->port_cursor = 4;
     ui->name_cursor = 6;
@@ -521,7 +523,12 @@ int connection_input_ui_get_port(const ConnectionInputUI *ui)
     if (strlen(ui->port) == 0)
         return DEFAULT_PORT;
 
-    return atoi(ui->port);
+    char *endptr;
+    long port = strtol(ui->port, &endptr, 10);
+    if (*endptr != '\0' || port < 1 || port > 65535)
+        return DEFAULT_PORT;
+
+    return (int)port;
 }
 
 const char *connection_input_ui_get_ip(const ConnectionInputUI *ui)
@@ -551,7 +558,8 @@ void host_settings_ui_init(HostSettingsUI *ui)
     if (!ui)
         return;
 
-    strcpy(ui->name, "Host"); // 기본 이름
+    strncpy(ui->name, "Host", MAX_NAME_LENGTH - 1); // 기본 이름
+    ui->name[MAX_NAME_LENGTH - 1] = '\0';
     ui->name_cursor = 4;
 }
 
@@ -848,8 +856,10 @@ void spectator_input_ui_init(SpectatorInputUI *ui)
         return;
 
     memset(ui->ip_address, 0, MAX_IP_LENGTH);
-    strcpy(ui->port, "7773");   // 기본 포트
-    strcpy(ui->name, "Viewer"); // 기본 이름
+    strncpy(ui->port, "7773", MAX_PORT_LENGTH - 1);   // 기본 포트
+    ui->port[MAX_PORT_LENGTH - 1] = '\0';
+    strncpy(ui->name, "Viewer", MAX_NAME_LENGTH - 1); // 기본 이름
+    ui->name[MAX_NAME_LENGTH - 1] = '\0';
     ui->ip_cursor = 0;
     ui->port_cursor = 4;
     ui->name_cursor = 6;
@@ -1191,7 +1201,12 @@ int spectator_input_ui_get_port(const SpectatorInputUI *ui)
     if (strlen(ui->port) == 0)
         return DEFAULT_PORT;
 
-    return atoi(ui->port);
+    char *endptr;
+    long port = strtol(ui->port, &endptr, 10);
+    if (*endptr != '\0' || port < 1 || port > 65535)
+        return DEFAULT_PORT;
+
+    return (int)port;
 }
 
 const char *spectator_input_ui_get_ip(const SpectatorInputUI *ui)
@@ -1334,9 +1349,11 @@ int multiplay_input_connection(char *ip_out, int *port_out, char *name_out)
         case INPUT_PLACE_STONE:
             if (connection_input_ui_is_valid(&ui))
             {
-                strcpy(ip_out, connection_input_ui_get_ip(&ui));
+                strncpy(ip_out, connection_input_ui_get_ip(&ui), MAX_IP_LENGTH - 1);
+                ip_out[MAX_IP_LENGTH - 1] = '\0';
                 *port_out = connection_input_ui_get_port(&ui);
-                strcpy(name_out, connection_input_ui_get_name(&ui));
+                strncpy(name_out, connection_input_ui_get_name(&ui), MAX_NAME_LENGTH - 1);
+                name_out[MAX_NAME_LENGTH - 1] = '\0';
                 result = 0;
                 running = false;
             }
@@ -1476,7 +1493,8 @@ int multiplay_input_host_settings(char *name_out)
         switch (event.action)
         {
         case INPUT_PLACE_STONE:
-            strcpy(name_out, host_settings_ui_get_name(&ui));
+            strncpy(name_out, host_settings_ui_get_name(&ui), MAX_NAME_LENGTH - 1);
+            name_out[MAX_NAME_LENGTH - 1] = '\0';
             result = 0;
             running = false;
             break;
@@ -1557,9 +1575,11 @@ int spectator_input_connection(char *ip_out, int *port_out, char *name_out)
         case INPUT_PLACE_STONE:
             if (spectator_input_ui_is_valid(&ui))
             {
-                strcpy(ip_out, spectator_input_ui_get_ip(&ui));
+                strncpy(ip_out, spectator_input_ui_get_ip(&ui), MAX_IP_LENGTH - 1);
+                ip_out[MAX_IP_LENGTH - 1] = '\0';
                 *port_out = spectator_input_ui_get_port(&ui);
-                strcpy(name_out, spectator_input_ui_get_name(&ui));
+                strncpy(name_out, spectator_input_ui_get_name(&ui), MAX_NAME_LENGTH - 1);
+                name_out[MAX_NAME_LENGTH - 1] = '\0';
                 result = 0;
                 running = false;
             }
@@ -1830,7 +1850,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
     NetworkManager network;
     if (!network_init_client(&network))
     {
-        strcpy(ui.error_message, "Failed to initialize network");
+        strncpy(ui.error_message, "Failed to initialize network", sizeof(ui.error_message) - 1);
+        ui.error_message[sizeof(ui.error_message) - 1] = '\0';
         ui.state = CONNECT_STATE_FAILED;
     }
 
@@ -1846,7 +1867,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
         network.socket_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (network.socket_fd < 0)
         {
-            strcpy(ui.error_message, "Failed to create socket");
+            strncpy(ui.error_message, "Failed to create socket", sizeof(ui.error_message) - 1);
+            ui.error_message[sizeof(ui.error_message) - 1] = '\0';
             ui.state = CONNECT_STATE_FAILED;
         }
         else
@@ -1863,7 +1885,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
 
             if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0)
             {
-                strcpy(ui.error_message, "Invalid IP address");
+                strncpy(ui.error_message, "Invalid IP address", sizeof(ui.error_message) - 1);
+                ui.error_message[sizeof(ui.error_message) - 1] = '\0';
                 ui.state = CONNECT_STATE_FAILED;
             }
             else
@@ -1872,7 +1895,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
                 int conn_result = connect(network.socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
                 if (conn_result < 0 && errno != EINPROGRESS)
                 {
-                    strcpy(ui.error_message, "Connection refused");
+                    strncpy(ui.error_message, "Connection refused", sizeof(ui.error_message) - 1);
+                    ui.error_message[sizeof(ui.error_message) - 1] = '\0';
                     ui.state = CONNECT_STATE_FAILED;
                 }
                 else
@@ -1893,7 +1917,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
         // 타임아웃 체크
         if (ui.elapsed_seconds >= ui.timeout_seconds && ui.state == CONNECT_STATE_WAITING)
         {
-            strcpy(ui.error_message, "Connection timed out");
+            strncpy(ui.error_message, "Connection timed out", sizeof(ui.error_message) - 1);
+            ui.error_message[sizeof(ui.error_message) - 1] = '\0';
             ui.state = CONNECT_STATE_FAILED;
         }
 
@@ -1940,7 +1965,8 @@ int multiplay_wait_connection(const char *ip, int port, const char *name)
                 }
                 else
                 {
-                    strcpy(ui.error_message, "Connection refused");
+                    strncpy(ui.error_message, "Connection refused", sizeof(ui.error_message) - 1);
+                    ui.error_message[sizeof(ui.error_message) - 1] = '\0';
                     ui.state = CONNECT_STATE_FAILED;
                 }
             }
@@ -2034,7 +2060,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
         network.socket_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (network.socket_fd < 0)
         {
-            strcpy(ui.error_message, "Failed to create socket");
+            strncpy(ui.error_message, "Failed to create socket", sizeof(ui.error_message) - 1);
+            ui.error_message[sizeof(ui.error_message) - 1] = '\0';
             ui.state = CONNECT_STATE_FAILED;
         }
         else
@@ -2051,7 +2078,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
 
             if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0)
             {
-                strcpy(ui.error_message, "Invalid IP address");
+                strncpy(ui.error_message, "Invalid IP address", sizeof(ui.error_message) - 1);
+                ui.error_message[sizeof(ui.error_message) - 1] = '\0';
                 ui.state = CONNECT_STATE_FAILED;
             }
             else
@@ -2060,7 +2088,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
                 int conn_result = connect(network.socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
                 if (conn_result < 0 && errno != EINPROGRESS)
                 {
-                    strcpy(ui.error_message, "Connection refused");
+                    strncpy(ui.error_message, "Connection refused", sizeof(ui.error_message) - 1);
+                    ui.error_message[sizeof(ui.error_message) - 1] = '\0';
                     ui.state = CONNECT_STATE_FAILED;
                 }
                 else
@@ -2081,7 +2110,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
         // 타임아웃 체크
         if (ui.elapsed_seconds >= ui.timeout_seconds && ui.state == CONNECT_STATE_WAITING)
         {
-            strcpy(ui.error_message, "Connection timed out");
+            strncpy(ui.error_message, "Connection timed out", sizeof(ui.error_message) - 1);
+            ui.error_message[sizeof(ui.error_message) - 1] = '\0';
             ui.state = CONNECT_STATE_FAILED;
         }
 
@@ -2128,7 +2158,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
                 }
                 else
                 {
-                    strcpy(ui.error_message, "Connection refused");
+                    strncpy(ui.error_message, "Connection refused", sizeof(ui.error_message) - 1);
+                    ui.error_message[sizeof(ui.error_message) - 1] = '\0';
                     ui.state = CONNECT_STATE_FAILED;
                 }
             }

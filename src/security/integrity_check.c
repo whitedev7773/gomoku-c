@@ -156,7 +156,7 @@ void integrity_hash_to_hex(const SHA256Hash *hash, char *out_hex)
 
     for (int i = 0; i < SHA256_HASH_SIZE; i++)
     {
-        sprintf(out_hex + (i * 2), "%02x", hash->hash[i]);
+        snprintf(out_hex + (i * 2), 3, "%02x", hash->hash[i]);
     }
     out_hex[SHA256_HEX_SIZE - 1] = '\0';
 }

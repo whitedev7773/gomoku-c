@@ -124,6 +124,14 @@ int protocol_deserialize(Message *msg, const uint8_t *buffer, size_t buffer_size
     }
 
     size_t payload_size = msg->header.length;
+    size_t max_payload_size = expected_size - sizeof(MessageHeader);
+
+    // 페이로드 크기 검증 (Buffer overflow 방지)
+    if (payload_size > max_payload_size)
+    {
+        return -1; // Invalid payload size
+    }
+
     if (payload_size > 0)
     {
         memcpy(&msg->payload, ptr, payload_size);

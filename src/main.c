@@ -20,7 +20,6 @@
 #include "game/ai/ai_engine.h"
 #include "network/core/network.h"
 #include "security/integrity_check.h"
-#include "security/anti_debug.h"
 #include "security/memory_check.h"
 #include "security/security_log.h"
 #include <ncurses.h>
@@ -71,36 +70,7 @@ int main(int argc, char *argv[])
         security_log_warning("Hash file not found - skipping integrity check (development mode)");
     }
 
-    // 2. 안티-디버깅 체크
-    // 환경 변수 GOMOKU_SKIP_DEBUG_CHECK=1 설정 시 디버거 체크 건너뛰기
-    const char *skip_debug_check = getenv("GOMOKU_SKIP_DEBUG_CHECK");
-    if (skip_debug_check == NULL || strcmp(skip_debug_check, "1") != 0)
-    {
-        AntiDebugState anti_debug_state;
-        anti_debug_init(&anti_debug_state);
-
-        DebugDetectionType debug_type;
-        if (anti_debug_comprehensive_check(&anti_debug_state, &debug_type))
-        {
-            fprintf(stderr, "==================================================\n");
-            fprintf(stderr, "SECURITY ALERT: Debugger detected!\n");
-            fprintf(stderr, "Detection method: %s\n", anti_debug_type_to_string(debug_type));
-            fprintf(stderr, "==================================================\n");
-            fprintf(stderr, "\nDebugging is not allowed in release builds.\n");
-            fprintf(stderr, "If you need to debug, please use a development build.\n");
-            fprintf(stderr, "To skip this check (development only), set:\n");
-            fprintf(stderr, "  export GOMOKU_SKIP_DEBUG_CHECK=1\n\n");
-
-            security_log_critical("Program terminated due to debugger detection");
-            return 1;
-        }
-    }
-    else
-    {
-        security_log_warning("Debug check skipped (GOMOKU_SKIP_DEBUG_CHECK=1)");
-    }
-
-    // 3. 메모리 무결성 체크 초기화
+    // 2. 메모리 무결성 체크 초기화
     MemoryCheckState memory_check_state;
     memory_check_init(&memory_check_state);
 

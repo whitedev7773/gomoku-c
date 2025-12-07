@@ -31,6 +31,11 @@ bool replay_get_log_files(LogFileList *list)
         if (strncmp(entry->d_name, "gomoku-", 7) == 0 &&
             strstr(entry->d_name, ".log") != NULL)
         {
+            // 배열 범위 검증
+            if (list->file_count >= MAX_LOG_FILES)
+            {
+                break;  // 더 이상 추가하지 않음
+            }
 
             LogFileInfo *info = &list->files[list->file_count];
             strncpy(info->filename, entry->d_name, LOG_FILENAME_SIZE - 1);
@@ -51,7 +56,8 @@ bool replay_get_log_files(LogFileList *list)
             }
             else
             {
-                strcpy(info->display_name, entry->d_name);
+                strncpy(info->display_name, entry->d_name, sizeof(info->display_name) - 1);
+                info->display_name[sizeof(info->display_name) - 1] = '\0';
             }
 
             list->file_count++;

@@ -91,13 +91,15 @@ ParsedArgs parse_arguments(int argc, char *argv[]) {
 
         // Check for optional -port argument
         if (argc >= 6 && strcmp(argv[4], "-port") == 0) {
-            args.port = atoi(argv[5]);
-            if (args.port <= 0 || args.port > 65535) {
+            char *endptr;
+            long port = strtol(argv[5], &endptr, 10);
+            if (*endptr != '\0' || port <= 0 || port > 65535) {
                 snprintf(args.error_message, sizeof(args.error_message),
                         "Error: Invalid port number '%s'. Port must be between 1 and 65535", argv[5]);
                 args.valid = false;
                 return args;
             }
+            args.port = (int)port;
         }
         return args;
     }
@@ -116,13 +118,15 @@ ParsedArgs parse_arguments(int argc, char *argv[]) {
 
         // Check for optional -port argument
         if (argc >= 6 && strcmp(argv[4], "-port") == 0) {
-            args.port = atoi(argv[5]);
-            if (args.port <= 0 || args.port > 65535) {
+            char *endptr;
+            long port = strtol(argv[5], &endptr, 10);
+            if (*endptr != '\0' || port <= 0 || port > 65535) {
                 snprintf(args.error_message, sizeof(args.error_message),
                         "Error: Invalid port number '%s'. Port must be between 1 and 65535", argv[5]);
                 args.valid = false;
                 return args;
             }
+            args.port = (int)port;
         }
         return args;
     }

@@ -440,6 +440,16 @@ int network_receive_message(NetworkManager *net, Message *msg)
     MessageHeader temp_header;
     memcpy(&temp_header, net->recv_buffer, sizeof(MessageHeader));
     temp_header.length = ntohs(*(uint16_t *)(net->recv_buffer + 2));
+
+    // 패킷 길이 검증 (Buffer overflow 방지)
+    if (temp_header.length > RECV_BUFFER_SIZE - sizeof(MessageHeader))
+    {
+        fprintf(stderr, "[SECURITY] Invalid message length: %u (max: %lu)\n",
+                temp_header.length, RECV_BUFFER_SIZE - sizeof(MessageHeader));
+        net->recv_buffer_used = 0;
+        return -1;
+    }
+
     size_t total_size = sizeof(MessageHeader) + temp_header.length;
 
     // 전체 메시지 읽기
