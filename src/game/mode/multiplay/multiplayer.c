@@ -26,21 +26,7 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
     MultiplayerGame game;
     memset(&game, 0, sizeof(game));
 
-    // 네트워크 초기화
-    if (!network_init_server(&game.network, port))
-    {
-        printf("Failed to initialize server\n");
-        return -1;
-    }
-
-    if (!network_server_start_listen(&game.network))
-    {
-        printf("Failed to start listening\n");
-        network_cleanup(&game.network);
-        return -1;
-    }
-
-    // 대기 화면을 위한 ncurses 초기화
+    // 대기 화면을 위한 ncurses 초기화 (에러 표시용으로 먼저 초기화)
     initscr();
     start_color();
     cbreak();
@@ -51,6 +37,114 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
     // 테마 초기화
     ThemeType saved_theme = theme_load_from_config();
     theme_init(saved_theme);
+
+    // 네트워크 초기화
+    if (!network_init_server(&game.network, port))
+    {
+        // 에러 모달 표시
+        clear();
+        menu_ui_draw_logo(stdscr);
+
+        // 모달 박스
+        int modal_width = 60;
+        int modal_height = 8;
+        int modal_start_x = (COLS - modal_width) / 2;
+        int modal_start_y = (LINES - modal_height) / 2 - 4;
+
+        // 테두리
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+        mvprintw(modal_start_y, modal_start_x, "┌");
+        for (int i = 1; i < modal_width - 1; i++)
+            mvprintw(modal_start_y, modal_start_x + i, "─");
+        mvprintw(modal_start_y, modal_start_x + modal_width - 1, "┐");
+
+        for (int i = 1; i < modal_height - 1; i++)
+        {
+            mvprintw(modal_start_y + i, modal_start_x, "│");
+            mvprintw(modal_start_y + i, modal_start_x + modal_width - 1, "│");
+        }
+
+        mvprintw(modal_start_y + modal_height - 1, modal_start_x, "└");
+        for (int i = 1; i < modal_width - 1; i++)
+            mvprintw(modal_start_y + modal_height - 1, modal_start_x + i, "─");
+        mvprintw(modal_start_y + modal_height - 1, modal_start_x + modal_width - 1, "┘");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        // 에러 메시지
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+        mvprintw(modal_start_y + 1, modal_start_x + (modal_width - 16) / 2, "NETWORK ERROR");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        mvprintw(modal_start_y + 3, modal_start_x + 2, "Failed to initialize server.");
+        mvprintw(modal_start_y + 4, modal_start_x + 2, "Port %d may already be in use.", port);
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+        attron(A_DIM);
+        mvprintw(modal_start_y + 6, modal_start_x + (modal_width - 28) / 2, "Please restart the application");
+        attroff(A_DIM);
+
+        refresh();
+        timeout(-1); // blocking mode for exit
+        getch();
+
+        endwin();
+        return -1;
+    }
+
+    if (!network_server_start_listen(&game.network))
+    {
+        // 에러 모달 표시
+        clear();
+        menu_ui_draw_logo(stdscr);
+
+        // 모달 박스
+        int modal_width = 60;
+        int modal_height = 8;
+        int modal_start_x = (COLS - modal_width) / 2;
+        int modal_start_y = (LINES - modal_height) / 2;
+
+        // 테두리
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+        mvprintw(modal_start_y, modal_start_x, "┌");
+        for (int i = 1; i < modal_width - 1; i++)
+            mvprintw(modal_start_y, modal_start_x + i, "─");
+        mvprintw(modal_start_y, modal_start_x + modal_width - 1, "┐");
+
+        for (int i = 1; i < modal_height - 1; i++)
+        {
+            mvprintw(modal_start_y + i, modal_start_x, "│");
+            mvprintw(modal_start_y + i, modal_start_x + modal_width - 1, "│");
+        }
+
+        mvprintw(modal_start_y + modal_height - 1, modal_start_x, "└");
+        for (int i = 1; i < modal_width - 1; i++)
+            mvprintw(modal_start_y + modal_height - 1, modal_start_x + i, "─");
+        mvprintw(modal_start_y + modal_height - 1, modal_start_x + modal_width - 1, "┘");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        // 에러 메시지
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+        mvprintw(modal_start_y + 1, modal_start_x + (modal_width - 16) / 2, "NETWORK ERROR");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        mvprintw(modal_start_y + 3, modal_start_x + 2, "Failed to start listening on port %d.", port);
+        mvprintw(modal_start_y + 4, modal_start_x + 2, "Port may already be in use by another process.");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+        attron(A_DIM);
+        mvprintw(modal_start_y + 6, modal_start_x + (modal_width - 28) / 2, "Please restart the application");
+        attroff(A_DIM);
+
+        refresh();
+        timeout(-1); // blocking mode for exit
+        getch();
+
+        endwin();
+        network_cleanup(&game.network);
+        return -1;
+    }
 
     network_set_nonblocking(game.network.socket_fd, true);
 
@@ -74,13 +168,13 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
 
         // 키 입력 확인 (취소)
         int ch = getch();
-        if (ch == 'q' || ch == 'Q' || ch == 27) // ESC
+        if (ch == 'q' || ch == 'Q')
         {
             cancelled = true;
             break;
         }
 
-        // 화면 렌더링
+        // 화면 렌더링ㅑ
         clear();
 
         menu_ui_draw_logo(stdscr);
@@ -158,7 +252,7 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
 
         // 안내 메시지 (하단)
         attron(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_DIM);
-        mvprintw(box_start_y + box_height - 3, box_start_x + (box_width - 24) / 2, "Press Q or ESC to cancel");
+        mvprintw(box_start_y + box_height - 3, box_start_x + (box_width - 18) / 2, "Press Q to cancel");
         attroff(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_DIM);
 
         refresh();
@@ -170,13 +264,14 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
         usleep(100000); // 100ms
     }
 
-    endwin();
-
     if (cancelled)
     {
         network_cleanup(&game.network);
+        endwin();
         return -1;
     }
+
+    endwin();
 
     // 연결 성공 - 잠시 메시지 표시
     initscr();

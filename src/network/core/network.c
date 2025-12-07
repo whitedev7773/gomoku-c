@@ -43,7 +43,15 @@ bool network_init_server(NetworkManager *net, int port)
     int opt = 1;
     if (setsockopt(net->socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
     {
-        perror("setsockopt");
+        perror("setsockopt SO_REUSEADDR");
+        close(net->socket_fd);
+        return false;
+    }
+
+    // SO_REUSEPORT 설정 (더 강력한 포트 재사용)
+    if (setsockopt(net->socket_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
+    {
+        perror("setsockopt SO_REUSEPORT");
         close(net->socket_fd);
         return false;
     }
@@ -311,6 +319,13 @@ void network_cleanup(NetworkManager *net)
 
     if (net->client_fd > 0)
     {
+        // SO_LINGER 설정으로 강제 종료
+        struct linger ling;
+        ling.l_onoff = 1;
+        ling.l_linger = 0;
+        setsockopt(net->client_fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
+
+        shutdown(net->client_fd, SHUT_RDWR);
         close(net->client_fd);
         net->client_fd = -1;
     }
@@ -319,6 +334,13 @@ void network_cleanup(NetworkManager *net)
     {
         if (net->spectator_fds[i] > 0)
         {
+            // SO_LINGER 설정으로 강제 종료
+            struct linger ling;
+            ling.l_onoff = 1;
+            ling.l_linger = 0;
+            setsockopt(net->spectator_fds[i], SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
+
+            shutdown(net->spectator_fds[i], SHUT_RDWR);
             close(net->spectator_fds[i]);
             net->spectator_fds[i] = -1;
         }
@@ -327,11 +349,19 @@ void network_cleanup(NetworkManager *net)
 
     if (net->socket_fd >= 0)
     {
-        close(net->socket_fd);
-        net->socket_fd = -1;
-    }
+        // SO_LINGER 설정으로 강제 종료
+        struct linger ling;
+        ling.l_onoff = 1;
+        ling.l_linger = 0;
+        setsockopt(net->socket_fd, SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
 
-    // pthread_mutex_unlock(&net->mutex);
+        shutdown(net->socket_fd, SHUT_RDWR);
+        if (close(net->socket_fd) < 0)
+        {
+            perror("close socket_fd");
+        }
+        net->socket_fd = -1;
+    } // pthread_mutex_unlock(&net->mutex);
 }
 
 int network_send_message(NetworkManager *net, const Message *msg)
