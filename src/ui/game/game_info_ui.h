@@ -26,6 +26,7 @@ typedef InfoBottomUI GameInfoUI;
 
 // 상단 Info 함수 별칭 (호환성 유지)
 #define game_info_draw_opponent_name info_top_opponent
+#define game_info_draw_opponent_color info_top_opponent_color
 #define game_info_draw_viewers info_top_viewers
 #define game_info_draw_ping info_top_ping
 #define game_info_draw_port info_top_port

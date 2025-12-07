@@ -2,15 +2,9 @@
 #define BOARD_H
 
 #include <stdbool.h>
+#include "stone.h"
 
 #define BOARD_SIZE 19
-
-typedef enum
-{
-    EMPTY = 0,
-    BLACK = 1,
-    WHITE = 2
-} Stone;
 
 typedef enum
 {

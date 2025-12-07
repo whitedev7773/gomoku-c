@@ -257,6 +257,11 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
             if (mp_handle_my_turn(&ui_mgr, &game, &input_handler))
             {
                 turn_manager_next_turn(&game.turn_mgr);
+                // 턴 변경 후 System Log에 메시지
+                Stone next_player = turn_manager_get_current_player(&game.turn_mgr);
+                char turn_msg[32];
+                snprintf(turn_msg, sizeof(turn_msg), "%s's turn", next_player == BLACK ? "BLACK" : "WHITE");
+                log_add_msg(&game.log_ui, turn_msg);
             }
         }
         else if (!game.game_over)
@@ -491,6 +496,11 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
             if (mp_handle_my_turn(&ui_mgr, &game, &input_handler))
             {
                 turn_manager_next_turn(&game.turn_mgr);
+                // 턴 변경 후 System Log에 메시지
+                Stone next_player = turn_manager_get_current_player(&game.turn_mgr);
+                char turn_msg[32];
+                snprintf(turn_msg, sizeof(turn_msg), "%s's turn", next_player == BLACK ? "BLACK" : "WHITE");
+                log_add_msg(&game.log_ui, turn_msg);
             }
         }
         else if (!game.game_over)

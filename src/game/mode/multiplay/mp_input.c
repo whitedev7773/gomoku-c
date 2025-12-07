@@ -197,6 +197,21 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                         modal_ui_show(&game->modal_ui, MODAL_GIVEUP, modal_msg);
                         break;
 
+                    case CMD_SWAP:
+                        if (game->swap_used)
+                        {
+                            chat_add_msg(&game->chat_ui, "Swap can only be used once per game", CHAT_MSG_SYSTEM);
+                        }
+                        else
+                        {
+                            Message msg;
+                            protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
+                            msg.payload.command.command_type = CMD_SWAP;
+                            mp_send_with_error_check(game, &msg, "sending swap request");
+                            chat_add_msg(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
+                        }
+                        break;
+
                     case CMD_UNDO:
                         if (!is_my_turn)
                         {
@@ -218,43 +233,6 @@ bool mp_handle_chat_input(MultiplayerGame *game, int ch, bool is_my_turn)
                             chat_add_msg(&game->chat_ui, "Undo request sent", CHAT_MSG_SYSTEM);
                         }
                         break;
-
-                    case CMD_SWAP:
-                        if (game->me.color != WHITE)
-                        {
-                            chat_add_msg(&game->chat_ui, "Only WHITE can use swap", CHAT_MSG_SYSTEM);
-                        }
-                        else if (game->swap_used)
-                        {
-                            chat_add_msg(&game->chat_ui, "Swap already used", CHAT_MSG_SYSTEM);
-                        }
-                        else if (board_get_move_count(&game->board) < 3)
-                        {
-                            chat_add_msg(&game->chat_ui, "Swap available after 3 moves", CHAT_MSG_SYSTEM);
-                        }
-                        else
-                        {
-                            Message msg;
-                            protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
-                            msg.payload.command.command_type = CMD_SWAP;
-                            network_send_message(&game->network, &msg);
-
-                            snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
-                            modal_ui_show(&game->modal_ui, MODAL_SWAP_REQUEST, modal_msg);
-                            chat_add_msg(&game->chat_ui, "Swap request sent", CHAT_MSG_SYSTEM);
-                        }
-                        break;
-
-                    case CMD_QUIT:
-                    {
-                        Message msg;
-                        protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
-                        msg.payload.command.command_type = CMD_QUIT;
-                        network_send_message(&game->network, &msg);
-                        game->game_over = true;
-                        game->quit_requested = true;
-                    }
-                    break;
 
                     case CMD_HELP:
                         chat_add_msg(&game->chat_ui, "=== Commands ===", CHAT_MSG_SYSTEM);

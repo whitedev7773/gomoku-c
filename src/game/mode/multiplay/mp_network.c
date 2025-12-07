@@ -118,6 +118,12 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             ui_render_flags_set(&ui_mgr->render_flags, RENDER_BOARD_FULL);
 
             mp_broadcast_move_to_spectators(game, &msg);
+
+            // 턴 변경 후 System Log에 메시지
+            Stone next_player = turn_manager_get_current_player(&game->turn_mgr);
+            char turn_msg[32];
+            snprintf(turn_msg, sizeof(turn_msg), "%s's turn", next_player == BLACK ? "BLACK" : "WHITE");
+            log_add_msg(&game->log_ui, turn_msg);
         }
     }
     break;
@@ -170,8 +176,31 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             break;
 
         case CMD_SWAP:
-            snprintf(modal_msg, sizeof(modal_msg), "%s wants to swap colors", game->opponent.name);
-            modal_ui_show(&game->modal_ui, MODAL_SWAP_RESPONSE, modal_msg);
+            if (game->opponent.color == WHITE)
+            {
+                // 화이트가 요청하면 즉시 수락
+                Stone temp = game->me.color;
+                game->me.color = game->opponent.color;
+                game->opponent.color = temp;
+                game->swap_used = true;
+                chat_add_msg(&game->chat_ui, "Swap accepted automatically (WHITE requested)", CHAT_MSG_SYSTEM);
+                game->first_render = true;
+                ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
+
+                // 응답 전송
+                Message response_msg;
+                protocol_init_message(&response_msg, MSG_COMMAND_RESPONSE, game->network.sequence_number++);
+                response_msg.payload.command_response.command_type = CMD_SWAP;
+                response_msg.payload.command_response.accepted = 1;
+                strncpy(response_msg.payload.command_response.message, "Swap accepted automatically", sizeof(response_msg.payload.command_response.message) - 1);
+                mp_send_with_error_check(game, &response_msg, "sending swap response");
+            }
+            else
+            {
+                // 블랙이 요청하면 모달
+                snprintf(modal_msg, sizeof(modal_msg), "%s wants to swap colors", game->opponent.name);
+                modal_ui_show(&game->modal_ui, MODAL_SWAP_RESPONSE, modal_msg);
+            }
             break;
 
         default:

@@ -18,6 +18,7 @@ endif()
 include_directories(${CURSES_INCLUDE_DIR})
 
 include_directories(include)
+include_directories(src)
 
 # Main executable source files (exclude test directory)
 file(GLOB SRC_FILES "src/main.c")

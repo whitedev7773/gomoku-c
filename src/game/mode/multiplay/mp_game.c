@@ -101,7 +101,7 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
     // 상단 Info 영역 렌더링
     if (game->first_render || ui_render_flags_is_set(render_flags, RENDER_INFO))
     {
-        game_info_draw_opponent_name(game->opponent.name);
+        game_info_draw_opponent_color(game->opponent.name, game->opponent.color);
         game_info_draw_viewers(game->network.spectator_count);
         game_info_draw_ping(network_get_ping_ms((NetworkManager *)&game->network));
         game_info_draw_port(game->network.port > 0 ? game->network.port : game->network.remote_port);

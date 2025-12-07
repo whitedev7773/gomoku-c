@@ -18,6 +18,18 @@ void info_top_opponent(const char *name)
     refresh();
 }
 
+// 상대방 이름 + 색 표시 - 위치 (49, 1)
+void info_top_opponent_color(const char *name, Stone color)
+{
+    // 영역 클리어 (15칸)
+    move(1, 49);
+    for (int i = 0; i < 15; i++)
+        addch(' ');
+    // 이름만 표시
+    mvaddstr(1, 50, name);
+    refresh();
+}
+
 // 뷰어 수 표시 - 위치 (60, 1) - 형식: "{n} of Viewers"
 void info_top_viewers(int count)
 {
