@@ -160,8 +160,6 @@ const char *security_log_event_to_string(SecurityEventType event)
     {
     case SEC_EVENT_STARTUP:
         return "STARTUP";
-    case SEC_EVENT_INTEGRITY_CHECK:
-        return "INTEGRITY_CHECK";
     case SEC_EVENT_INTEGRITY_VIOLATION:
         return "INTEGRITY_VIOLATION";
     case SEC_EVENT_DEBUG_DETECTED:

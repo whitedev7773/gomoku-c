@@ -19,7 +19,6 @@
 #include "game/feature/replay.h"
 #include "game/ai/ai_engine.h"
 #include "network/core/network.h"
-#include "security/integrity_check.h"
 #include "security/memory_check.h"
 #include "security/security_log.h"
 #include <ncurses.h>
@@ -48,28 +47,6 @@ int main(int argc, char *argv[])
     security_log_write(SEC_LOG_INFO, SEC_EVENT_STARTUP,
                        "Gomoku-C starting (PID: %d)", getpid());
 
-    // 1. 실행 파일 무결성 검증
-    IntegrityResult integrity = integrity_verify_self(argv[0]);
-    if (integrity != INTEGRITY_OK && integrity != INTEGRITY_HASH_FILE_MISSING)
-    {
-        fprintf(stderr, "==================================================\n");
-        fprintf(stderr, "SECURITY ALERT: Integrity verification failed!\n");
-        fprintf(stderr, "Result: %s\n", integrity_result_to_string(integrity));
-        fprintf(stderr, "==================================================\n");
-        fprintf(stderr, "\nThis executable has been modified or corrupted.\n");
-        fprintf(stderr, "Please download the official version from:\n");
-        fprintf(stderr, "https://github.com/whitedev7773/gomoku-c/releases\n\n");
-
-        security_log_critical("Program terminated due to integrity failure");
-        return 1;
-    }
-
-    if (integrity == INTEGRITY_HASH_FILE_MISSING)
-    {
-        // 해시 파일이 없는 경우 (개발 버전일 수 있음)
-        security_log_warning("Hash file not found - skipping integrity check (development mode)");
-    }
-
     // 2. 메모리 무결성 체크 초기화
     MemoryCheckState memory_check_state;
     memory_check_init(&memory_check_state);
@@ -78,7 +55,7 @@ int main(int argc, char *argv[])
     // 실제 함수 크기는 수동으로 측정하거나 추정해야 함
     // memory_check_add_protected_function(&memory_check_state, (void*)main, 256, "main");
 
-    security_log_write(SEC_LOG_INFO, SEC_EVENT_INTEGRITY_CHECK,
+    security_log_write(SEC_LOG_INFO, SEC_EVENT_STARTUP,
                        "Security initialization completed successfully");
 
     // ============================================

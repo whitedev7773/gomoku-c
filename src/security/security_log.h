@@ -23,13 +23,12 @@ typedef enum
  */
 typedef enum
 {
-    SEC_EVENT_STARTUP,              // 프로그램 시작
-    SEC_EVENT_INTEGRITY_CHECK,      // 무결성 검사
-    SEC_EVENT_INTEGRITY_VIOLATION,  // 무결성 위반
-    SEC_EVENT_DEBUG_DETECTED,       // 디버거 감지
-    SEC_EVENT_MEMORY_VIOLATION,     // 메모리 변조 감지
-    SEC_EVENT_SUSPICIOUS_ACTIVITY,  // 의심스러운 활동
-    SEC_EVENT_SHUTDOWN              // 프로그램 종료
+    SEC_EVENT_STARTUP,             // 프로그램 시작
+    SEC_EVENT_INTEGRITY_VIOLATION, // 무결성 위반
+    SEC_EVENT_DEBUG_DETECTED,      // 디버거 감지
+    SEC_EVENT_MEMORY_VIOLATION,    // 메모리 변조 감지
+    SEC_EVENT_SUSPICIOUS_ACTIVITY, // 의심스러운 활동
+    SEC_EVENT_SHUTDOWN             // 프로그램 종료
 } SecurityEventType;
 
 /**
