@@ -1,258 +1,329 @@
 # Gomoku-C
 
-Gomoku-C는 Linux/WSL2 환경에서 실행되는 터미널 기반의 오목 게임입니다. 이 프로젝트는 싱글플레이(플레이어 vs AI), 멀티플레이(온라인 대전), 관전자 모드, 리플레이 기능을 포함하며, ncurses를 활용한 직관적인 UI를 제공합니다.
+<div align="center">
+
+![Gomoku-C Logo](docs/images/logo.png)
+
+**터미널에서 즐기는 본격 오목 게임**
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20WSL2-lightgrey.svg)]()
+[![Language](https://img.shields.io/badge/language-C-orange.svg)]()
+
+[설치하기](#설치-방법) | [게임 시작하기](#게임-시작하기) | [조작법](#조작법) | [기능 소개](#주요-기능)
+
+</div>
 
 ---
 
-## 1. 설치 및 실행하는 법
+## 소개
 
-### 의존성 설치
+**Gomoku-C**는 Linux/WSL2 환경에서 실행되는 터미널 기반 오목 게임입니다.
 
-Gomoku-C를 실행하기 위해서는 다음 의존성들이 필요합니다:
+혼자서 AI와 대결하거나, 친구와 네트워크를 통해 대전할 수 있습니다. ncurses 라이브러리를 활용하여 터미널에서도 깔끔하고 직관적인 UI를 제공합니다.
 
-- **CMake 3.10+**
-- **ncursesw** (UTF-8 지원)
-- **pthread** (멀티스레딩 지원)
+![메인 메뉴 스크린샷](docs/images/main_menu.png)
 
-Ubuntu/Debian에서 의존성을 설치하려면 아래 명령어를 실행하세요:
+### 왜 Gomoku-C인가요?
+
+- **설치가 간단합니다** - 몇 줄의 명령어로 바로 플레이 가능
+- **네트워크 대전 지원** - 친구와 LAN 또는 인터넷으로 대전
+- **AI 대전 지원** - 혼자서도 쉬움/어려움 난이도의 AI와 대결
+- **관전 모드** - 다른 사람의 게임을 실시간으로 관전
+- **리플레이 기능** - 지난 게임을 다시 보며 복기
+- **다양한 테마** - 취향에 맞는 색상 테마 선택
+- **게임패드 지원** - 키보드 외에 게임패드로도 조작 가능
+
+---
+
+## 스크린샷
+
+<div align="center">
+
+|           싱글 플레이 with AI            |     멀티플레이 with Chat      |
+| :--------------------------------------: | :---------------------------: |
+| ![게임 플레이](docs/images/gameplay.png) | ![채팅](docs/images/chat.png) |
+
+|            테마 선택            |              리플레이               |
+| :-----------------------------: | :---------------------------------: |
+| ![테마](docs/images/themes.png) | ![리플레이](docs/images/replay.png) |
+
+</div>
+
+---
+
+## 설치 방법
+
+### 요구 사항
+
+- **운영체제**: Linux (Ubuntu/Debian 권장) 또는 WSL2
+- **터미널 크기**: 최소 120 x 31 (자동으로 확인됨)
+
+### Step 1: 필수 패키지 설치
+
+터미널을 열고 아래 명령어를 실행하세요:
+
+**Ubuntu / Debian:**
 
 ```bash
-sudo apt-get install build-essential cmake libncursesw5-dev
+sudo apt-get update
+sudo apt-get install -y build-essential libncursesw5-dev git
 ```
 
-### 빌드 및 실행
+**Fedora / RHEL:**
 
-1. 프로젝트를 클론합니다:
+```bash
+sudo dnf install -y gcc ncurses-devel git
+```
+
+### Step 2: CMake 설치 (3.10 이상 필요)
+
+#### 방법 1: apt로 간편 설치 (구버전, 빠름)
+
+```bash
+sudo apt-get install -y cmake
+```
+
+> **참고**: Ubuntu 18.04 이상에서는 CMake 3.10 이상이 설치됩니다.
+
+#### 방법 2: 최신 버전 직접 설치 (권장)
+
+apt로 설치한 CMake 버전이 낮거나, 최신 버전이 필요한 경우:
+
+```bash
+# 기존 cmake 제거 (설치되어 있는 경우)
+sudo apt-get remove -y cmake
+
+# CMake 3.28.1 다운로드 및 설치
+wget https://github.com/Kitware/CMake/releases/download/v3.28.1/cmake-3.28.1-linux-x86_64.sh
+chmod +x cmake-3.28.1-linux-x86_64.sh
+sudo ./cmake-3.28.1-linux-x86_64.sh --skip-license --prefix=/usr/local
+
+# 설치 확인
+cmake --version
+```
+
+> **참고**: `/usr/local/bin`이 PATH에 포함되어 있어야 합니다. 포함되어 있지 않다면:
+>
+> ```bash
+> echo 'export PATH=/usr/local/bin:$PATH' >> ~/.bashrc
+> source ~/.bashrc
+> ```
+
+### Step 3: 소스 코드 다운로드
 
 ```bash
 git clone https://github.com/whitedev7773/gomoku-c.git
 cd gomoku-c
 ```
 
-2. 빌드 스크립트를 실행합니다:
+### Step 4: 빌드 및 실행
 
 ```bash
 ./build_and_run.sh
 ```
 
-3. 클린 빌드가 필요할 경우:
+이게 전부입니다! 게임이 자동으로 빌드되고 실행됩니다.
+
+> **참고**: 빌드에 문제가 있다면 클린 빌드를 시도해보세요:
+>
+> ```bash
+> ./build_and_run.sh --clean
+> ```
+
+---
+
+## 게임 시작하기
+
+### 메뉴 모드 (권장)
+
+가장 간단한 방법입니다. 메뉴에서 원하는 모드를 선택하세요:
 
 ```bash
-./build_and_run.sh --clean
+./build/gomoku-c
 ```
 
-4. 수동으로 빌드하려면:
+![메뉴 선택 화면](docs/images/menu_select.png)
+
+### 명령줄 옵션으로 바로 시작
+
+메뉴를 거치지 않고 바로 게임을 시작할 수 있습니다:
+
+#### 싱글플레이 (AI 대전)
 
 ```bash
-mkdir -p build && cd build
-cmake ..
-make
-./gomoku-c
+# 쉬운 난이도
+./build/gomoku-c --singleplay --easy
+
+# 어려운 난이도
+./build/gomoku-c --singleplay --hard
+```
+
+#### 멀티플레이 (친구와 대전)
+
+**호스트 (게임 방 만들기):**
+
+```bash
+./build/gomoku-c --multiplay-host
+```
+
+화면에 표시되는 IP 주소를 친구에게 알려주세요.
+
+**클라이언트 (게임 방 참가):**
+
+```bash
+./build/gomoku-c --multiplay-client -ip 192.168.0.10
+```
+
+포트를 지정하려면 (기본값: 7773):
+
+```bash
+./build/gomoku-c --multiplay-client -ip 192.168.0.10 -port 7773
+```
+
+#### 관전 모드
+
+진행 중인 게임을 관전할 수 있습니다 (최대 3명):
+
+```bash
+./build/gomoku-c --spectator -ip 192.168.0.10
 ```
 
 ---
 
-## 2. 사용법 및 주요 기능 설명
+## 조작법
 
-### 실행 모드
+### 인게임 조작
 
-Gomoku-C는 다양한 실행 모드를 제공합니다. 아래는 주요 실행 명령어입니다:
+|        키        | 동작                  |
+| :--------------: | :-------------------- |
+| `↑` `↓` `←` `→`  | 커서 이동             |
+|     `Space`      | 돌 놓기               |
+| `Enter` 또는 `T` | 채팅 모드 진입        |
+|      `ESC`       | 채팅 모드 종료 / 메뉴 |
 
-#### 메뉴 모드 (기본)
+### 채팅 명령어
 
-```bash
-./gomoku-c
-```
+채팅창에서 특수 명령어를 입력할 수 있습니다:
 
-#### 싱글플레이 모드
+|  명령어   | 설명                                          |
+| :-------: | :-------------------------------------------- |
+|  `/quit`  | 게임 퇴장                                     |
+|  `/undo`  | 무르기 요청 (상대방 수락 필요, 10초 타임아웃) |
+| `/giveup` | 기권 (즉시 패배)                              |
 
-- 쉬움 난이도:
-
-```bash
-./gomoku-c --singleplay --easy
-```
-
-- 어려움 난이도:
-
-```bash
-./gomoku-c --singleplay --hard
-```
-
-#### 멀티플레이 모드
-
-- 호스트:
-
-```bash
-./gomoku-c --multiplay-host
-```
-
-- 클라이언트:
-
-```bash
-./gomoku-c --multiplay-client -ip <호스트 IP>
-```
-
-- 포트 지정:
-
-```bash
-./gomoku-c --multiplay-client -ip <호스트 IP> -port <포트 번호>
-```
-
-#### 관전자 모드
-
-- 최대 3명의 관전자가 지원됩니다:
-
-```bash
-./gomoku-c --spectator -ip <호스트 IP> -port <포트 번호>
-```
-
-### 주요 기능
-
-1. **싱글플레이**: AI와 대결할 수 있으며, 쉬움/어려움 난이도를 선택할 수 있습니다.
-2. **멀티플레이**: TCP 소켓을 이용한 온라인 대전이 가능합니다.
-3. **관전자 모드**: 진행 중인 게임을 실시간으로 관전할 수 있습니다.
-4. **리플레이**: 이전 게임의 기록을 재생할 수 있습니다.
-5. **채팅**: 멀티플레이 중 실시간 채팅이 가능합니다.
-6. **UI**: 100x31 고정 레이아웃으로 직관적인 인터페이스를 제공합니다.
+> **팁**: `/q`까지만 입력하면 나머지 글자가 자동완성으로 표시됩니다.
 
 ---
 
-## 3. 구현 시 어려웠던 점 설명
+## 주요 기능
 
-### 1. **UI 레이아웃 설계**
+### 1. 싱글플레이 - AI 대전
 
-- 터미널 크기를 100x31로 고정하면서도 다양한 UI 요소(게임판, 채팅창, 정보 패널 등)를 효율적으로 배치하는 데 어려움이 있었습니다.
-- `ncurses` 라이브러리를 활용하여 동적 레이아웃을 구현하고, UTF-8 문자를 지원하도록 설정하는 데 많은 시간이 소요되었습니다.
+![AI 대전](docs/images/singleplay.png)
 
-### 2. **멀티플레이 네트워크 프로토콜**
+혼자서 AI와 대결할 수 있습니다:
 
-- TCP 소켓을 이용한 커스텀 바이너리 프로토콜을 설계하면서 메시지 직렬화/역직렬화, 연결 상태 관리, 동기화 문제를 해결해야 했습니다.
-- 특히, 관전자 모드에서 실시간 상태 동기화를 구현하는 데 어려움이 있었습니다.
+- **Easy 모드**: 오목을 처음 접하는 분들을 위한 쉬운 난이도
+- **Hard 모드**: 미니맥스 알고리즘 기반의 강력한 AI
 
-### 3. **AI 엔진 개발**
+플레이어는 항상 흑돌(선공)로 시작합니다.
 
-- 쉬움 난이도에서는 휴리스틱 기반 평가를 사용했지만, 어려움 난이도에서는 미니맥스 알고리즘과 알파-베타 가지치기를 구현해야 했습니다.
-- 성능 최적화를 위해 탐색 깊이를 조정하고, 평가 함수의 효율성을 높이는 데 집중했습니다.
+### 2. 멀티플레이 - 네트워크 대전
 
-### 4. **리플레이 시스템**
+![멀티플레이](docs/images/multiplay.png)
 
-- 게임 기록을 저장하고 이를 재생하는 기능을 구현하면서, 기록 포맷 설계와 UI 통합에 많은 노력이 필요했습니다.
+|                     HOST 모드                      |                 CLIENT(JOIN) 모드                  |
+| :------------------------------------------------: | :------------------------------------------------: |
+| ![멀티플레이-host](docs/images/multiplay-host.png) | ![멀티플레이-join](docs/images/multiplay-join.png) |
+
+TCP 소켓을 이용한 네트워크 대전을 지원합니다:
+
+- **LAN 대전**: 같은 네트워크에 있는 친구와 대전
+- **인터넷 대전**: 포트포워딩 설정 시 외부 네트워크에서도 대전 가능
+- **도메인 지원**: IP 대신 도메인 주소로도 접속 가능
+
+### 3. 관전 모드
+
+![관전 모드](docs/images/spectator.png)
+
+진행 중인 게임을 실시간으로 관전할 수 있습니다:
+
+- 최대 3명의 관전자 지원
+- 실시간 게임 상태 동기화
+- 채팅 관람 가능
+
+### 4. 리플레이
+
+![리플레이](docs/images/replay.png)
+
+모든 게임은 자동으로 기록됩니다:
+
+- 파일 형식: `gomoku-YYYYMMDD-HH:MM.log`
+- 메뉴에서 리플레이를 선택하여 지난 게임 재생
+- `/quit` 명령어로 리플레이 종료
+
+### 5. 실시간 채팅
+
+![채팅](docs/images/chat_bubble.png)
+
+게임 중 상대방과 채팅할 수 있습니다:
+
+- 말풍선 스타일의 채팅 UI
+- 최대 15자까지 입력 가능
+- 시스템 메시지 표시 (입장, 착수 위치 등)
+
+### 6. 테마 커스터마이징
+
+![테마 선택](docs/images/theme_select.png)
+
+다양한 색상 테마를 지원합니다:
+
+|  테마   | 설명             |
+| :-----: | :--------------- |
+|  White  | 기본 흰색 테마   |
+| Hacker  | 녹색 해커 스타일 |
+|  Gold   | 황금빛 고급 테마 |
+| Skyblue | 시원한 하늘색    |
+|  Pink   | 핑크 테마        |
+| Rainbow | 무지개 색상      |
+
+### 7. 공정한 게임 규칙
+
+Gomoku-C는 프로 오목 규칙을 적용합니다:
+
+#### Renju Rule (렌주 룰)
+
+흑돌의 선공 이점을 보정하기 위한 규칙:
+
+- **삼삼 금지**: 동시에 두 개의 열린 3을 만들 수 없음
+- **사사 금지**: 동시에 두 개의 4를 만들 수 없음
+- **육목 금지**: 6개 이상 연속으로 놓을 수 없음
+
+#### Swap Rule (스왑 룰)
+
+공정한 시작을 위한 규칙:
+
+- 첫 3수(흑1, 백1, 흑2) 후 백이 흑백 교체를 선택할 수 있음
 
 ---
-
-Gomoku-C는 이러한 도전 과제를 극복하며 완성된 프로젝트로, 터미널 기반 게임 개발의 좋은 사례가 될 것입니다.
-
-## 요구사항
-
-### 시스템 요구사항
-
-- Linux 환경 (Ubuntu/Debian 권장)
-- GCC 컴파일러
-- CMake 3.10.0 이상
-- ncursesw 라이브러리 (UTF-8 지원)
-
-### 필수 패키지 설치
-
-Ubuntu/Debian:
-
-```bash
-sudo apt-get update
-sudo apt-get install build-essential cmake libncursesw5-dev
-```
-
-Fedora/RHEL:
-
-```bash
-sudo dnf install gcc cmake ncurses-devel
-```
-
-## 빌드 방법
-
-### 방법 1: 스크립트를 사용한 빌드 및 실행
-
-가장 간단한 방법으로, 빌드와 실행을 한 번에 수행합니다:
-
-```bash
-./build_and_run.sh
-```
-
-클린 빌드가 필요한 경우:
-
-```bash
-./build_and_run.sh --clean
-```
-
-### 방법 2: 수동 빌드
-
-직접 빌드 과정을 제어하고 싶은 경우:
-
-```bash
-# 빌드 디렉터리 생성
-mkdir -p build
-cd build
-
-# CMake 설정
-cmake ..
-
-# 빌드
-make
-
-# 실행
-./gomoku-c
-```
-
-### 방법 3: 빌드 후 실행 스크립트 사용
-
-이미 빌드된 상태에서 실행만 하려는 경우:
-
-```bash
-./run.sh
-```
-
-## 테스트 빌드
-
-프로젝트에는 여러 테스트 실행 파일이 포함되어 있습니다:
-
-```bash
-cd build
-
-# 각종 테스트 실행
-./test_phase2      # Phase 2 테스트
-./test_phase3_ui   # Phase 3 UI 테스트
-./test_menu        # 메뉴 테스트
-./test_ai          # AI 엔진 테스트
-./test_board       # 보드 단위 테스트
-./test_rules       # 규칙 단위 테스트
-```
-
-또는 테스트 스크립트 사용:
-
-```bash
-./run_tests.sh
-```
-
-## 프로젝트 구조
-
-```
-gomoku-c/
-├── src/
-│   ├── main.c              # 메인 진입점
-│   ├── game/               # 게임 로직
-│   ├── ui/                 # 사용자 인터페이스
-│   ├── network/            # 네트워크 기능
-│   ├── utils/              # 유틸리티 함수
-│   └── test/               # 테스트 파일
-├── include/                # 헤더 파일
-├── build/                  # 빌드 출력 (생성됨)
-├── CMakeLists.txt          # CMake 설정
-└── build_and_run.sh        # 빌드 및 실행 스크립트
-```
 
 ## 문제 해결
 
-### ncursesw를 찾을 수 없는 경우
+### 터미널 크기가 너무 작다고 나와요
 
-빌드 시 ncursesw 관련 경고가 나타나면:
+터미널 창의 크기를 **120 x 31** 이상으로 조절해주세요. 현재 크기는 화면에 표시됩니다.
+
+### UTF-8 문자가 깨져 보여요
+
+locale 설정을 확인하세요:
+
+```bash
+export LANG=ko_KR.UTF-8
+export LC_ALL=ko_KR.UTF-8
+```
+
+### ncursesw를 찾을 수 없다고 해요
 
 ```bash
 # Ubuntu/Debian
@@ -262,27 +333,73 @@ sudo apt-get install libncursesw5-dev
 sudo dnf install ncurses-devel
 ```
 
-### UTF-8 문자가 제대로 표시되지 않는 경우
+### 빌드가 실패해요
 
-locale 설정 확인:
-
-```bash
-export LANG=ko_KR.UTF-8
-export LC_ALL=ko_KR.UTF-8
-```
-
-### 빌드가 실패하는 경우
-
-클린 빌드 시도:
+클린 빌드를 시도해보세요:
 
 ```bash
 rm -rf build
 ./build_and_run.sh
 ```
 
-## 개발 환경
+### 네트워크 연결이 안 돼요
 
-- 언어: C
-- 빌드 시스템: CMake
-- UI 라이브러리: ncurses (wide character support)
-- 버전: 0.1.0
+1. 호스트와 클라이언트가 같은 네트워크에 있는지 확인
+2. 방화벽에서 포트 7773이 열려 있는지 확인
+3. 외부 네트워크라면 포트포워딩 설정 필요
+
+---
+
+## 프로젝트 구조
+
+```
+gomoku-c/
+├── src/
+│   ├── main.c                 # 프로그램 진입점
+│   ├── game/                  # 게임 로직
+│   │   ├── core/              # 보드, 규칙, 턴 관리
+│   │   ├── ai/                # AI 엔진
+│   │   ├── mode/              # 싱글/멀티/관전 모드
+│   │   └── feature/           # 로거 등 부가 기능
+│   ├── ui/                    # 사용자 인터페이스
+│   │   ├── core/              # UI 핵심, 테마, 입력 처리
+│   │   ├── menu/              # 메뉴 화면
+│   │   └── game/              # 게임 화면 (보드, 채팅, 정보창)
+│   ├── network/               # 네트워크 통신
+│   │   ├── core/              # TCP 소켓, 클라이언트/서버
+│   │   └── messages/          # 프로토콜 메시지
+│   └── utils/                 # 유틸리티 함수
+├── docs/
+│   └── images/                # README 이미지
+├── CMakeLists.txt             # CMake 빌드 설정
+├── build_and_run.sh           # 빌드 및 실행 스크립트
+└── README.md                  # 이 문서
+```
+
+---
+
+## 기여하기
+
+버그 리포트, 기능 제안, Pull Request를 환영합니다!
+
+1. 이 저장소를 Fork 합니다
+2. 새 브랜치를 만듭니다 (`git checkout -b feature/amazing-feature`)
+3. 변경사항을 커밋합니다 (`git commit -m 'feat: Add amazing feature'`)
+4. 브랜치에 Push 합니다 (`git push origin feature/amazing-feature`)
+5. Pull Request를 생성합니다
+
+---
+
+## 라이선스
+
+이 프로젝트는 MIT 라이선스로 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+
+---
+
+<div align="center">
+
+**Gomoku-C** - 터미널에서 즐기는 오목의 재미
+
+Made with C and ncurses
+
+</div>
