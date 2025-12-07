@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - release
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/workflows/**"
 
 jobs:
   build-and-release:
@@ -92,7 +96,10 @@ jobs:
             HASH=$(echo "$line" | cut -d' ' -f1)
             MSG=$(echo "$line" | cut -d' ' -f2-)
 
-            if echo "$MSG" | grep -qiE "^feat(\(.+\))?:"; then
+            # Skip docs-only commits
+            if echo "$MSG" | grep -qiE "^docs(\(.+\))?:"; then
+              continue
+            elif echo "$MSG" | grep -qiE "^feat(\(.+\))?:"; then
               FEATURES="${FEATURES}- ${MSG}\n"
             elif echo "$MSG" | grep -qiE "^fix(\(.+\))?:"; then
               FIXES="${FIXES}- ${MSG}\n"
