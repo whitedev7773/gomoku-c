@@ -467,7 +467,7 @@ static void board_redraw_cell_multiplayer(WINDOW *win, const Board *board,
 
     // board_win 내부 좌표에 맞춤
     int y = 2 + row;
-    int x = 4 + (col * 2);
+    int x = 5 + (col * 2);
 
     Stone stone = board_get_stone(board, row, col);
     bool is_my_cursor = (my_cursor && my_cursor->cursor_row == row && my_cursor->cursor_col == col);
@@ -594,7 +594,7 @@ static void board_draw_multiplayer(WINDOW *win, const Board *board,
     {
         // board_win 내부 좌표에 맞춤
         int y = 2 + row;
-        int x = 4;
+        int x = 5;
 
         wmove(win, y, x);
 
