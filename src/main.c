@@ -19,6 +19,10 @@
 #include "game/feature/replay.h"
 #include "game/ai/ai_engine.h"
 #include "network/core/network.h"
+#include "security/integrity_check.h"
+#include "security/anti_debug.h"
+#include "security/memory_check.h"
+#include "security/security_log.h"
 #include <ncurses.h>
 
 // 터미널 리사이징 감지를 위한 시그널 핸들러
@@ -31,6 +35,86 @@ void handle_sigwinch(int sig)
 
 int main(int argc, char *argv[])
 {
+    // ============================================
+    // Phase 14: 보안 시스템 초기화
+    // ============================================
+
+    // 보안 로그 초기화
+    if (!security_log_init())
+    {
+        fprintf(stderr, "Failed to initialize security logging\n");
+        // 로그 실패는 치명적이지 않으므로 계속 진행
+    }
+
+    security_log_write(SEC_LOG_INFO, SEC_EVENT_STARTUP,
+                       "Gomoku-C starting (PID: %d)", getpid());
+
+    // 1. 실행 파일 무결성 검증
+    IntegrityResult integrity = integrity_verify_self(argv[0]);
+    if (integrity != INTEGRITY_OK && integrity != INTEGRITY_HASH_FILE_MISSING)
+    {
+        fprintf(stderr, "==================================================\n");
+        fprintf(stderr, "SECURITY ALERT: Integrity verification failed!\n");
+        fprintf(stderr, "Result: %s\n", integrity_result_to_string(integrity));
+        fprintf(stderr, "==================================================\n");
+        fprintf(stderr, "\nThis executable has been modified or corrupted.\n");
+        fprintf(stderr, "Please download the official version from:\n");
+        fprintf(stderr, "https://github.com/whitedev7773/gomoku-c/releases\n\n");
+
+        security_log_critical("Program terminated due to integrity failure");
+        return 1;
+    }
+
+    if (integrity == INTEGRITY_HASH_FILE_MISSING)
+    {
+        // 해시 파일이 없는 경우 (개발 버전일 수 있음)
+        security_log_warning("Hash file not found - skipping integrity check (development mode)");
+    }
+
+    // 2. 안티-디버깅 체크
+    // 환경 변수 GOMOKU_SKIP_DEBUG_CHECK=1 설정 시 디버거 체크 건너뛰기
+    const char *skip_debug_check = getenv("GOMOKU_SKIP_DEBUG_CHECK");
+    if (skip_debug_check == NULL || strcmp(skip_debug_check, "1") != 0)
+    {
+        AntiDebugState anti_debug_state;
+        anti_debug_init(&anti_debug_state);
+
+        DebugDetectionType debug_type;
+        if (anti_debug_comprehensive_check(&anti_debug_state, &debug_type))
+        {
+            fprintf(stderr, "==================================================\n");
+            fprintf(stderr, "SECURITY ALERT: Debugger detected!\n");
+            fprintf(stderr, "Detection method: %s\n", anti_debug_type_to_string(debug_type));
+            fprintf(stderr, "==================================================\n");
+            fprintf(stderr, "\nDebugging is not allowed in release builds.\n");
+            fprintf(stderr, "If you need to debug, please use a development build.\n");
+            fprintf(stderr, "To skip this check (development only), set:\n");
+            fprintf(stderr, "  export GOMOKU_SKIP_DEBUG_CHECK=1\n\n");
+
+            security_log_critical("Program terminated due to debugger detection");
+            return 1;
+        }
+    }
+    else
+    {
+        security_log_warning("Debug check skipped (GOMOKU_SKIP_DEBUG_CHECK=1)");
+    }
+
+    // 3. 메모리 무결성 체크 초기화
+    MemoryCheckState memory_check_state;
+    memory_check_init(&memory_check_state);
+
+    // 주요 함수들을 보호 목록에 추가 (예시)
+    // 실제 함수 크기는 수동으로 측정하거나 추정해야 함
+    // memory_check_add_protected_function(&memory_check_state, (void*)main, 256, "main");
+
+    security_log_write(SEC_LOG_INFO, SEC_EVENT_INTEGRITY_CHECK,
+                       "Security initialization completed successfully");
+
+    // ============================================
+    // 기존 초기화 코드
+    // ============================================
+
     // Parse command line arguments
     ParsedArgs args = parse_arguments(argc, argv);
 

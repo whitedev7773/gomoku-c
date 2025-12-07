@@ -15,6 +15,10 @@ else()
     message(WARNING "ncursesw not found, using regular ncurses. UTF-8 characters may not display correctly.")
 endif()
 
+# OpenSSL for SHA256 hashing
+find_package(OpenSSL REQUIRED)
+message(STATUS "Using OpenSSL version: ${OPENSSL_VERSION}")
+
 include_directories(${CURSES_INCLUDE_DIR})
 
 include_directories(include)
@@ -26,6 +30,7 @@ file(GLOB_RECURSE UTIL_FILES "src/utils/*.c")
 file(GLOB_RECURSE GAME_FILES "src/game/*.c")
 file(GLOB_RECURSE UI_FILES "src/ui/*.c")
 file(GLOB_RECURSE NETWORK_FILES "src/network/*.c")
+file(GLOB_RECURSE SECURITY_FILES "src/security/*.c")
 
 # Core game files without singleplay (for tests that don't need UI)
 set(CORE_GAME_FILES
@@ -37,8 +42,8 @@ set(CORE_GAME_FILES
     src/game/ai/ai_engine.c
 )
 
-add_executable(gomoku-c ${SRC_FILES} ${UTIL_FILES} ${GAME_FILES} ${UI_FILES} ${NETWORK_FILES})
-target_link_libraries(gomoku-c ${CURSES_LIBRARIES})
+add_executable(gomoku-c ${SRC_FILES} ${UTIL_FILES} ${GAME_FILES} ${UI_FILES} ${NETWORK_FILES} ${SECURITY_FILES})
+target_link_libraries(gomoku-c ${CURSES_LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
 
 # Test executables
 file(GLOB TEST_PHASE2_FILES "src/test/test_phase2.c")
