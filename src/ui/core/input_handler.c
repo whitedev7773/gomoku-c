@@ -196,6 +196,7 @@ InputEvent input_handler_get_event(InputHandler *handler, WINDOW *win)
             event = process_gamepad_input(handler);
             if (event.action != INPUT_NONE)
             {
+                nodelay(win, FALSE); // 상태 복구
                 return event;
             }
 
@@ -209,6 +210,7 @@ InputEvent input_handler_get_event(InputHandler *handler, WINDOW *win)
                     event.character = (char)key;
                 }
                 event.action = input_map_key_to_action(key);
+                nodelay(win, FALSE); // 상태 복구
                 return event;
             }
 
@@ -229,5 +231,6 @@ InputEvent input_handler_get_event(InputHandler *handler, WINDOW *win)
 
     event.action = input_map_key_to_action(key);
 
+    nodelay(win, FALSE); // 상태 복구
     return event;
 }

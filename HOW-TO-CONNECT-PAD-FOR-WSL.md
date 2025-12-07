@@ -7,7 +7,7 @@
 ### 📄 파일명: `HOW-TO-CONNECT-PAD-FOR-WSL.md`
 
 ````markdown
-# 🎮 WSL2 Xbox 컨트롤러 연결 및 xboxdrv 실행 가이드
+# 🎮 WSL2에서 Xbox 컨트롤러(게임패드) 연결 가이드
 
 이 문서는 윈도우(Host)에 연결된 Xbox 컨트롤러를 WSL2(Linux)로 연결하고, `xboxdrv`를 이용해 인식시키는 전체 절차를 설명합니다.
 
@@ -87,10 +87,30 @@ _(예: `1-2` 또는 `3-4` 같은 숫자를 찾으세요)_
 jstest /dev/input/js0
 ```
 
+---
+
+## ⚠️ 중요: `xboxdrv` 오류 해결법 (uinput 문제)
+
+```bash
+# 대부분의 최신 리눅스는 `xboxdrv` 없이도 `/dev/input/js0` 경로로 컨트롤러 입력을 받을 수 있습니다.
+# 프로젝트(`gomoku-c`) 코드에서 `xboxdrv`에 의존하지 않고 리눅스 표준 조이스틱 입력을 받도록 하는 것이 훨씬 쉽습니다.
+
+# 연결 테스트 명령어:
+sudo apt install joystick
+jstest /dev/input/js0
 ```
 
 ---
 
 ### 💡 팁
+
 이제 이 파일을 프로젝트 폴더에 넣어두고, 패드를 연결할 때마다 **"1단계(attach) → 2단계(modprobe) → 3단계(xboxdrv)"** 순서로 진행하시면 됩니다.
+
+# 추가적인 설정 명령어:
+
+sudo modprobe uinput
+sudo chmod 666 /dev/uinput
+
+```
+
 ```
