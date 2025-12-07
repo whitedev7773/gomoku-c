@@ -271,7 +271,9 @@ void chat_update_autocomplete(ChatUI *chat)
             if (strncmp(chat->input_buffer, COMMANDS[i], strlen(chat->input_buffer)) == 0)
             {
                 // 나머지 부분을 힌트로 표시
-                strcpy(chat->autocomplete_hint, COMMANDS[i] + strlen(chat->input_buffer));
+                const char *remaining = COMMANDS[i] + strlen(chat->input_buffer);
+                strncpy(chat->autocomplete_hint, remaining, MAX_CHAT_MESSAGE_LENGTH);
+                chat->autocomplete_hint[MAX_CHAT_MESSAGE_LENGTH] = '\0';
                 break;
             }
         }

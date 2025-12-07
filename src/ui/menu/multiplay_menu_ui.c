@@ -177,7 +177,7 @@ void connection_input_ui_init(ConnectionInputUI *ui)
         return;
 
     memset(ui->ip_address, 0, MAX_IP_LENGTH);
-    strncpy(ui->port, "7773", MAX_PORT_LENGTH - 1);   // 기본 포트
+    strncpy(ui->port, "7773", MAX_PORT_LENGTH - 1); // 기본 포트
     ui->port[MAX_PORT_LENGTH - 1] = '\0';
     strncpy(ui->name, "Player", MAX_NAME_LENGTH - 1); // 기본 이름
     ui->name[MAX_NAME_LENGTH - 1] = '\0';
@@ -856,7 +856,7 @@ void spectator_input_ui_init(SpectatorInputUI *ui)
         return;
 
     memset(ui->ip_address, 0, MAX_IP_LENGTH);
-    strncpy(ui->port, "7773", MAX_PORT_LENGTH - 1);   // 기본 포트
+    strncpy(ui->port, "7773", MAX_PORT_LENGTH - 1); // 기본 포트
     ui->port[MAX_PORT_LENGTH - 1] = '\0';
     strncpy(ui->name, "Viewer", MAX_NAME_LENGTH - 1); // 기본 이름
     ui->name[MAX_NAME_LENGTH - 1] = '\0';
@@ -2044,7 +2044,8 @@ int spectator_wait_connection(const char *ip, int port, const char *name)
     NetworkManager network;
     if (!network_init_spectator(&network))
     {
-        strcpy(ui.error_message, "Failed to initialize network");
+        strncpy(ui.error_message, "Failed to initialize network", sizeof(ui.error_message) - 1);
+        ui.error_message[sizeof(ui.error_message) - 1] = '\0';
         ui.state = CONNECT_STATE_FAILED;
     }
 
