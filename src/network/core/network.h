@@ -58,6 +58,11 @@ typedef struct
     uint64_t bytes_received;
     uint32_t messages_sent;
     uint32_t messages_received;
+
+    // PING 측정
+    uint64_t ping_last_sent; // 마지막 PING 전송 시간 (ms)
+    int ping_rtt_ms;         // 최근 RTT (ms)
+    bool ping_pending;       // PING 응답 대기 중
 } NetworkManager;
 
 // 초기화 및 정리

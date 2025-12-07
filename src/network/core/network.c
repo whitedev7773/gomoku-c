@@ -26,6 +26,11 @@ bool network_init_server(NetworkManager *net, int port)
     }
     net->spectator_count = 0;
 
+    // PING 초기화
+    net->ping_last_sent = 0;
+    net->ping_rtt_ms = 0;
+    net->ping_pending = false;
+
     // 소켓 생성
     net->socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (net->socket_fd < 0)
@@ -159,6 +164,11 @@ bool network_init_client(NetworkManager *net)
     net->role = NETWORK_CLIENT;
     net->state = NET_DISCONNECTED;
     net->socket_fd = -1;
+
+    // PING 초기화
+    net->ping_last_sent = 0;
+    net->ping_rtt_ms = 0;
+    net->ping_pending = false;
 
     return true;
 }
@@ -420,8 +430,7 @@ void network_set_nonblocking(int socket_fd, bool nonblocking)
 
 int network_get_ping_ms(NetworkManager *net)
 {
-    // TODO: PING/PONG 메시지로 실제 RTT 측정
-    return 0;
+    return net->ping_rtt_ms;
 }
 
 // 관전자 관련 함수들
@@ -432,6 +441,11 @@ bool network_init_spectator(NetworkManager *net)
     net->role = NETWORK_SPECTATOR;
     net->state = NET_DISCONNECTED;
     net->socket_fd = -1;
+
+    // PING 초기화
+    net->ping_last_sent = 0;
+    net->ping_rtt_ms = 0;
+    net->ping_pending = false;
 
     return true;
 }

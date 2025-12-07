@@ -4,6 +4,17 @@
 
 #include "mp_network.h"
 #include <string.h>
+#include <sys/time.h>
+
+// ============================================================================
+// 헬퍼 함수
+// ============================================================================
+
+static uint64_t get_current_time_ms();
+
+// ============================================================================
+// 에러 체크 포함 네트워크 전송
+// ============================================================================
 
 // ============================================================================
 // 에러 체크 포함 네트워크 전송
@@ -264,6 +275,29 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
     }
     break;
 
+    case MSG_PING:
+    {
+        // PING 수신: PONG 응답
+        Message pong_msg;
+        protocol_init_message(&pong_msg, MSG_PONG, game->network.sequence_number++);
+        pong_msg.payload.ping_pong.timestamp = msg.payload.ping_pong.timestamp;
+        mp_send_with_error_check(game, &pong_msg, "sending pong");
+    }
+    break;
+
+    case MSG_PONG:
+    {
+        // PONG 수신: RTT 계산
+        if (game->network.ping_pending)
+        {
+            uint64_t now = get_current_time_ms();
+            uint64_t sent_time = game->network.ping_last_sent;
+            game->network.ping_rtt_ms = (int)(now - sent_time);
+            game->network.ping_pending = false;
+        }
+    }
+    break;
+
     default:
         break;
     }
@@ -421,6 +455,38 @@ void mp_handle_spectator_connections(MultiplayerGame *game)
                     }
                 }
             }
+        }
+    }
+}
+
+// ============================================================================
+// PING 처리
+// ============================================================================
+
+#include <sys/time.h>
+
+static uint64_t get_current_time_ms()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000 + (uint64_t)tv.tv_usec / 1000;
+}
+
+void mp_send_ping_if_needed(MultiplayerGame *game)
+{
+    uint64_t now = get_current_time_ms();
+
+    // 1초마다 PING 전송 (대기 중이 아니면)
+    if (!game->network.ping_pending && (now - game->network.ping_last_sent) >= 1000)
+    {
+        Message ping_msg;
+        protocol_init_message(&ping_msg, MSG_PING, game->network.sequence_number++);
+        ping_msg.payload.ping_pong.timestamp = now;
+
+        if (mp_send_with_error_check(game, &ping_msg, "sending ping"))
+        {
+            game->network.ping_last_sent = now;
+            game->network.ping_pending = true;
         }
     }
 }

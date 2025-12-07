@@ -244,6 +244,7 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
         }
 
         mp_handle_spectator_connections(&game);
+        mp_send_ping_if_needed(&game);
         mp_handle_network_messages(&ui_mgr, &game);
         mp_render_game(&ui_mgr, &game);
 
@@ -478,6 +479,7 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
             game.first_render = true;
         }
 
+        mp_send_ping_if_needed(&game);
         mp_handle_network_messages(&ui_mgr, &game);
         mp_render_game(&ui_mgr, &game);
 

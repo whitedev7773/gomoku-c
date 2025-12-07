@@ -20,6 +20,11 @@ bool mp_send_with_error_check(MultiplayerGame *game, const Message *msg, const c
  */
 bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game);
 
+/**
+ * PING 메시지 전송 (주기적 호출)
+ */
+void mp_send_ping_if_needed(MultiplayerGame *game);
+
 // ============================================================================
 // 관전자 브로드캐스트
 // ============================================================================
