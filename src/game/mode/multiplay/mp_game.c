@@ -80,6 +80,12 @@ void mp_cleanup_game(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *inp
 
 void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
 {
+    // 모달 닫힌 후 전체 재렌더링 시 Border도 다시 그림
+    if (game->first_render)
+    {
+        ingame_border_redraw_all();
+    }
+
     Stone current_player = turn_manager_get_current_player(&game->turn_mgr);
     if (current_player == BLACK)
     {
