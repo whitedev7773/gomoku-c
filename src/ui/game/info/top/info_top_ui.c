@@ -21,9 +21,9 @@ void info_top_opponent(const char *name)
 // 상대방 이름 + 색 표시 - 위치 (49, 1)
 void info_top_opponent_color(const char *name, Stone color)
 {
-    // 영역 클리어 (15칸)
+    // 영역 클리어 (14칸)
     move(1, 49);
-    for (int i = 0; i < 15; i++)
+    for (int i = 0; i < 14; i++)
         addch(' ');
     // 이름만 표시
     mvaddstr(1, 50, name);
