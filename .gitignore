@@ -35,3 +35,6 @@ Makefile
 # OS
 .DS_Store
 Thumbs.db
+
+# setting file
+.gomoku-config
