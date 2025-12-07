@@ -17,7 +17,7 @@ gomoku-c
 !src/test/
 
 # Log files
-*.omk
+*.log
 *.omk
 
 # CMake
