@@ -183,54 +183,30 @@ InputEvent input_handler_get_event(InputHandler *handler, WINDOW *win)
         return event;
     }
 
-    // 게임패드가 연결된 경우 논블로킹 모드로 폴링
+    // 항상 논블로킹 모드로 설정
+    nodelay(win, TRUE);
+
+    // 게임패드 입력 확인 (논블로킹)
     if (handler->gamepad_enabled)
     {
-        // 논블로킹 모드 설정
-        nodelay(win, TRUE);
-
-        // 폴링 루프: 입력이 있을 때까지 반복
-        while (1)
+        event = process_gamepad_input(handler);
+        if (event.action != INPUT_NONE)
         {
-            // 게임패드 입력 먼저 확인
-            event = process_gamepad_input(handler);
-            if (event.action != INPUT_NONE)
-            {
-                nodelay(win, FALSE); // 상태 복구
-                return event;
-            }
-
-            // 키보드 입력 확인 (논블로킹)
-            int key = wgetch(win);
-            if (key != ERR)
-            {
-                event.key_code = key;
-                if (key >= 0 && key < 256)
-                {
-                    event.character = (char)key;
-                }
-                event.action = input_map_key_to_action(key);
-                nodelay(win, FALSE); // 상태 복구
-                return event;
-            }
-
-            // CPU 사용량 관리를 위한 짧은 대기
-            napms(10);
+            return event;
         }
     }
 
-    // 게임패드가 없으면 블로킹 모드로 키보드 입력만 처리
-    nodelay(win, FALSE);
+    // 키보드 입력 확인 (논블로킹)
     int key = wgetch(win);
-    event.key_code = key;
-
-    if (key >= 0 && key < 256)
+    if (key != ERR)
     {
-        event.character = (char)key;
+        event.key_code = key;
+        if (key >= 0 && key < 256)
+        {
+            event.character = (char)key;
+        }
+        event.action = input_map_key_to_action(key);
     }
 
-    event.action = input_map_key_to_action(key);
-
-    nodelay(win, FALSE); // 상태 복구
     return event;
 }

@@ -16,11 +16,12 @@ void difficulty_select_ui_init(DifficultySelectUI *ui)
 
     ui->selected = 0; // Easy가 기본값
     ui->option_count = 2;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void difficulty_select_ui_render(WINDOW *win, const DifficultySelectUI *ui)
+void difficulty_select_ui_render(WINDOW *win, DifficultySelectUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -128,6 +129,8 @@ void difficulty_select_ui_render(WINDOW *win, const DifficultySelectUI *ui)
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void difficulty_select_ui_move(DifficultySelectUI *ui, int direction)
@@ -142,6 +145,8 @@ void difficulty_select_ui_move(DifficultySelectUI *ui, int direction)
         ui->selected = ui->option_count - 1;
     else if (ui->selected >= ui->option_count)
         ui->selected = 0;
+
+    ui->needs_render = true; // 선택 변경으로 렌더링 필요
 }
 
 AIDifficulty difficulty_select_ui_get_selected(const DifficultySelectUI *ui)
@@ -162,11 +167,12 @@ void rule_select_ui_init(RuleSelectUI *ui)
 
     ui->selected = 1; // Renju가 기본값
     ui->option_count = 2;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void rule_select_ui_render(WINDOW *win, const RuleSelectUI *ui)
+void rule_select_ui_render(WINDOW *win, RuleSelectUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -274,6 +280,8 @@ void rule_select_ui_render(WINDOW *win, const RuleSelectUI *ui)
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void rule_select_ui_move(RuleSelectUI *ui, int direction)
@@ -288,6 +296,8 @@ void rule_select_ui_move(RuleSelectUI *ui, int direction)
         ui->selected = ui->option_count - 1;
     else if (ui->selected >= ui->option_count)
         ui->selected = 0;
+
+    ui->needs_render = true; // 선택 변경으로 렌더링 필요
 }
 
 GameRule rule_select_ui_get_selected(const RuleSelectUI *ui)

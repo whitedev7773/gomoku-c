@@ -28,11 +28,12 @@ void multiplay_mode_select_ui_init(MultiplayModeSelectUI *ui)
 
     ui->selected = 0; // Host가 기본값
     ui->option_count = 2;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *ui)
+void multiplay_mode_select_ui_render(WINDOW *win, MultiplayModeSelectUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -144,6 +145,8 @@ void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *u
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void multiplay_mode_select_ui_move(MultiplayModeSelectUI *ui, int direction)
@@ -158,6 +161,8 @@ void multiplay_mode_select_ui_move(MultiplayModeSelectUI *ui, int direction)
         ui->selected = ui->option_count - 1;
     else if (ui->selected >= ui->option_count)
         ui->selected = 0;
+
+    ui->needs_render = true; // 선택 변경으로 렌더링 필요
 }
 
 MultiplayMode multiplay_mode_select_ui_get_selected(const MultiplayModeSelectUI *ui)
@@ -185,11 +190,12 @@ void connection_input_ui_init(ConnectionInputUI *ui)
     ui->port_cursor = 4;
     ui->name_cursor = 6;
     ui->active_field = INPUT_FIELD_IP;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
+void connection_input_ui_render(WINDOW *win, ConnectionInputUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -412,6 +418,8 @@ void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui)
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void connection_input_ui_move_field(ConnectionInputUI *ui, int direction)
@@ -435,6 +443,8 @@ void connection_input_ui_move_field(ConnectionInputUI *ui, int direction)
         else if (ui->active_field == INPUT_FIELD_PORT)
             ui->active_field = INPUT_FIELD_NAME;
     }
+
+    ui->needs_render = true; // 필드 변경으로 렌더링 필요
 }
 
 void connection_input_ui_handle_char(ConnectionInputUI *ui, char ch)
@@ -469,6 +479,8 @@ void connection_input_ui_handle_char(ConnectionInputUI *ui, char ch)
             ui->name[ui->name_cursor] = '\0';
         }
     }
+
+    ui->needs_render = true; // 입력 변경으로 렌더링 필요
 }
 
 void connection_input_ui_handle_backspace(ConnectionInputUI *ui)
@@ -500,6 +512,8 @@ void connection_input_ui_handle_backspace(ConnectionInputUI *ui)
             ui->name[ui->name_cursor] = '\0';
         }
     }
+
+    ui->needs_render = true; // 입력 변경으로 렌더링 필요
 }
 
 bool connection_input_ui_is_valid(const ConnectionInputUI *ui)
@@ -561,11 +575,12 @@ void host_settings_ui_init(HostSettingsUI *ui)
     strncpy(ui->name, "Host", MAX_NAME_LENGTH - 1); // 기본 이름
     ui->name[MAX_NAME_LENGTH - 1] = '\0';
     ui->name_cursor = 4;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui)
+void host_settings_ui_render(WINDOW *win, HostSettingsUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -649,6 +664,8 @@ void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui)
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void host_settings_ui_handle_char(HostSettingsUI *ui, char ch)
@@ -707,11 +724,12 @@ void multiplay_rule_select_ui_init(MultiplayRuleSelectUI *ui)
 
     ui->selected = 1; // Renju가 기본값
     ui->option_count = 2;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void multiplay_rule_select_ui_render(WINDOW *win, const MultiplayRuleSelectUI *ui)
+void multiplay_rule_select_ui_render(WINDOW *win, MultiplayRuleSelectUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -823,6 +841,8 @@ void multiplay_rule_select_ui_render(WINDOW *win, const MultiplayRuleSelectUI *u
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void multiplay_rule_select_ui_move(MultiplayRuleSelectUI *ui, int direction)
@@ -837,6 +857,8 @@ void multiplay_rule_select_ui_move(MultiplayRuleSelectUI *ui, int direction)
         ui->selected = ui->option_count - 1;
     else if (ui->selected >= ui->option_count)
         ui->selected = 0;
+
+    ui->needs_render = true; // 선택 변경으로 렌더링 필요
 }
 
 GameRule multiplay_rule_select_ui_get_selected(const MultiplayRuleSelectUI *ui)
@@ -864,11 +886,12 @@ void spectator_input_ui_init(SpectatorInputUI *ui)
     ui->port_cursor = 4;
     ui->name_cursor = 6;
     ui->active_field = SPECTATOR_FIELD_IP;
+    ui->needs_render = true; // 초기 렌더링 필요
 }
 
-void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
+void spectator_input_ui_render(WINDOW *win, SpectatorInputUI *ui)
 {
-    if (!win || !ui)
+    if (!win || !ui || !ui->needs_render)
         return;
 
     wclear(win);
@@ -1091,6 +1114,8 @@ void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui)
     wattroff(win, COLOR_PAIR(COLOR_PAIR_DIM));
 
     wrefresh(win);
+
+    ui->needs_render = false; // 렌더링 완료
 }
 
 void spectator_input_ui_move_field(SpectatorInputUI *ui, int direction)
@@ -1114,6 +1139,8 @@ void spectator_input_ui_move_field(SpectatorInputUI *ui, int direction)
         else if (ui->active_field == SPECTATOR_FIELD_PORT)
             ui->active_field = SPECTATOR_FIELD_NAME;
     }
+
+    ui->needs_render = true; // 필드 변경으로 렌더링 필요
 }
 
 void spectator_input_ui_handle_char(SpectatorInputUI *ui, char ch)
@@ -1148,6 +1175,8 @@ void spectator_input_ui_handle_char(SpectatorInputUI *ui, char ch)
             ui->name[ui->name_cursor] = '\0';
         }
     }
+
+    ui->needs_render = true; // 입력 변경으로 렌더링 필요
 }
 
 void spectator_input_ui_handle_backspace(SpectatorInputUI *ui)
@@ -1179,6 +1208,8 @@ void spectator_input_ui_handle_backspace(SpectatorInputUI *ui)
             ui->name[ui->name_cursor] = '\0';
         }
     }
+
+    ui->needs_render = true; // 입력 변경으로 렌더링 필요
 }
 
 bool spectator_input_ui_is_valid(const SpectatorInputUI *ui)

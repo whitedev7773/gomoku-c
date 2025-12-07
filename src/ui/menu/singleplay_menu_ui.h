@@ -9,22 +9,24 @@
 // 난이도 선택 UI
 typedef struct
 {
-    int selected;     // 0: Easy, 1: Hard
-    int option_count; // 2
+    int selected;      // 0: Easy, 1: Hard
+    int option_count;  // 2
+    bool needs_render; // 렌더링 필요 여부
 } DifficultySelectUI;
 
 // 규칙 선택 UI
 typedef struct
 {
-    int selected;     // 0: Standard, 1: Renju
-    int option_count; // 2
+    int selected;      // 0: Standard, 1: Renju
+    int option_count;  // 2
+    bool needs_render; // 렌더링 필요 여부
 } RuleSelectUI;
 
 // 난이도 선택 UI 초기화
 void difficulty_select_ui_init(DifficultySelectUI *ui);
 
 // 난이도 선택 UI 렌더링
-void difficulty_select_ui_render(WINDOW *win, const DifficultySelectUI *ui);
+void difficulty_select_ui_render(WINDOW *win, DifficultySelectUI *ui);
 
 // 난이도 선택 이동 (좌우/상하 지원)
 void difficulty_select_ui_move(DifficultySelectUI *ui, int direction);
@@ -36,7 +38,7 @@ AIDifficulty difficulty_select_ui_get_selected(const DifficultySelectUI *ui);
 void rule_select_ui_init(RuleSelectUI *ui);
 
 // 규칙 선택 UI 렌더링
-void rule_select_ui_render(WINDOW *win, const RuleSelectUI *ui);
+void rule_select_ui_render(WINDOW *win, RuleSelectUI *ui);
 
 // 규칙 선택 이동 (좌우/상하 지원)
 void rule_select_ui_move(RuleSelectUI *ui, int direction);

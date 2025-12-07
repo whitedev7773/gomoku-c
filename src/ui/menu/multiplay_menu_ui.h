@@ -18,8 +18,9 @@ typedef enum
 
 typedef struct
 {
-    int selected;     // 0: Host, 1: Join
-    int option_count; // 2
+    int selected;      // 0: Host, 1: Join
+    int option_count;  // 2
+    bool needs_render; // 렌더링 필요 여부
 } MultiplayModeSelectUI;
 
 // 연결 정보 입력 UI (IP + PORT + Name 한 화면)
@@ -39,6 +40,7 @@ typedef struct
     int port_cursor;                   // PORT 입력 커서 위치
     int name_cursor;                   // Name 입력 커서 위치
     ConnectionInputField active_field; // 현재 활성 필드 (0: IP, 1: PORT, 2: Name)
+    bool needs_render;                 // 렌더링 필요 여부
 } ConnectionInputUI;
 
 // HOST 설정 입력 UI (Name만)
@@ -46,13 +48,15 @@ typedef struct
 {
     char name[MAX_NAME_LENGTH];
     int name_cursor;
+    bool needs_render; // 렌더링 필요 여부
 } HostSettingsUI;
 
 // 규칙 선택 UI (호스트용)
 typedef struct
 {
-    int selected;     // 0: Standard, 1: Renju
-    int option_count; // 2
+    int selected;      // 0: Standard, 1: Renju
+    int option_count;  // 2
+    bool needs_render; // 렌더링 필요 여부
 } MultiplayRuleSelectUI;
 
 // 관전자 연결 정보 입력 UI (IP + PORT + Name)
@@ -72,6 +76,7 @@ typedef struct
     int port_cursor;
     int name_cursor;
     SpectatorInputField active_field;
+    bool needs_render; // 렌더링 필요 여부
 } SpectatorInputUI;
 
 // 연결 대기 UI 상태
@@ -112,7 +117,7 @@ typedef struct
 // HOST/JOIN 선택 UI 함수
 // ==========================================
 void multiplay_mode_select_ui_init(MultiplayModeSelectUI *ui);
-void multiplay_mode_select_ui_render(WINDOW *win, const MultiplayModeSelectUI *ui);
+void multiplay_mode_select_ui_render(WINDOW *win, MultiplayModeSelectUI *ui);
 void multiplay_mode_select_ui_move(MultiplayModeSelectUI *ui, int direction);
 MultiplayMode multiplay_mode_select_ui_get_selected(const MultiplayModeSelectUI *ui);
 
@@ -120,7 +125,7 @@ MultiplayMode multiplay_mode_select_ui_get_selected(const MultiplayModeSelectUI 
 // 연결 정보 입력 UI 함수 (JOIN/CLIENT용)
 // ==========================================
 void connection_input_ui_init(ConnectionInputUI *ui);
-void connection_input_ui_render(WINDOW *win, const ConnectionInputUI *ui);
+void connection_input_ui_render(WINDOW *win, ConnectionInputUI *ui);
 void connection_input_ui_move_field(ConnectionInputUI *ui, int direction);
 void connection_input_ui_handle_char(ConnectionInputUI *ui, char ch);
 void connection_input_ui_handle_backspace(ConnectionInputUI *ui);
@@ -133,7 +138,7 @@ const char *connection_input_ui_get_name(const ConnectionInputUI *ui);
 // HOST 설정 입력 UI 함수
 // ==========================================
 void host_settings_ui_init(HostSettingsUI *ui);
-void host_settings_ui_render(WINDOW *win, const HostSettingsUI *ui);
+void host_settings_ui_render(WINDOW *win, HostSettingsUI *ui);
 void host_settings_ui_handle_char(HostSettingsUI *ui, char ch);
 void host_settings_ui_handle_backspace(HostSettingsUI *ui);
 bool host_settings_ui_is_valid(const HostSettingsUI *ui);
@@ -143,7 +148,7 @@ const char *host_settings_ui_get_name(const HostSettingsUI *ui);
 // 규칙 선택 UI 함수 (HOST용)
 // ==========================================
 void multiplay_rule_select_ui_init(MultiplayRuleSelectUI *ui);
-void multiplay_rule_select_ui_render(WINDOW *win, const MultiplayRuleSelectUI *ui);
+void multiplay_rule_select_ui_render(WINDOW *win, MultiplayRuleSelectUI *ui);
 void multiplay_rule_select_ui_move(MultiplayRuleSelectUI *ui, int direction);
 GameRule multiplay_rule_select_ui_get_selected(const MultiplayRuleSelectUI *ui);
 
@@ -151,7 +156,7 @@ GameRule multiplay_rule_select_ui_get_selected(const MultiplayRuleSelectUI *ui);
 // 관전자 입력 UI 함수
 // ==========================================
 void spectator_input_ui_init(SpectatorInputUI *ui);
-void spectator_input_ui_render(WINDOW *win, const SpectatorInputUI *ui);
+void spectator_input_ui_render(WINDOW *win, SpectatorInputUI *ui);
 void spectator_input_ui_move_field(SpectatorInputUI *ui, int direction);
 void spectator_input_ui_handle_char(SpectatorInputUI *ui, char ch);
 void spectator_input_ui_handle_backspace(SpectatorInputUI *ui);
