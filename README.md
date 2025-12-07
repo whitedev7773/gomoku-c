@@ -143,7 +143,7 @@ cd gomoku-c
 ./build/gomoku-c
 ```
 
-![메뉴 선택 화면](docs/images/menu_select.png)
+![메뉴 선택 화면](docs/images/main_menu.png)
 
 ### 명령줄 옵션으로 바로 시작
 
