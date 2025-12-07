@@ -188,7 +188,7 @@ int multiplayer_run_host(int port, GameRule rule, const char *player_name)
 
     clear();
     attron(COLOR_PAIR(3) | A_BOLD);
-    mvprintw(LINES / 2 - 1, (COLS - 18) / 2, "PLAYER CONNECTED!");
+    mvprintw(LINES / 2 - 1, (COLS - 18) / 2, "CONNECTED TO SERVER!");
     attroff(COLOR_PAIR(3) | A_BOLD);
 
     attron(COLOR_PAIR(2));
@@ -347,23 +347,22 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
         return -1;
     }
 
-    // CLI 모드에서만 printf 사용 (TUI에서 호출 시 주석 처리)
-    // printf("=== GOMOKU MULTIPLAYER - CLIENT ===\n");
-    // printf("Connecting to %s:%d...\n", server_ip, port);
+    // ncurses 초기화 (연결 시도 UI용)
+    initscr();
+    start_color();
+    cbreak();
+    noecho();
+    curs_set(0);
+    nodelay(stdscr, TRUE); // non-blocking 입력
 
+    // 테마 초기화
+    ThemeType saved_theme = theme_load_from_config();
+    theme_init(saved_theme);
+
+    // 연결 시도
     if (!network_client_connect(&game.network, server_ip, port))
     {
         // 연결 실패 화면 표시
-        initscr();
-        start_color();
-        cbreak();
-        noecho();
-        curs_set(0);
-
-        // 테마 초기화
-        ThemeType saved_theme = theme_load_from_config();
-        theme_init(saved_theme);
-
         clear();
 
         // 타이틀
@@ -391,6 +390,135 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
         return -1;
     }
 
+    // 연결 대기 화면
+    const char *spinner[] = {"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"};
+    const int spinner_frames = 10;
+    int frame = 0;
+    time_t start_time = time(NULL);
+    bool connected = false;
+    bool cancelled = false;
+
+    while (!connected && !cancelled)
+    {
+        // 연결 상태 확인
+        if (network_client_check_connection(&game.network))
+        {
+            connected = true;
+            break;
+        }
+
+        // 타임아웃 체크 (10초)
+        if (time(NULL) - start_time > 10)
+        {
+            cancelled = true;
+            break;
+        }
+
+        // 키 입력 확인 (취소)
+        int ch = getch();
+        if (ch == 'q' || ch == 'Q' || ch == 27) // ESC
+        {
+            cancelled = true;
+            break;
+        }
+
+        // 화면 렌더링
+        clear();
+
+        menu_ui_draw_logo(stdscr);
+
+        // 전체 터미널을 채우는 border box 그리기 (100x31)
+        int box_width = 100;
+        int box_height = 31;
+        int box_start_x = 0;
+        int box_start_y = 0;
+
+        // 테두리 색상
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        // 상단 테두리
+        mvprintw(box_start_y, box_start_x, "┏");
+        for (int i = 1; i < box_width - 1; i++)
+            mvprintw(box_start_y, box_start_x + i, "━");
+        mvprintw(box_start_y, box_start_x + box_width - 1, "┓");
+
+        // 측면 테두리
+        for (int i = 1; i < box_height - 1; i++)
+        {
+            mvprintw(box_start_y + i, box_start_x, "┃");
+            mvprintw(box_start_y + i, box_start_x + box_width - 1, "┃");
+        }
+
+        // 하단 테두리
+        mvprintw(box_start_y + box_height - 1, box_start_x, "┗");
+        for (int i = 1; i < box_width - 1; i++)
+            mvprintw(box_start_y + box_height - 1, box_start_x + i, "━");
+        mvprintw(box_start_y + box_height - 1, box_start_x + box_width - 1, "┛");
+
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        // 서버 정보 박스 (중앙)
+        int info_box_width = 60;
+        int info_box_height = 12;
+        int info_box_start_x = box_start_x + (box_width - info_box_width) / 2;
+        int info_box_start_y = box_start_y + 15;
+
+        // 정보 박스 테두리
+        mvprintw(info_box_start_y, info_box_start_x, "┌");
+        for (int i = 1; i < info_box_width - 1; i++)
+            mvprintw(info_box_start_y, info_box_start_x + i, "─");
+        mvprintw(info_box_start_y, info_box_start_x + info_box_width - 1, "┐");
+
+        for (int i = 1; i < info_box_height - 1; i++)
+        {
+            mvprintw(info_box_start_y + i, info_box_start_x, "│");
+            mvprintw(info_box_start_y + i, info_box_start_x + info_box_width - 1, "│");
+        }
+
+        mvprintw(info_box_start_y + info_box_height - 1, info_box_start_x, "└");
+        for (int i = 1; i < info_box_width - 1; i++)
+            mvprintw(info_box_start_y + info_box_height - 1, info_box_start_x + i, "─");
+        mvprintw(info_box_start_y + info_box_height - 1, info_box_start_x + info_box_width - 1, "┘");
+
+        // 서버 정보 내용
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+        mvprintw(info_box_start_y + 1, info_box_start_x + 2, "Client Mode: Connecting to Server");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT) | A_BOLD);
+
+        attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+        mvprintw(info_box_start_y + 3, info_box_start_x + 2, "Server IP: %s", server_ip);
+        mvprintw(info_box_start_y + 4, info_box_start_x + 2, "Port: %d", port);
+        mvprintw(info_box_start_y + 5, info_box_start_x + 2, "Player: %s", player_name);
+        mvprintw(info_box_start_y + 6, info_box_start_x + 2, "Rule: %s", rule == RULE_STANDARD ? "Standard" : "Renju");
+        attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
+
+        // 스피너와 대기 메시지
+        attron(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+        mvprintw(info_box_start_y + 8, info_box_start_x + (info_box_width - 2) / 2, "%s", spinner[frame]);
+        mvprintw(info_box_start_y + 9, info_box_start_x + (info_box_width - 20) / 2, "Connecting...");
+        attroff(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
+
+        // 안내 메시지 (하단)
+        attron(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_DIM);
+        mvprintw(box_start_y + box_height - 3, box_start_x + (box_width - 24) / 2, "Press Q or ESC to cancel");
+        attroff(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_DIM);
+
+        refresh();
+
+        // 애니메이션 업데이트
+        frame = (frame + 1) % spinner_frames;
+
+        usleep(100000); // 100ms
+    }
+
+    endwin();
+
+    if (cancelled || !connected)
+    {
+        network_cleanup(&game.network);
+        return -1;
+    }
+
     // printf("Connected to server!\n");
 
     // 플레이어 정보 설정 (TUI에서 받은 닉네임 사용)
@@ -404,7 +532,6 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
     // 연결 승인 대기
     Message msg;
     int attempts = 0;
-    bool connected = false;
     while (attempts < 50)
     {
         int result = network_receive_message(&game.network, &msg);

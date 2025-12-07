@@ -77,6 +77,7 @@ void network_get_local_ip(char *ip_buffer, size_t buffer_size);
 
 // 클라이언트 함수
 bool network_client_connect(NetworkManager *net, const char *server_ip, int port);
+bool network_client_check_connection(NetworkManager *net);
 
 // 관전자 함수
 bool network_init_spectator(NetworkManager *net);

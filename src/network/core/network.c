@@ -188,6 +188,10 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
         return false;
     }
 
+    // 논블로킹 모드 설정
+    int flags = fcntl(net->socket_fd, F_GETFL, 0);
+    fcntl(net->socket_fd, F_SETFL, flags | O_NONBLOCK);
+
     // TCP_NODELAY 설정
     int opt = 1;
     setsockopt(net->socket_fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
@@ -206,9 +210,10 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
         return false;
     }
 
-    // 연결
+    // 연결 시도 (논블로킹)
     net->state = NET_CONNECTING;
-    if (connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    int connect_result = connect(net->socket_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (connect_result < 0 && errno != EINPROGRESS)
     {
         perror("connect");
         close(net->socket_fd);
@@ -217,11 +222,70 @@ bool network_client_connect(NetworkManager *net, const char *server_ip, int port
         return false;
     }
 
+    // EINPROGRESS이면 연결 진행 중
+    if (connect_result < 0 && errno == EINPROGRESS)
+    {
+        net->state = NET_CONNECTING;
+    }
+    else if (connect_result == 0)
+    {
+        // 즉시 연결 성공
+        fcntl(net->socket_fd, F_SETFL, flags); // 블로킹 모드로 복원
+        net->state = NET_CONNECTED;
+    }
+
     strncpy(net->remote_ip, server_ip, sizeof(net->remote_ip) - 1);
     net->remote_port = port;
-    net->state = NET_CONNECTED;
 
     return true;
+}
+
+bool network_client_check_connection(NetworkManager *net)
+{
+    if (net->state != NET_CONNECTING)
+    {
+        return net->state == NET_CONNECTED;
+    }
+
+    fd_set write_fds;
+    struct timeval timeout;
+    FD_ZERO(&write_fds);
+    FD_SET(net->socket_fd, &write_fds);
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    int select_result = select(net->socket_fd + 1, NULL, &write_fds, NULL, &timeout);
+    if (select_result > 0)
+    {
+        // 연결 성공 확인
+        int error;
+        socklen_t len = sizeof(error);
+        getsockopt(net->socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+        if (error == 0)
+        {
+            // 블로킹 모드로 복원
+            int flags = fcntl(net->socket_fd, F_GETFL, 0);
+            fcntl(net->socket_fd, F_SETFL, flags & ~O_NONBLOCK);
+            net->state = NET_CONNECTED;
+            return true;
+        }
+        else
+        {
+            net->state = NET_ERROR;
+            return false;
+        }
+    }
+    else if (select_result == 0)
+    {
+        // 아직 연결 중
+        return false;
+    }
+    else
+    {
+        // 에러
+        net->state = NET_ERROR;
+        return false;
+    }
 }
 
 void network_cleanup(NetworkManager *net)
