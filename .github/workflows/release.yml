@@ -1,0 +1,160 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential libncursesw5-dev
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Calculate next version
+        id: version
+        run: |
+          # Get latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $LATEST_TAG"
+
+          # Extract version numbers
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+
+          # Get commits since last tag
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --oneline)
+          else
+            COMMITS=$(git log ${LATEST_TAG}..HEAD --oneline)
+          fi
+
+          # Determine version bump based on commit messages
+          if echo "$COMMITS" | grep -qiE "^[a-f0-9]+ (BREAKING|breaking|!:)"; then
+            # Major version bump for breaking changes
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif echo "$COMMITS" | grep -qiE "^[a-f0-9]+ feat"; then
+            # Minor version bump for new features
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            # Patch version bump for fixes and other changes
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "previous_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          PREVIOUS_TAG="${{ steps.version.outputs.previous_tag }}"
+
+          # Get commits since last tag
+          if [ "$PREVIOUS_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"%h %s" --reverse)
+          else
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"%h %s" --reverse)
+          fi
+
+          # Categorize commits
+          FEATURES=""
+          FIXES=""
+          ENHANCEMENTS=""
+          OTHERS=""
+
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then continue; fi
+
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+
+            if echo "$MSG" | grep -qiE "^feat(\(.+\))?:"; then
+              FEATURES="${FEATURES}- ${MSG}\n"
+            elif echo "$MSG" | grep -qiE "^fix(\(.+\))?:"; then
+              FIXES="${FIXES}- ${MSG}\n"
+            elif echo "$MSG" | grep -qiE "^(enhance|improvement|update|refactor)(\(.+\))?:"; then
+              ENHANCEMENTS="${ENHANCEMENTS}- ${MSG}\n"
+            else
+              OTHERS="${OTHERS}- ${MSG}\n"
+            fi
+          done <<< "$COMMITS"
+
+          # Build release notes
+          NOTES="## What's Changed\n\n"
+
+          if [ -n "$FEATURES" ]; then
+            NOTES="${NOTES}### New Features\n${FEATURES}\n"
+          fi
+
+          if [ -n "$FIXES" ]; then
+            NOTES="${NOTES}### Bug Fixes\n${FIXES}\n"
+          fi
+
+          if [ -n "$ENHANCEMENTS" ]; then
+            NOTES="${NOTES}### Improvements\n${ENHANCEMENTS}\n"
+          fi
+
+          if [ -n "$OTHERS" ]; then
+            NOTES="${NOTES}### Other Changes\n${OTHERS}\n"
+          fi
+
+          # Add installation instructions
+          NOTES="${NOTES}---\n\n"
+          NOTES="${NOTES}## Installation\n"
+          NOTES="${NOTES}1. Download \`gomoku-c-linux-x86_64.tar.gz\`\n"
+          NOTES="${NOTES}2. Extract: \`tar -xzvf gomoku-c-linux-x86_64.tar.gz\`\n"
+          NOTES="${NOTES}3. Run: \`./gomoku-c\`\n\n"
+          NOTES="${NOTES}### Requirements\n"
+          NOTES="${NOTES}- Linux x86_64\n"
+          NOTES="${NOTES}- ncursesw library (\`sudo apt-get install libncursesw5\`)\n"
+
+          # Save to file (to handle multiline)
+          echo -e "$NOTES" > release_notes.md
+          echo "Generated release notes"
+
+      - name: Get release date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Create release package
+        run: |
+          mkdir -p release-package
+          cp build/gomoku-c release-package/
+          cp README.md release-package/ 2>/dev/null || true
+          cd release-package
+          tar -czvf ../gomoku-c-linux-x86_64.tar.gz .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Gomoku v${{ steps.version.outputs.version }} (${{ steps.date.outputs.date }})
+          body_path: release_notes.md
+          files: |
+            gomoku-c-linux-x86_64.tar.gz
+          draft: false
+          prerelease: false
