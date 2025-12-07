@@ -24,6 +24,13 @@
 
 ![메인 메뉴 스크린샷](docs/images/main_menu.png)
 
+## Team. OmokLens 팀원 소개
+
+| [<img src="https://github.com/ahapwhs0414.png" width="150">](https://github.com/ahapwhs0414) | [<img src="https://github.com/whitedev7773.png" width="150">](https://github.com/whitedev7773) |
+| :------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------: |
+|                         **[권선우](https://github.com/ahapwhs0414)**                         |                         **[장기원](https://github.com/whitedev7773)**                          |
+|                                       기획 / 개발보조                                        |                                       개발 / TUI 디자인                                        |
+
 ### 왜 Gomoku-C인가요?
 
 - **설치가 간단합니다** - 몇 줄의 명령어로 바로 플레이 가능
