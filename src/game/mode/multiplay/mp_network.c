@@ -321,9 +321,11 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
         if (game->network.ping_pending)
         {
             uint64_t now = get_current_time_ms();
-            uint64_t sent_time = game->network.ping_last_sent;
-            game->network.ping_rtt_ms = (int)(now - sent_time);
+            int rtt = (int)(now - game->network.ping_last_sent);
+            game->network.ping_rtt_ms = rtt;
             game->network.ping_pending = false;
+            // PING 값이 변경되었으므로 UI 업데이트 플래그 설정
+            ui_render_flags_set(&ui_mgr->render_flags, RENDER_INFO);
         }
     }
     break;

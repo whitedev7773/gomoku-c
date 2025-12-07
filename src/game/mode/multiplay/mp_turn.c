@@ -30,6 +30,9 @@ void mp_move_cursor_and_send(MultiplayerGame *game, UIRenderFlags *render_flags,
 
 bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *input_handler)
 {
+    // PING 전송 (주기적)
+    mp_send_ping_if_needed(game);
+
     // 모달 처리
     if (modal_ui_is_active(&game->modal_ui))
     {
@@ -152,6 +155,9 @@ bool mp_handle_my_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *i
 
 void mp_handle_opponent_turn(UIManager *ui_mgr, MultiplayerGame *game, InputHandler *input_handler)
 {
+    // PING 전송 (주기적)
+    mp_send_ping_if_needed(game);
+
     // 모달 처리
     if (modal_ui_is_active(&game->modal_ui))
     {

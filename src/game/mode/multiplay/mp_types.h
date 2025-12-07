@@ -68,6 +68,12 @@ typedef struct
 
     // 게임 시간 추적
     time_t game_start_time;
+
+    // PING 측정
+    int ping_ms;
+    int prev_ping_ms; // 이전 PING 값 (변경 감지용)
+    uint64_t last_ping_sent;
+    bool ping_pending;
 } MultiplayerGame;
 
 // ============================================================================

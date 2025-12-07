@@ -42,6 +42,12 @@ bool mp_init_game_ui(UIManager *ui_mgr, MultiplayerGame *game, GameRule rule)
     // 게임 시작 시간 설정
     game->game_start_time = time(NULL);
 
+    // PING 초기화
+    game->ping_ms = -1;      // 측정 전 -1
+    game->prev_ping_ms = -1; // 이전 값 초기화
+    game->last_ping_sent = 0;
+    game->ping_pending = false;
+
     // 로거 초기화
     if (!logger_init(&game->logger))
     {
@@ -135,6 +141,20 @@ void mp_render_game(UIManager *ui_mgr, MultiplayerGame *game)
         wrefresh(ui_mgr->system_log_win);
     }
     log_render_sel(ui_mgr->system_log_win, &game->log_ui, render_flags, game->first_render, 0, 0);
+
+    // 상단 Info 표시
+    if (game->first_render)
+    {
+        info_top_opponent(game->opponent.name);
+        info_top_port(game->network.port > 0 ? game->network.port : game->network.remote_port);
+    }
+
+    // PING 변경 시에만 업데이트
+    if (game->first_render || game->ping_ms != game->prev_ping_ms)
+    {
+        game->prev_ping_ms = game->ping_ms;
+        info_top_ping(game->ping_ms);
+    }
 
     game->first_render = false;
 
