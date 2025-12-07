@@ -49,7 +49,7 @@ void multiplay_mode_select_ui_render(WINDOW *win, MultiplayModeSelectUI *ui)
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 2, (max_x - 26) / 2, "╔═══════════════════════╗");
-    mvwprintw(win, 3, (max_x - 26) / 2, "║  MULTIPLAYER MODE     ║");
+    mvwprintw(win, 3, (max_x - 26) / 2, "║   MULTIPLAYER  MODE   ║");
     mvwprintw(win, 4, (max_x - 26) / 2, "╚═══════════════════════╝");
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
@@ -596,7 +596,7 @@ void host_settings_ui_render(WINDOW *win, HostSettingsUI *ui)
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 2, (max_x - 26) / 2, "╔═══════════════════════╗");
-    mvwprintw(win, 3, (max_x - 26) / 2, "║   HOST GAME (LAN)     ║");
+    mvwprintw(win, 3, (max_x - 26) / 2, "║    HOST GAME  (LAN)   ║");
     mvwprintw(win, 4, (max_x - 26) / 2, "╚═══════════════════════╝");
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
@@ -745,7 +745,7 @@ void multiplay_rule_select_ui_render(WINDOW *win, MultiplayRuleSelectUI *ui)
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 2, (max_x - 26) / 2, "╔═══════════════════════╗");
-    mvwprintw(win, 3, (max_x - 26) / 2, "║  SELECT GAME RULE     ║");
+    mvwprintw(win, 3, (max_x - 26) / 2, "║    SELECT GAME RULE   ║");
     mvwprintw(win, 4, (max_x - 26) / 2, "╚═══════════════════════╝");
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
@@ -907,7 +907,7 @@ void spectator_input_ui_render(WINDOW *win, SpectatorInputUI *ui)
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 2, (max_x - 26) / 2, "╔═══════════════════════╗");
-    mvwprintw(win, 3, (max_x - 26) / 2, "║   SPECTATOR MODE      ║");
+    mvwprintw(win, 3, (max_x - 26) / 2, "║    SPECTATOR  MODE    ║");
     mvwprintw(win, 4, (max_x - 26) / 2, "╚═══════════════════════╝");
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
@@ -2272,7 +2272,7 @@ void host_wait_ui_render(WINDOW *win, const HostWaitUI *ui)
     // 타이틀
     wattron(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
     mvwprintw(win, 2, (max_x - 26) / 2, "╔═══════════════════════╗");
-    mvwprintw(win, 3, (max_x - 26) / 2, "║    HOST GAME (LAN)    ║");
+    mvwprintw(win, 3, (max_x - 26) / 2, "║    HOST GAME  (LAN)   ║");
     mvwprintw(win, 4, (max_x - 26) / 2, "╚═══════════════════════╝");
     wattroff(win, A_BOLD | COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
