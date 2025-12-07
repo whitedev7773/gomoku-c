@@ -12,6 +12,8 @@ typedef enum
 {
     MODAL_NONE = 0,
     MODAL_GIVEUP,          // 기권 확인
+    MODAL_GIVEUP_REQUEST,  // 기권 요청
+    MODAL_GIVEUP_RESPONSE, // 기권 응답
     MODAL_UNDO_REQUEST,    // 무르기 요청
     MODAL_UNDO_RESPONSE,   // 무르기 응답
     MODAL_GAME_RESULT,     // 게임 결과

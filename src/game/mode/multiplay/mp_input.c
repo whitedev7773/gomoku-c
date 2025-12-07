@@ -24,27 +24,23 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
     switch (result)
     {
     case MODAL_RESULT_YES:
-        // 기권 확정
+        // 기권 요청 전송
         if (game->modal_ui.type == MODAL_GIVEUP)
         {
-            game->game_over = true;
-            game->result = (game->me.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
             modal_ui_close(&game->modal_ui);
 
-            // 기권 메시지 전송
+            // 기권 요청 메시지 전송
             Message msg;
             protocol_init_message(&msg, MSG_COMMAND, game->network.sequence_number++);
             msg.payload.command.command_type = CMD_GIVEUP;
-            mp_send_with_error_check(game, &msg, "sending giveup");
+            mp_send_with_error_check(game, &msg, "sending giveup request");
 
-            // 관전자에게 기권 결과 전송
-            char giveup_msg[128];
-            snprintf(giveup_msg, sizeof(giveup_msg), "%s gave up. %s wins!",
-                     game->me.name, game->opponent.name);
-            uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
-            mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, game->opponent.name, giveup_msg);
+            char modal_msg[MODAL_MAX_MESSAGE_LENGTH];
+            snprintf(modal_msg, sizeof(modal_msg), "Waiting for opponent's response...");
+            modal_ui_show(&game->modal_ui, MODAL_GIVEUP_REQUEST, modal_msg);
+            chat_add_msg(&game->chat_ui, "Giveup request sent", CHAT_MSG_SYSTEM);
 
-            ret = MP_MODAL_GAME_OVER;
+            ret = MP_MODAL_CLOSED;
         }
         break;
 
@@ -94,6 +90,31 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
             game->first_render = true;
             ret = MP_MODAL_CLOSED;
         }
+        else if (game->modal_ui.type == MODAL_GIVEUP_RESPONSE)
+        {
+            game->game_over = true;
+            game->result = (game->opponent.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+
+            Message msg;
+            protocol_init_message(&msg, MSG_COMMAND_RESPONSE, game->network.sequence_number++);
+            msg.payload.command_response.command_type = CMD_GIVEUP;
+            msg.payload.command_response.accepted = 1;
+            strncpy(msg.payload.command_response.message, "Giveup accepted", sizeof(msg.payload.command_response.message) - 1);
+            network_send_message(&game->network, &msg);
+
+            modal_ui_close(&game->modal_ui);
+            char giveup_msg[128];
+            snprintf(giveup_msg, sizeof(giveup_msg), "%s gave up. %s wins!",
+                     game->opponent.name, game->me.name);
+            modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, giveup_msg);
+            chat_add_msg(&game->chat_ui, giveup_msg, CHAT_MSG_SYSTEM);
+
+            // 관전자에게 기권 결과 전송
+            uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+            mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, game->me.name, giveup_msg);
+
+            ret = MP_MODAL_GAME_OVER;
+        }
         break;
 
     case MODAL_RESULT_DECLINE:
@@ -117,6 +138,16 @@ MpModalResult mp_handle_modal_input(MultiplayerGame *game, InputAction action)
             strncpy(msg.payload.command_response.message, "Swap declined", sizeof(msg.payload.command_response.message) - 1);
             network_send_message(&game->network, &msg);
             chat_add_msg(&game->chat_ui, "Swap declined", CHAT_MSG_SYSTEM);
+        }
+        else if (game->modal_ui.type == MODAL_GIVEUP_RESPONSE)
+        {
+            Message msg;
+            protocol_init_message(&msg, MSG_COMMAND_RESPONSE, game->network.sequence_number++);
+            msg.payload.command_response.command_type = CMD_GIVEUP;
+            msg.payload.command_response.accepted = 0;
+            strncpy(msg.payload.command_response.message, "Giveup declined", sizeof(msg.payload.command_response.message) - 1);
+            network_send_message(&game->network, &msg);
+            chat_add_msg(&game->chat_ui, "Giveup declined", CHAT_MSG_SYSTEM);
         }
         modal_ui_close(&game->modal_ui);
         ret = MP_MODAL_CLOSED;

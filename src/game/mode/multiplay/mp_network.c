@@ -149,18 +149,8 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             break;
 
         case CMD_GIVEUP:
-            game->game_over = true;
-            game->result = (game->opponent.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
-            snprintf(modal_msg, sizeof(modal_msg), "%s has given up!", game->opponent.name);
-            modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, modal_msg);
-            chat_add_msg(&game->chat_ui, modal_msg, CHAT_MSG_SYSTEM);
-            {
-                uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
-                const char *winner = (game->result == GAME_BLACK_WIN)
-                                         ? ((game->me.color == BLACK) ? game->me.name : game->opponent.name)
-                                         : ((game->me.color == WHITE) ? game->me.name : game->opponent.name);
-                mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, winner, modal_msg);
-            }
+            snprintf(modal_msg, sizeof(modal_msg), "%s wants to give up", game->opponent.name);
+            modal_ui_show(&game->modal_ui, MODAL_GIVEUP_RESPONSE, modal_msg);
             break;
 
         case CMD_UNDO:
@@ -185,7 +175,7 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
         bool accepted = msg.payload.command_response.accepted;
 
         if (modal_ui_is_active(&game->modal_ui) &&
-            (game->modal_ui.type == MODAL_UNDO_REQUEST || game->modal_ui.type == MODAL_SWAP_REQUEST))
+            (game->modal_ui.type == MODAL_UNDO_REQUEST || game->modal_ui.type == MODAL_SWAP_REQUEST || game->modal_ui.type == MODAL_GIVEUP_REQUEST))
         {
             modal_ui_close(&game->modal_ui);
             game->first_render = true;
@@ -222,6 +212,27 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             else
             {
                 chat_add_msg(&game->chat_ui, "Swap rejected by opponent", CHAT_MSG_SYSTEM);
+            }
+        }
+        else if (cmd_type == CMD_GIVEUP)
+        {
+            if (accepted)
+            {
+                game->game_over = true;
+                game->result = (game->me.color == BLACK) ? GAME_WHITE_WIN : GAME_BLACK_WIN;
+                char giveup_msg[128];
+                snprintf(giveup_msg, sizeof(giveup_msg), "%s gave up. %s wins!",
+                         game->me.name, game->opponent.name);
+                modal_ui_show(&game->modal_ui, MODAL_GAME_RESULT, giveup_msg);
+                chat_add_msg(&game->chat_ui, giveup_msg, CHAT_MSG_SYSTEM);
+
+                // 관전자에게 기권 결과 전송
+                uint8_t giveup_result = (game->result == GAME_BLACK_WIN) ? RESULT_BLACK_WIN : RESULT_WHITE_WIN;
+                mp_broadcast_game_result_to_spectators(game, giveup_result, REASON_GIVEUP, game->opponent.name, giveup_msg);
+            }
+            else
+            {
+                chat_add_msg(&game->chat_ui, "Giveup rejected by opponent", CHAT_MSG_SYSTEM);
             }
         }
     }

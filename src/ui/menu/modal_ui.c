@@ -30,6 +30,18 @@ static void modal_ui_setup_buttons(ModalUI *modal)
         modal->selected_button = 1; // 기본값: No
         break;
 
+    case MODAL_GIVEUP_REQUEST:
+        // 기권 요청은 표시만 (상대방 응답 대기)
+        modal->button_count = 0;
+        break;
+
+    case MODAL_GIVEUP_RESPONSE:
+        modal->buttons[0] = BUTTON_ACCEPT;
+        modal->buttons[1] = BUTTON_DECLINE;
+        modal->button_count = 2;
+        modal->selected_button = 0;
+        break;
+
     case MODAL_UNDO_REQUEST:
         // 무르기 요청은 표시만 (상대방 응답 대기)
         modal->button_count = 0;
@@ -161,6 +173,12 @@ void modal_ui_render(WINDOW *parent_win, const ModalUI *modal)
     {
     case MODAL_GIVEUP:
         title = " Confirm Giveup ";
+        break;
+    case MODAL_GIVEUP_REQUEST:
+        title = " Giveup Request ";
+        break;
+    case MODAL_GIVEUP_RESPONSE:
+        title = " Giveup Request ";
         break;
     case MODAL_UNDO_REQUEST:
         title = " Undo Request ";
