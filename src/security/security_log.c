@@ -28,9 +28,10 @@ void security_log_write(SecurityLogLevel level, SecurityEventType event_type, co
 
     // 현재 시간 가져오기
     time_t now = time(NULL);
-    struct tm *tm_info = localtime(&now);
+    struct tm tm_info;
+    localtime_r(&now, &tm_info);
     char time_buffer[64];
-    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+    strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", &tm_info);
 
     // 가변 인자 처리
     char formatted_message[MAX_LOG_MESSAGE_LENGTH];
@@ -172,5 +173,15 @@ const char *security_log_event_to_string(SecurityEventType event)
         return "SHUTDOWN";
     default:
         return "UNKNOWN";
+    }
+}
+
+void security_log_cleanup(void)
+{
+    if (g_log_file)
+    {
+        security_log_write(SEC_LOG_INFO, SEC_EVENT_SHUTDOWN, "Security logging shutting down");
+        fclose(g_log_file);
+        g_log_file = NULL;
     }
 }

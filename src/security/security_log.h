@@ -87,4 +87,9 @@ const char *security_log_level_to_string(SecurityLogLevel level);
  */
 const char *security_log_event_to_string(SecurityEventType event);
 
+/**
+ * 보안 로그 정리 (파일 핸들 닫기)
+ */
+void security_log_cleanup(void);
+
 #endif // SECURITY_LOG_H
