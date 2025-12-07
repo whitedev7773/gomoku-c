@@ -1,12 +1,3 @@
-요청하신 3가지 핵심 명령어를 포함하여, **WSL 초심자가 순서대로 따라 할 수 있는 완벽한 가이드**로 정리했습니다.
-
-이 내용을 `HOW-TO-CONNECT-PAD-FOR-WSL.md` 파일로 저장하여 프로젝트에 포함하시면 됩니다.
-
----
-
-### 📄 파일명: `HOW-TO-CONNECT-PAD-FOR-WSL.md`
-
-````markdown
 # 🎮 WSL2에서 Xbox 컨트롤러(게임패드) 연결 가이드
 
 이 문서는 윈도우(Host)에 연결된 Xbox 컨트롤러를 WSL2(Linux)로 연결하고, `xboxdrv`를 이용해 인식시키는 전체 절차를 설명합니다.
@@ -19,18 +10,18 @@
 
 1. **관리자 권한**으로 PowerShell을 실행합니다.
 2. 현재 연결된 USB 목록을 확인하여 컨트롤러의 **BUSID**를 찾습니다.
+
    ```powershell
    usbipd list
    ```
-````
 
-_(예: `1-2` 또는 `3-4` 같은 숫자를 찾으세요)_
+   _(예: `1-2` 또는 `3-4` 같은 숫자를 찾으세요)_
 
-3.  찾은 BUSID를 이용해 WSL로 장치를 연결합니다. **(핵심 명령어 1)**
-    ```powershell
-    usbipd attach --wsl --busid <BUSID>
-    ```
-    - `<BUSID>` 자리에 위에서 찾은 숫자를 넣으세요. (예: `usbipd attach --wsl --busid 1-2`)
+3. 찾은 BUSID를 이용해 WSL로 장치를 연결합니다. **(핵심 명령어 1)**
+   ```powershell
+   usbipd attach --wsl --busid <BUSID>
+   ```
+   - `<BUSID>` 자리에 위에서 찾은 숫자를 넣으세요. (예: `usbipd attach --wsl --busid 1-2`)
 
 ---
 
@@ -99,17 +90,6 @@ jstest /dev/input/js0
 sudo apt install joystick
 jstest /dev/input/js0
 ```
-
----
-
-### 💡 팁
-
-이제 이 파일을 프로젝트 폴더에 넣어두고, 패드를 연결할 때마다 **"1단계(attach) → 2단계(modprobe) → 3단계(xboxdrv)"** 순서로 진행하시면 됩니다.
-
-# 추가적인 설정 명령어:
-
-sudo modprobe uinput
-sudo chmod 666 /dev/uinput
 
 ```
 
