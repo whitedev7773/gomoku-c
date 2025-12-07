@@ -122,7 +122,8 @@ bool mp_handle_network_messages(UIManager *ui_mgr, MultiplayerGame *game)
             // 턴 변경 후 System Log에 메시지
             Stone next_player = turn_manager_get_current_player(&game->turn_mgr);
             char turn_msg[32];
-            snprintf(turn_msg, sizeof(turn_msg), "%s's turn", next_player == BLACK ? "BLACK" : "WHITE");
+            const char *player_name = (next_player == game->me.color) ? game->me.name : game->opponent.name;
+            snprintf(turn_msg, sizeof(turn_msg), "%s's turn", player_name);
             log_add_msg(&game->log_ui, turn_msg);
         }
     }
