@@ -8,6 +8,8 @@ on:
       - "**/*.md"
       - "docs/**"
       - ".github/workflows/**"
+      - "**/*.omk"
+      - "**/*.log"
 
 jobs:
   build-and-release:
