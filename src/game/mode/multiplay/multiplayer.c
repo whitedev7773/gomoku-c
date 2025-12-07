@@ -488,14 +488,14 @@ int multiplayer_run_client(const char *server_ip, int port, GameRule rule, const
         attron(COLOR_PAIR(COLOR_PAIR_DEFAULT));
         mvprintw(info_box_start_y + 3, info_box_start_x + 2, "Server IP: %s", server_ip);
         mvprintw(info_box_start_y + 4, info_box_start_x + 2, "Port: %d", port);
-        mvprintw(info_box_start_y + 5, info_box_start_x + 2, "Player: %s", player_name);
-        mvprintw(info_box_start_y + 6, info_box_start_x + 2, "Rule: %s", rule == RULE_STANDARD ? "Standard" : "Renju");
+        mvprintw(info_box_start_y + 5, info_box_start_x + 2, "Name: %s", player_name);
+        mvprintw(info_box_start_y + 6, info_box_start_x + 2, "Rule: ???");
         attroff(COLOR_PAIR(COLOR_PAIR_DEFAULT));
 
         // 스피너와 대기 메시지
         attron(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
         mvprintw(info_box_start_y + 8, info_box_start_x + (info_box_width - 2) / 2, "%s", spinner[frame]);
-        mvprintw(info_box_start_y + 9, info_box_start_x + (info_box_width - 20) / 2, "Connecting...");
+        mvprintw(info_box_start_y + 9, info_box_start_x + (info_box_width - 13) / 2, "Connecting...");
         attroff(COLOR_PAIR(COLOR_PAIR_SYSTEM) | A_BOLD);
 
         // 안내 메시지 (하단)
