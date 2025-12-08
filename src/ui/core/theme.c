@@ -107,6 +107,12 @@ bool theme_set(ThemeType theme)
         return false;
     }
 
+    // 이미 같은 테마가 적용되어 있으면 아무 작업도 하지 않음 (불필요한 재렌더링 방지)
+    if (g_theme_manager.initialized && g_theme_manager.current_theme == theme)
+    {
+        return true;
+    }
+
     if (!g_theme_manager.initialized)
     {
         return theme_init(theme);
