@@ -98,8 +98,18 @@ int replay_run_with_selection(void)
     // 테마 초기화
     theme_init(theme_get_current());
 
+    // stdscr refresh (하위 윈도우 표시를 위해 필요)
+    refresh();
+
     // 파일 선택 UI
+    bool using_stdscr = false;
     WINDOW *list_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
+    if (list_win == NULL)
+    {
+        // 터미널 크기가 작아 newwin이 실패할 경우 stdscr로 폴백
+        list_win = stdscr;
+        using_stdscr = true;
+    }
     keypad(list_win, TRUE);
 
     // 게임패드 입력 핸들러 초기화
@@ -153,7 +163,8 @@ int replay_run_with_selection(void)
         wattroff(list_win, COLOR_PAIR(COLOR_PAIR_DIM));
 
         wrefresh(list_win);
-        InputEvent event = input_handler_get_event(&input_handler, list_win);
+        // 기다림: 사용자가 키를 누를 때까지 대기하도록 블로킹 입력 사용
+        InputEvent event = input_get_event(list_win);
         input_handler_cleanup(&input_handler);
         delwin(list_win);
         endwin();
@@ -233,7 +244,13 @@ int replay_run_with_selection(void)
             curs_set(0);
             theme_init(theme_get_current());
 
+            using_stdscr = false;
             list_win = newwin(UI_MIN_HEIGHT, UI_MIN_WIDTH, 0, 0);
+            if (list_win == NULL)
+            {
+                list_win = stdscr;
+                using_stdscr = true;
+            }
             keypad(list_win, TRUE);
 
             // 파일 열기 실패 시 모달창 표시
@@ -263,7 +280,10 @@ int replay_run_with_selection(void)
     }
 
     input_handler_cleanup(&input_handler);
-    delwin(list_win);
+    if (!using_stdscr && list_win != NULL)
+    {
+        delwin(list_win);
+    }
     endwin();
 
     return 0;

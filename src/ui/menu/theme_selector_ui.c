@@ -200,20 +200,31 @@ ThemeType theme_selector_run(void)
     bool running = true;
     ThemeType selected_theme = current_theme;
 
+    // 초기 렌더링 한 번만 수행
+    theme_selector_render(selector_win, &selector);
+
     while (running)
     {
-        theme_selector_render(selector_win, &selector);
+        // 블로킹으로 키 입력 대기 (키가 눌릴 때만 처리 및 재렌더링)
+        InputEvent event = input_get_event(selector_win);
 
-        InputEvent event = input_handler_get_event(&input_handler, selector_win);
+        if (event.action == INPUT_NONE)
+        {
+            // 입력이 없는 경우는 거의 없음(블로킹 호출이므로), 루프 계속
+            continue;
+        }
 
         switch (event.action)
         {
         case INPUT_MOVE_UP:
             theme_selector_move(&selector, -1);
+            // 선택 변경이 있으면 화면 갱신
+            theme_selector_render(selector_win, &selector);
             break;
 
         case INPUT_MOVE_DOWN:
             theme_selector_move(&selector, 1);
+            theme_selector_render(selector_win, &selector);
             break;
 
         case INPUT_PLACE_STONE:
